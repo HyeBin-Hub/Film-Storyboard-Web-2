@@ -112,7 +112,6 @@ if "processing" not in st.session_state: st.session_state.processing = False
 # =========================================================
 
 # 1-2. 메인 컨트롤 패널 (여기가 사이드바를 대체함)
-st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
 st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
 
 # 탭을 사용하여 공간 절약
