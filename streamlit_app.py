@@ -11,7 +11,14 @@ st.set_page_config(
 )
 
 # 커스텀 CSS: 영화 콘티 느낌의 어두운 테마와 금색 포인트
-st.markdown("Hello, Streamlit!")
+st.markdown("""
+### AI ID Photo Generator
+
+Generate a **plain ID-style photo**  
+using structured facial tags.
+""")
+
+
 st.markdown("""
     <style>
     /* 전체 배경 및 폰트 */
