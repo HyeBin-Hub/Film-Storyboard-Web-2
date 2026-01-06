@@ -100,3 +100,61 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
+# --- 2. 세션 상태 초기화 (워크플로우 메모리) ---
+if "step" not in st.session_state: 
+    st.session_state.step = 1
+    
+if "generated_faces" not in st.session_state: 
+    st.session_state.generated_faces = []
+    
+if "selected_face_url" not in st.session_state: 
+    st.session_state.selected_face_url = None
+    
+if "final_character_url" not in st.session_state: 
+    st.session_state.final_character_url = None
+    
+if "scene_url" not in st.session_state: 
+    st.session_state.scene_url = None
+
+
+# --- 3. 사이드바: Director's Chair (설정 패널) ---
+with st.sidebar:
+    st.title("🎬 Director's Chair")
+    
+    # API 설정 (접이식)
+    with st.expander("🔐 Studio Settings (API)", expanded=False):
+        if "RUNCOMFY_API_KEY" in st.secrets:
+            api_key = st.secrets["RUNCOMFY_API_KEY"]
+            deployment_id = st.secrets["DEPLOYMENT_ID"]
+            st.success("Studio License Verified ✅")
+        else:
+            api_key = st.text_input("API Key", type="password")
+            deployment_id = st.text_input("Deployment ID")
+
+    st.markdown("---")
+    
+    # 장르 프리셋 (분위기 자동 설정용 - 실제 프롬프트에 반영 가능)
+    genre = st.selectbox("🎞️ Genre Preset", 
+                         ["Noir (Dark, Contrast)", "Sci-Fi (Neon, Clean)", "Documentary (Raw, Realistic)", "Fantasy (Soft, Vibrant)"])
+    
+    st.markdown("### 👤 Casting Profile (Portrait Master)")
+    
+    # 탭으로 옵션 정리
+    tab_bio, tab_face, tab_hair = st.tabs(["Bio", "Face", "Hair"])
+    
+    pm_options = {}
+    with tab_bio:
+        pm_options["gender"] = st.selectbox("Gender", ["Man", "Woman"])
+        pm_options["age"] = st.slider("Age", 4, 80, 25)
+        pm_options["nationality_1"] = st.selectbox("Nationality", ["Korean", "American", "Japanese", "British", "French"])
+        pm_options["body_type"] = st.selectbox("Body Type", ["Fit", "Slim", "Muscular", "Average", "Curvy"])
+    
+    with tab_face:
+        pm_options["face_shape"] = st.selectbox("Face Shape", ["Oval", "Square", "Round", "Diamond"])
+        pm_options["eyes_color"] = st.selectbox("Eye Color", ["Brown", "Black", "Blue", "Green"])
+        pm_options["facial_expression"] = st.selectbox("Expression", ["Neutral", "Smiling", "Serious", "Curious"])
+        
+    with tab_hair:
+        pm_options["hair_style"] = st.selectbox("Hair Style", ["Short", "Long", "Bob", "Buzz cut", "Ponytail"])
+        pm_options["hair_color"] = st.selectbox("Hair Color", ["Black", "Brown", "Blonde", "Red", "Grey"])
