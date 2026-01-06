@@ -66,7 +66,7 @@ if "scene_url" not in st.session_state: st.session_state.scene_url = None
 
 # --- 3. 사이드바: Director's Chair (설정 패널) ---
 with st.sidebar:
-    st.title("🎬 Director's Chair789")
+    st.title("🎬 Director's Chair")
     
     # API 설정 (접이식)
     with st.expander("🔐 Studio Settings (API)", expanded=False):
