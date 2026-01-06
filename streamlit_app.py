@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide", 
     initial_sidebar_state="expanded"
 )
-
+'''
 # 커스텀 CSS: 영화 콘티 느낌의 어두운 테마와 금색 포인트
 st.markdown("""
 ### AI ID Photo Generator
@@ -247,3 +247,4 @@ elif st.session_state.step == 4:
     # (선택 사항) 다음 단계를 위한 확장 공간: 배경 합성 등
     with st.expander("🚀 Next Step: Scene Composition (Coming Soon)"):
         st.info("이 캐릭터를 배경 이미지와 합성하는 기능(Step 3 워크플로우)이 여기에 추가될 예정입니다.")
+'''
