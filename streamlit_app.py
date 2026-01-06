@@ -18,9 +18,9 @@ st.markdown("""
 
 /* [1] 전체 앱: 밝고 중립적인 배경 */
 .stApp {
-    background-color: #f5f6f7;
-    color: #111;
-    font-family: 'Inter', sans-serif;
+    background-color: #050505;
+    color: #e0e0e0;
+    font-family: 'Rajdhani', sans-serif;
 }
 
 /* [2] 사이드바: 단순한 입력 패널 */
