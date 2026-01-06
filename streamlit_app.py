@@ -21,41 +21,146 @@ using structured facial tags.
 
 st.markdown("""
     <style>
-    /* 전체 배경 및 폰트 */
-    .stApp { background-color: #0e1117; color: #e0e0e0; font-family: 'Helvetica Neue', sans-serif; }
-    
-    /* 헤더 스타일 */
-    h1, h2, h3 { color: #f5c518; font-weight: 700; letter-spacing: -1px; }
-    
-    /* 스토리보드 카드 스타일 */
-    .storyboard-card { 
-        border: 1px solid #333; 
-        padding: 15px; 
-        border-radius: 8px; 
-        background-color: #161b22; 
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    /* 폰트 로드 (디지털 시계 느낌) */
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;700&display=swap');
+
+    /* [1] 전체 배경: 다크 메탈 텍스처 */
+    .stApp {
+        background-color: #050505;
+        background-image: radial-gradient(#1a1a1a 1px, transparent 1px), radial-gradient(#1a1a1a 1px, transparent 1px);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        color: #e0e0e0;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* [2] 사이드바 (Control Deck) 스타일 */
+    [data-testid="stSidebar"] {
+        background-color: #0f1115;
+        border-right: 1px solid #333;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    }
+    [data-testid="stSidebar"] h1, h2, h3 {
+        color: #FFD700; /* Amber Gold */
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
     }
     
-    /* 버튼 스타일 (영화제 수상작 느낌의 골드 테두리) */
-    div.stButton > button {
-        width: 100%;
-        border: 1px solid #f5c518;
-        color: #f5c518;
-        background-color: transparent;
-        border-radius: 4px;
+    /* 입력 필드 스타일 */
+    .stTextInput>div>div, .stSelectbox>div>div {
+        background-color: #1a1c23;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 2px;
+    }
+    
+    /* [3] 메인 뷰포트 (카메라 화면) */
+    .viewport-container {
+        border: 2px solid #333;
+        border-radius: 10px;
+        background-color: #000;
+        padding: 5px;
+        position: relative;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.1); /* Cyber Cyan Glow */
+        margin-bottom: 20px;
+    }
+    .viewport-overlay {
+        position: absolute;
+        top: 20px; left: 20px;
+        color: #ff3333;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 14px;
+        z-index: 10;
+        text-shadow: 0 0 3px #ff3333;
+    }
+    .viewport-meta {
+        position: absolute;
+        bottom: 20px; right: 20px;
+        color: #00ffff;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 12px;
+        z-index: 10;
+    }
+    .viewport-frame {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        height: 500px; /* 고정 높이 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+    }
+
+    /* [4] 액션 버튼 (슬레이트) */
+    .action-btn-container button {
+        background: linear-gradient(45deg, #FFD700, #FFA500) !important;
+        color: #000 !important;
+        font-weight: 900 !important;
+        font-size: 24px !important;
+        border: none !important;
+        border-radius: 5px !important;
+        box-shadow: 0 0 15px #FFD700 !important;
+        transition: transform 0.2s !important;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        height: 60px;
+    }
+    .action-btn-container button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 25px #FFD700 !important;
+    }
+    .action-btn-container button:active {
+        transform: scale(0.95);
+    }
+
+    /* [5] 필름 스트립 (하단) */
+    .film-strip-container {
+        background-color: #111;
+        border-top: 2px dashed #444;
+        border-bottom: 2px dashed #444;
+        padding: 10px 0;
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-top: 30px;
+    }
+    .film-frame {
+        display: inline-block;
+        width: 150px;
+        height: 100px;
+        margin-right: 10px;
+        border: 2px solid #333;
+        background-color: #222;
+        cursor: pointer;
+        opacity: 0.6;
         transition: all 0.3s;
     }
-    div.stButton > button:hover {
-        background-color: #f5c518;
-        color: #000000;
-        border: 1px solid #f5c518;
+    .film-frame:hover, .film-frame-selected {
+        border-color: #FFD700;
+        opacity: 1.0;
+        box-shadow: 0 0 10px #FFD700;
+        transform: scale(1.05);
     }
     
-    /* 선택된 이미지 하이라이트 */
-    .selected-img { border: 3px solid #f5c518; }
+    /* 커스텀 탭 스타일 */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+        background-color: #0f1115;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 40px;
+        white-space: pre-wrap;
+        background-color: #1a1c23;
+        border-radius: 4px 4px 0px 0px;
+        color: #888;
+        border: 1px solid #333;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #FFD700 !important;
+        color: #000 !important;
+        font-weight: bold;
+    }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # --- 2. 세션 상태 초기화 (워크플로우 메모리) ---
 if "step" not in st.session_state: st.session_state.step = 1
