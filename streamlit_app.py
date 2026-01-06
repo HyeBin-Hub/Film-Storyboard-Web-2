@@ -129,7 +129,7 @@ if "processing" not in st.session_state: st.session_state.processing = False
 st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
 
 # 탭을 사용하여 공간 절약
-tab1, tab2, tab3 = st.tabs(["👤 CHARACTER PROFILE", "⚙️ TECHNICAL SPECS", "📝 SCRIPT"])
+tab1, tab2, tab3 = st.tabs(["👤 CHARACTER PROFILE", "👗 CLOTHING TRANSLATE", "🏞️ BACKGROUND GENERATION", "📝 SCRIPT"])
 
 pm_options = {}
 
