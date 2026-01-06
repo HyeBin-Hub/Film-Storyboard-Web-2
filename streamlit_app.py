@@ -18,24 +18,27 @@ st.markdown("""
 
 /* [1] 전체 앱: 밝고 중립적인 배경 */
 .stApp {
-    background-color: #050505;
-    color: #e0e0e0;
-    font-family: 'Rajdhani', sans-serif;
-}
-
-/* [2] 사이드바: 단순한 입력 패널 */
-[data-testid="stSidebar"] {
-    background-color: #ffffff;
-    border-right: 1px solid #ddd;
-}
-
-[data-testid="stSidebar"] h1,
-[data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {
-    color: #111;
-    font-weight: 600;
-}
-
+        background-color: #050505;
+        background-image: radial-gradient(#1a1a1a 1px, transparent 1px), radial-gradient(#1a1a1a 1px, transparent 1px);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        color: #e0e0e0;
+        font-family: 'Rajdhani', sans-serif;
+    }
+    
+/* [2] 사이드바 (Control Deck) 스타일 */
+    [data-testid="stSidebar"] {
+        background-color: #0f1115;
+        border-right: 1px solid #333;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    }
+    [data-testid="stSidebar"] h1, h2, h3 {
+        color: #FFD700; /* Amber Gold */
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+    
 /* [3] 입력 필드 */
 .stTextInput>div>div,
 .stTextArea>div>textarea,
