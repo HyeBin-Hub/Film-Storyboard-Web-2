@@ -111,18 +111,6 @@ if "processing" not in st.session_state: st.session_state.processing = False
 # [SECTION 1] TOP CONTROL DECK (상단 계기판)
 # =========================================================
 
-# 1-1. 시스템 설정 (API Key) - 접이식으로 숨김
-with st.expander("🔌 SYSTEM CONFIGURATION (API KEY & SETTINGS)", expanded=False):
-    c1, c2 = st.columns([1, 1])
-    with c1:
-        if "RUNCOMFY_API_KEY" in st.secrets:
-            api_key = st.secrets["RUNCOMFY_API_KEY"]
-            deployment_id = st.secrets["DEPLOYMENT_ID"]
-            st.success("AUTHENTICATION VERIFIED ✅")
-        else:
-            api_key = st.text_input("ACCESS KEY", type="password")
-            deployment_id = st.text_input("DEPLOYMENT ID")
-
 # 1-2. 메인 컨트롤 패널 (여기가 사이드바를 대체함)
 st.markdown('<div class="dashboard-container">', unsafe_allow_html=True)
 st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
