@@ -129,17 +129,25 @@ if "processing" not in st.session_state: st.session_state.processing = False
 st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
 
 # 탭을 사용하여 공간 절약
-tab1, tab2, tab3 = st.tabs(["👤 CHARACTER PROFILE", "👗 CLOTHING TRANSLATE", "🏞️ BACKGROUND GENERATION", "📝 SCRIPT"])
+tab1, tab2, tab3, tab4 = st.tabs(["👤 CHARACTER PROFILE", "👗 CLOTHING TRANSLATE", "🏞️ BACKGROUND GENERATION", "📝 SCRIPT"])
 
 pm_options = {}
 
 with tab1:
     # 캐릭터 설정 (4열 배치)
     col_g, col_a, col_n, col_b = st.columns(4)
-    with col_g: pm_options["gender"] = st.selectbox("GENDER", ["Man", "Woman"])
-    with col_a: pm_options["age"] = st.number_input("AGE", 10, 80, 25)
-    with col_n: pm_options["nationality"] = st.selectbox("ORIGIN", ["Korean", "American", "British", "French"])
-    with col_b: pm_options["body_type"] = st.selectbox("BODY", ["Fit", "Slim", "Muscular", "Average"])
+    
+    with col_g: 
+        pm_options["gender"] = st.selectbox("GENDER", ["Man", "Woman"])
+        
+    with col_a: 
+        pm_options["age"] = st.number_input("AGE", 10, 80, 25)
+        
+    with col_n: 
+        pm_options["nationality"] = st.selectbox("ORIGIN", ["Korean", "American", "British", "French"])
+        
+    with col_b: 
+        pm_options["body_type"] = st.selectbox("BODY", ["Fit", "Slim", "Muscular", "Average"])
 
 with tab2:
     # 기술 설정 (3열 배치)
