@@ -107,7 +107,7 @@ with st.sidebar:
 
 # --- 4. 메인 스테이지 (Workflow Steps) ---
 
-st.markdown(f"## 🎥 Scene Production: Step {st.session_state.step}")
+st.markdown(f"## 🎥 Scene 56562 Production: Step {st.session_state.step}")
 
 # ==========================================
 # ACT 1: Casting (얼굴 생성)
