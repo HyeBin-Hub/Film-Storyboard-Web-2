@@ -304,27 +304,41 @@ with tab1:
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
                     with st.spinner("Casting in progress... (Switch Mode: 1)"):
-                        all_imgs = []
-                        for _ in range(int(st.session_state.shots_per_character)):
-                            res = backend.generate_faces(
-                                api_key=api_key,
-                                deployment_id=deployment_id,
-                                width=DEFAULT_W,
-                                height=DEFAULT_H,
-                                batch_size=1,              # ✅ 고정
-                                pm_options=pm_options,
-                                base_prompt=base_prompt,
-                                seed=fixed_seed,
-                            )
-                            if res:
-                                # res가 List[str]라면
-                                all_imgs.extend(res)
+
+                        n_chars = int(st.session_state.num_characters)
+                        shots = int(st.session_state.shots_per_character)
+                        
+                        # 결과를 캐릭터별로 묶어서 저장: [[c0_shot0, c0_shot1...], [c1_shot0...]]
+                        casting_groups = []
+                        for char_idx in range(n_chars):
+                            pm = st.session_state.pm_options_list[char_idx] if st.session_state.pm_options_list else pm_options
             
-                    if all_imgs:
-                        st.session_state.generated_faces = all_imgs
+                            group = []
+                            for i in range(shots):
+                                # ✅ Fixed seed라면 캐릭터/샷마다 다르게(중복 방지)
+                                #    예: seed = base + char_idx*1000 + i
+                                this_seed = (fixed_seed + char_idx * 1000 + i) if fixed_seed is not None else None
+            
+                                res = backend.generate_faces(
+                                    api_key=api_key,
+                                    deployment_id=deployment_id,
+                                    width=DEFAULT_W,
+                                    height=DEFAULT_H,
+                                    batch_size=1,            # ✅ B안이므로 1장 고정
+                                    pm_options=pm,
+                                    base_prompt=base_prompt,
+                                    seed=this_seed,
+                                )
+            
+                                if res:
+                                    group.extend(res[:1])    # 1장만
+                            casting_groups.append(group)
+            
+                        # ✅ 멀티 상태로 저장
+                        st.session_state.casting_groups = casting_groups
+                        st.session_state.generated_faces = [u for g in casting_groups for u in g]  # (기존 단일 표시용이 필요하면)
                         st.rerun()
-                    else:
-                        st.warning("이미지 URL을 받지 못했습니다. RunComfy result outputs를 확인하세요.")
+            
                 except Exception as e:
                     st.error(str(e))
 
