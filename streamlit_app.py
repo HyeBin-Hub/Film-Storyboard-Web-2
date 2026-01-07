@@ -206,208 +206,208 @@ if "processing" not in st.session_state: st.session_state.processing = False
 #     pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
 #     pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
 
-# st.header(f"🎬 Cinematic Storyboard AI")
+st.header(f"🎬 Cinematic Storyboard AI")
 
-# tab1, tab2, tab3, tab4 = st.tabs(["Step1 | 👤 CHARACTER PROFILE", "Step2 | 👗 CLOTHING TRANSLATE", "Step3 | 🏞️ BACKGROUND GENERATION", "Step4 | 📝 SCRIPT"])
-
-# pm_options = {}
-
-# with tab1:
-    
-#     # col_left, divider, col_right = st.columns([1, 0.3, 2])
-#     col_left, col_right = st.columns([3, 1])
-    
-    
-#     with col_right:
-#         st.markdown("#### Character Setting")
-        
-#         with st.expander("Portrait Setting"): 
-#             with st.expander("Gender & Nationality"): 
-#                 pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
-#                 pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
-#                 pm_options["age"] = st.number_input("AGE", 10, 80, 25)
-            
-#             with st.expander("Face & Body Type"): 
-#                 pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
-#                 pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
-            
-#             with st.expander("Eyes Type"): 
-#                 pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
-#                 pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
-            
-#             with st.expander("Lips Type"): 
-#                 pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
-#                 pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
-            
-#             with st.expander("Hair Style"): 
-#                 pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
-#                 pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
-#                 pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
-    
-#         st.markdown("#### Advanced Setting")
-        
-#         with st.expander("Image Count"): 
-#             batch_size = st.slider("Number of Images", 1, 4, 2)
-
-#     with col_left:
-#         st.markdown('<div class="viewport-frame">', unsafe_allow_html=True)
-        
-#         # 이미지 표시 로직
-#         display_img = None
-#         overlay_text = "STANDBY"
-        
-#         if st.session_state.step == 1 and st.session_state.generated_faces:
-#             display_img = st.session_state.generated_faces[-1]
-#             overlay_text = "CASTING COMPLETE"
-#         elif st.session_state.step == 3: # 의상 단계
-#             display_img = st.session_state.selected_face_url
-#             overlay_text = "REFERENCE LOADED"
-#         elif st.session_state.step == 4:
-#             display_img = st.session_state.final_character_url
-#             overlay_text = "FINAL RENDER"
-    
-#         if display_img:
-#             st.image(display_img, use_container_width=True)
-#         else:
-#             st.markdown(f"<h2 style='color:#333'>{overlay_text}</h2>", unsafe_allow_html=True)
-            
-#         st.markdown('</div>', unsafe_allow_html=True)
-
-# -------------------------------------------------
-
-
-# 1-2. 메인 컨트롤 패널 (여기가 사이드바를 대체함)
-st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
-
-# 탭을 사용하여 공간 절약
-tab1, tab2, tab3, tab4 = st.tabs(["👤 CHARACTER PROFILE", "👗 CLOTHING TRANSLATE", "🏞️ BACKGROUND GENERATION", "📝 SCRIPT"])
+tab1, tab2, tab3, tab4 = st.tabs(["Step1 | 👤 CHARACTER PROFILE", "Step2 | 👗 CLOTHING TRANSLATE", "Step3 | 🏞️ BACKGROUND GENERATION", "Step4 | 📝 SCRIPT"])
 
 pm_options = {}
 
 with tab1:
-    # 캐릭터 설정 (4열 배치)
-    col_g, col_a, col_n, col_b = st.columns(4)
     
-    with col_g: 
-        pm_options["gender"] = st.selectbox("GENDER", ["Man", "Woman"])
-        
-    with col_a: 
-        pm_options["age"] = st.number_input("AGE", 10, 80, 25)
-        
-    with col_n: 
-        pm_options["nationality"] = st.selectbox("ORIGIN", ["Korean", "American", "British", "French"])
-        
-    with col_b: 
-        pm_options["body_type"] = st.selectbox("BODY", ["Fit", "Slim", "Muscular", "Average"])
-
-with tab2:
-    # 기술 설정 (3열 배치)
-    col_r, col_l, col_q = st.columns(3)
-    with col_r: 
-        ratio = st.selectbox("ASPECT RATIO", ["Cinematic (16:9)", "Portrait (9:16)", "Square (1:1)"])
-        if "16:9" in ratio: width, height = 1152, 896
-        elif "9:16" in ratio: width, height = 896, 1152
-        else: width, height = 1024, 1024
-    with col_l: st.select_slider("LIGHTING MOOD", ["Dark", "Cinematic", "Bright"], value="Cinematic")
-    with col_q: batch_size = st.slider("BATCH SIZE", 1, 4, 2)
-
-with tab3:
-    # 프롬프트 입력
-    base_prompt = st.text_input("LOGLINE / PROMPT", "Cinematic shot, highly detailed masterpiece, 8k resolution")
-
-st.markdown('</div>', unsafe_allow_html=True) # End Dashboard
-
-
-# =========================================================
-# [SECTION 2] MAIN VIEWPORT (중앙 화면)
-# =========================================================
-
-# 레이아웃: 왼쪽(뷰포트) - 오른쪽(작업 버튼)
-col_view, col_action = st.columns([3, 1])
-
-with col_view:
-    st.markdown('<div class="viewport-frame">', unsafe_allow_html=True)
+    # col_left, divider, col_right = st.columns([1, 0.3, 2])
+    col_left, col_right = st.columns([3, 1])
     
-    # 이미지 표시 로직
-    display_img = None
-    overlay_text = "STANDBY"
     
-    if st.session_state.step == 1 and st.session_state.generated_faces:
-        display_img = st.session_state.generated_faces[-1]
-        overlay_text = "CASTING COMPLETE"
-    elif st.session_state.step == 3: # 의상 단계
-        display_img = st.session_state.selected_face_url
-        overlay_text = "REFERENCE LOADED"
-    elif st.session_state.step == 4:
-        display_img = st.session_state.final_character_url
-        overlay_text = "FINAL RENDER"
-
-    if display_img:
-        st.image(display_img, use_container_width=True)
-    else:
-        st.markdown(f"<h2 style='color:#333'>{overlay_text}</h2>", unsafe_allow_html=True)
+    with col_right:
+        st.markdown("#### Character Setting")
         
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col_action:
-    st.markdown("### 🎬 ACTION")
-    st.markdown("---")
-    
-    # 단계별 액션 버튼 로직
-    if st.session_state.step == 1:
-        st.info("Define character profile above and start casting.")
-        if st.button("RUN CASTING\n(GENERATE)", use_container_width=True):
-            if not api_key:
-                st.error("API KEY REQUIRED")
-            else:
-                with st.spinner("CASTING ACTORS..."):
-                    imgs = backend.generate_faces(base_prompt, pm_options, api_key, deployment_id, width, height, batch_size)
-                    if imgs:
-                        st.session_state.generated_faces = imgs
-                        st.session_state.step = 2
-                        st.rerun()
-
-    elif st.session_state.step == 2:
-        st.success("Select an actor from the Film Strip below.")
-        if st.button("↺ RESTART", use_container_width=True):
-            st.session_state.step = 1
-            st.rerun()
-
-    elif st.session_state.step == 3:
-        outfit = st.text_area("WARDROBE", "White t-shirt, jeans, sneakers")
-        if st.button("APPLY COSTUME", use_container_width=True):
-            with st.spinner("FITTING..."):
-                res = backend.generate_full_body(st.session_state.selected_face_url, outfit, api_key, deployment_id)
-                if res:
-                    st.session_state.final_character_url = res[-1]
-                    st.session_state.step = 4
-                    st.rerun()
-                    
-    elif st.session_state.step == 4:
-        st.balloons()
-        st.markdown("### ✅ SCENE CUT")
-        if st.button("NEW PROJECT", use_container_width=True):
-            st.session_state.step = 1
-            st.rerun()
-
-# =========================================================
-# [SECTION 3] FILM STRIP (하단 갤러리)
-# =========================================================
-st.markdown("### 🎞️ RUSHES (FILM STRIP)")
-
-if st.session_state.generated_faces:
-    cols = st.columns(len(st.session_state.generated_faces))
-    for idx, img in enumerate(st.session_state.generated_faces):
-        with cols[idx]:
-            # 선택 효과
-            border = "2px solid #FFD700" if img == st.session_state.selected_face_url else "1px solid #333"
-            st.markdown(f"<div style='border:{border}; padding:2px'>", unsafe_allow_html=True)
-            st.image(img, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+        with st.expander("Portrait Setting"): 
+            with st.expander("Gender & Nationality"): 
+                pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
+                pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
+                pm_options["age"] = st.number_input("AGE", 10, 80, 25)
             
-            if st.button(f"SELECT #{idx+1}", key=f"sel_{idx}"):
-                st.session_state.selected_face_url = img
-                st.session_state.step = 3
-                st.rerun()
-else:
-    st.caption("No footage available.")
+            with st.expander("Face & Body Type"): 
+                pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
+                pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
+            
+            with st.expander("Eyes Type"): 
+                pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+                pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+            
+            with st.expander("Lips Type"): 
+                pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
+                pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
+            
+            with st.expander("Hair Style"): 
+                pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
+                pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
+                pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
+    
+        st.markdown("#### Advanced Setting")
+        
+        with st.expander("Image Count"): 
+            batch_size = st.slider("Number of Images", 1, 4, 2)
+
+    with col_left:
+        st.markdown('<div class="viewport-frame">', unsafe_allow_html=True)
+        
+        # 이미지 표시 로직
+        display_img = None
+        overlay_text = "STANDBY"
+        
+        if st.session_state.step == 1 and st.session_state.generated_faces:
+            display_img = st.session_state.generated_faces[-1]
+            overlay_text = "CASTING COMPLETE"
+        elif st.session_state.step == 3: # 의상 단계
+            display_img = st.session_state.selected_face_url
+            overlay_text = "REFERENCE LOADED"
+        elif st.session_state.step == 4:
+            display_img = st.session_state.final_character_url
+            overlay_text = "FINAL RENDER"
+    
+        if display_img:
+            st.image(display_img, use_container_width=True)
+        else:
+            st.markdown(f"<h2 style='color:#333'>{overlay_text}</h2>", unsafe_allow_html=True)
+            
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# -------------------------------------------------
+
+
+# # 1-2. 메인 컨트롤 패널 (여기가 사이드바를 대체함)
+# st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
+
+# # 탭을 사용하여 공간 절약
+# tab1, tab2, tab3, tab4 = st.tabs(["👤 CHARACTER PROFILE", "👗 CLOTHING TRANSLATE", "🏞️ BACKGROUND GENERATION", "📝 SCRIPT"])
+
+# pm_options = {}
+
+# with tab1:
+#     # 캐릭터 설정 (4열 배치)
+#     col_g, col_a, col_n, col_b = st.columns(4)
+    
+#     with col_g: 
+#         pm_options["gender"] = st.selectbox("GENDER", ["Man", "Woman"])
+        
+#     with col_a: 
+#         pm_options["age"] = st.number_input("AGE", 10, 80, 25)
+        
+#     with col_n: 
+#         pm_options["nationality"] = st.selectbox("ORIGIN", ["Korean", "American", "British", "French"])
+        
+#     with col_b: 
+#         pm_options["body_type"] = st.selectbox("BODY", ["Fit", "Slim", "Muscular", "Average"])
+
+# with tab2:
+#     # 기술 설정 (3열 배치)
+#     col_r, col_l, col_q = st.columns(3)
+#     with col_r: 
+#         ratio = st.selectbox("ASPECT RATIO", ["Cinematic (16:9)", "Portrait (9:16)", "Square (1:1)"])
+#         if "16:9" in ratio: width, height = 1152, 896
+#         elif "9:16" in ratio: width, height = 896, 1152
+#         else: width, height = 1024, 1024
+#     with col_l: st.select_slider("LIGHTING MOOD", ["Dark", "Cinematic", "Bright"], value="Cinematic")
+#     with col_q: batch_size = st.slider("BATCH SIZE", 1, 4, 2)
+
+# with tab3:
+#     # 프롬프트 입력
+#     base_prompt = st.text_input("LOGLINE / PROMPT", "Cinematic shot, highly detailed masterpiece, 8k resolution")
+
+# st.markdown('</div>', unsafe_allow_html=True) # End Dashboard
+
+
+# # =========================================================
+# # [SECTION 2] MAIN VIEWPORT (중앙 화면)
+# # =========================================================
+
+# # 레이아웃: 왼쪽(뷰포트) - 오른쪽(작업 버튼)
+# col_view, col_action = st.columns([3, 1])
+
+# with col_view:
+#     st.markdown('<div class="viewport-frame">', unsafe_allow_html=True)
+    
+#     # 이미지 표시 로직
+#     display_img = None
+#     overlay_text = "STANDBY"
+    
+#     if st.session_state.step == 1 and st.session_state.generated_faces:
+#         display_img = st.session_state.generated_faces[-1]
+#         overlay_text = "CASTING COMPLETE"
+#     elif st.session_state.step == 3: # 의상 단계
+#         display_img = st.session_state.selected_face_url
+#         overlay_text = "REFERENCE LOADED"
+#     elif st.session_state.step == 4:
+#         display_img = st.session_state.final_character_url
+#         overlay_text = "FINAL RENDER"
+
+#     if display_img:
+#         st.image(display_img, use_container_width=True)
+#     else:
+#         st.markdown(f"<h2 style='color:#333'>{overlay_text}</h2>", unsafe_allow_html=True)
+        
+#     st.markdown('</div>', unsafe_allow_html=True)
+
+# with col_action:
+#     st.markdown("### 🎬 ACTION")
+#     st.markdown("---")
+    
+#     # 단계별 액션 버튼 로직
+#     if st.session_state.step == 1:
+#         st.info("Define character profile above and start casting.")
+#         if st.button("RUN CASTING\n(GENERATE)", use_container_width=True):
+#             if not api_key:
+#                 st.error("API KEY REQUIRED")
+#             else:
+#                 with st.spinner("CASTING ACTORS..."):
+#                     imgs = backend.generate_faces(base_prompt, pm_options, api_key, deployment_id, width, height, batch_size)
+#                     if imgs:
+#                         st.session_state.generated_faces = imgs
+#                         st.session_state.step = 2
+#                         st.rerun()
+
+#     elif st.session_state.step == 2:
+#         st.success("Select an actor from the Film Strip below.")
+#         if st.button("↺ RESTART", use_container_width=True):
+#             st.session_state.step = 1
+#             st.rerun()
+
+#     elif st.session_state.step == 3:
+#         outfit = st.text_area("WARDROBE", "White t-shirt, jeans, sneakers")
+#         if st.button("APPLY COSTUME", use_container_width=True):
+#             with st.spinner("FITTING..."):
+#                 res = backend.generate_full_body(st.session_state.selected_face_url, outfit, api_key, deployment_id)
+#                 if res:
+#                     st.session_state.final_character_url = res[-1]
+#                     st.session_state.step = 4
+#                     st.rerun()
+                    
+#     elif st.session_state.step == 4:
+#         st.balloons()
+#         st.markdown("### ✅ SCENE CUT")
+#         if st.button("NEW PROJECT", use_container_width=True):
+#             st.session_state.step = 1
+#             st.rerun()
+
+# # =========================================================
+# # [SECTION 3] FILM STRIP (하단 갤러리)
+# # =========================================================
+# st.markdown("### 🎞️ RUSHES (FILM STRIP)")
+
+# if st.session_state.generated_faces:
+#     cols = st.columns(len(st.session_state.generated_faces))
+#     for idx, img in enumerate(st.session_state.generated_faces):
+#         with cols[idx]:
+#             # 선택 효과
+#             border = "2px solid #FFD700" if img == st.session_state.selected_face_url else "1px solid #333"
+#             st.markdown(f"<div style='border:{border}; padding:2px'>", unsafe_allow_html=True)
+#             st.image(img, use_container_width=True)
+#             st.markdown("</div>", unsafe_allow_html=True)
+            
+#             if st.button(f"SELECT #{idx+1}", key=f"sel_{idx}"):
+#                 st.session_state.selected_face_url = img
+#                 st.session_state.step = 3
+#                 st.rerun()
+# else:
+#     st.caption("No footage available.")
