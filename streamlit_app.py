@@ -139,6 +139,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "Step4 | 📝 STORYBOARD"
 ])
 
+pm_options = {}
 # ---------------------------------------------------------
 # [TAB 1] 얼굴 생성
 # ---------------------------------------------------------
@@ -147,7 +148,7 @@ with tab1:
         st.markdown("### 1. Define Your Actor Profile")
 
         col_left, col_right = st.columns([3, 1])
-
+ 
         with col_right:
             
             st.markdown("#### Character Setting")
