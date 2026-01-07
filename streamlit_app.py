@@ -166,7 +166,7 @@ with col_left:
         pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
         pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
 
-    with col_q: batch_size = st.slider("BATCH SIZE", 1, 4, 2)
+    batch_size = st.slider("BATCH SIZE", 1, 4, 2)
 
 # col1, col2, col3, col4, col5 = st.columns(5)
 
