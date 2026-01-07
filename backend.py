@@ -138,6 +138,7 @@ def generate_faces(
     width: int,
     height: int,
     batch_size: int,
+    base_prompt: str | None = None,   # ✅ optional
 ) -> List[str]:
     """
     Step1 (Switch=1): Portrait generation.
@@ -146,6 +147,14 @@ def generate_faces(
     - Node 13: latent size + batch
     - Node 11: sampler seed
     """
+
+    DEFAULT_BASE_PROMPT = (
+        "Grey background, a 12-year-old Korean boy, "
+        "white t-shirt, buzz cut hair, "
+        "documentary photograph, cinematic still frame"
+    )
+    
+    prompt = base_prompt or DEFAULT_BASE_PROMPT
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
@@ -165,7 +174,7 @@ def generate_faces(
             "shot": "Half-length portrait" 
         }},
         "11": {"inputs": {"seed": seed}},
-        "12": {"inputs": {"text": base_prompt}},
+        "12": {"inputs": {"text": prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
         "56": {"inputs": {"select": 1}},
     }
