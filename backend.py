@@ -80,6 +80,7 @@ def _run_inference(overrides, api_key, deployment_id):
     except Exception as e:
         print(f"❌ API Error: {e}")
         return None
+    retry_count += 1
 
 
 def _extract_images(outputs, target_node_id):
