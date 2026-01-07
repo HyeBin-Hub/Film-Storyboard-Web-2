@@ -274,7 +274,7 @@ with tab1:
             st.markdown("#### Advanced Setting")
 
             with st.expander("Image Count"):
-                batch_size = st.slider("Number of Images", 1, 4, 2)
+                # batch_size = st.slider("Number of Images", 1, 4, 2)
 
                 seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
                 if seed_mode == "Fixed":
