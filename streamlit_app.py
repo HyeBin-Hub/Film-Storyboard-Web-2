@@ -197,7 +197,6 @@ with tab1:
                 try:
                     with st.spinner("Casting in progress... (Switch Mode: 1)"):
                         imgs = backend.generate_faces(
-                            base_prompt=base_prompt,
                             api_key=api_key,
                             deployment_id=deployment_id,
                             width=DEFAULT_W,
