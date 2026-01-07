@@ -24,94 +24,94 @@ else:
         st.stop() # 키가 없으면 앱 실행 중단
 
 # --- 2. CSS 매직: 와이드 콘솔 디자인 ---
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;700&display=swap');
+# st.markdown("""
+#     <style>
+#     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;700&display=swap');
 
-    /* [1] 배경 및 폰트 */
-    .stApp {
-        background-color: #050505;
-        background-image: radial-gradient(#151515 1px, transparent 1px);
-        background-size: 30px 30px;
-        color: #e0e0e0;
-        font-family: 'Rajdhani', sans-serif;
-    }
+#     /* [1] 배경 및 폰트 */
+#     .stApp {
+#         background-color: #050505;
+#         background-image: radial-gradient(#151515 1px, transparent 1px);
+#         background-size: 30px 30px;
+#         color: #e0e0e0;
+#         font-family: 'Rajdhani', sans-serif;
+#     }
 
-    /* [2] 상단 컨트롤 패널 (Dashboard) */
-    .dashboard-container {
-        background: linear-gradient(180deg, #161616 0%, #0a0a0a 100%);
-        border-bottom: 2px solid #333;
-        padding: 20px;
-        margin-top: -50px; /* Streamlit 기본 여백 제거 */
-        margin-left: -5rem; margin-right: -5rem; /* 좌우 꽉 채우기 */
-        padding-left: 5rem; padding-right: 5rem;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.8);
-        margin-bottom: 20px;
-    }
-    .control-label {
-        color: #888;
-        font-size: 12px;
-        letter-spacing: 1px;
-        margin-bottom: 5px;
-    }
+#     /* [2] 상단 컨트롤 패널 (Dashboard) */
+#     .dashboard-container {
+#         background: linear-gradient(180deg, #161616 0%, #0a0a0a 100%);
+#         border-bottom: 2px solid #333;
+#         padding: 20px;
+#         margin-top: -50px; /* Streamlit 기본 여백 제거 */
+#         margin-left: -5rem; margin-right: -5rem; /* 좌우 꽉 채우기 */
+#         padding-left: 5rem; padding-right: 5rem;
+#         box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+#         margin-bottom: 20px;
+#     }
+#     .control-label {
+#         color: #888;
+#         font-size: 12px;
+#         letter-spacing: 1px;
+#         margin-bottom: 5px;
+#     }
     
-    /* 입력 필드 커스텀 */
-    .stTextInput>div>div, .stSelectbox>div>div, .stNumberInput>div>div {
-        background-color: #222 !important;
-        border: 1px solid #444 !important;
-        color: #FFD700 !important; /* Gold Text */
-        border-radius: 4px;
-    }
+#     /* 입력 필드 커스텀 */
+#     .stTextInput>div>div, .stSelectbox>div>div, .stNumberInput>div>div {
+#         background-color: #222 !important;
+#         border: 1px solid #444 !important;
+#         color: #FFD700 !important; /* Gold Text */
+#         border-radius: 4px;
+#     }
     
-    /* [3] 메인 뷰포트 (중앙) */
-    .viewport-frame {
-        border: 2px solid #333;
-        border-radius: 12px;
-        background-color: #000;
-        min-height: 500px;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.05);
-    }
+#     /* [3] 메인 뷰포트 (중앙) */
+#     .viewport-frame {
+#         border: 2px solid #333;
+#         border-radius: 12px;
+#         background-color: #000;
+#         min-height: 500px;
+#         position: relative;
+#         display: flex;
+#         align-items: center;
+#         justify-content: center;
+#         box-shadow: 0 0 30px rgba(0, 255, 255, 0.05);
+#     }
     
-    /* [4] 액션 버튼 (하단 중앙 배치) */
-    .stButton>button {
-        background: linear-gradient(90deg, #FFD700, #ffaa00) !important;
-        color: #000 !important;
-        border: none;
-        font-weight: bold;
-        font-size: 20px;
-        padding: 15px 40px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        transition: all 0.3s;
-        width: 100%;
-        border-radius: 8px;
-    }
-    .stButton>button:hover {
-        box-shadow: 0 0 20px #FFD700;
-        transform: scale(1.02);
-    }
+#     /* [4] 액션 버튼 (하단 중앙 배치) */
+#     .stButton>button {
+#         background: linear-gradient(90deg, #FFD700, #ffaa00) !important;
+#         color: #000 !important;
+#         border: none;
+#         font-weight: bold;
+#         font-size: 20px;
+#         padding: 15px 40px;
+#         text-transform: uppercase;
+#         letter-spacing: 2px;
+#         transition: all 0.3s;
+#         width: 100%;
+#         border-radius: 8px;
+#     }
+#     .stButton>button:hover {
+#         box-shadow: 0 0 20px #FFD700;
+#         transform: scale(1.02);
+#     }
 
-    /* 필름 스트립 */
-    .film-strip {
-        display: flex;
-        gap: 10px;
-        overflow-x: auto;
-        padding: 20px 0;
-        border-top: 1px dashed #333;
-        margin-top: 30px;
-    }
+#     /* 필름 스트립 */
+#     .film-strip {
+#         display: flex;
+#         gap: 10px;
+#         overflow-x: auto;
+#         padding: 20px 0;
+#         border-top: 1px dashed #333;
+#         margin-top: 30px;
+#     }
     
-    /* 탭 스타일 재정의 (상단 패널용) */
-    .stTabs [data-baseweb="tab-list"] { background-color: transparent; }
-    .stTabs [data-baseweb="tab"] { color: #666; }
-    .stTabs [aria-selected="true"] { color: #FFD700 !important; border-bottom-color: #FFD700 !important; }
+#     /* 탭 스타일 재정의 (상단 패널용) */
+#     .stTabs [data-baseweb="tab-list"] { background-color: transparent; }
+#     .stTabs [data-baseweb="tab"] { color: #666; }
+#     .stTabs [aria-selected="true"] { color: #FFD700 !important; border-bottom-color: #FFD700 !important; }
     
-    </style>
-""", unsafe_allow_html=True)
+#     </style>
+# """, unsafe_allow_html=True)
 
 # --- 3. 세션 상태 관리 ---
 if "step" not in st.session_state: 
