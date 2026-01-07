@@ -126,16 +126,25 @@ if "processing" not in st.session_state: st.session_state.processing = False
 
 st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE")
 
-tab1, tab2 = st.tabs(["Eyes Type",""])
+# tab1, tab2 = st.tabs(["EYES TYPE","LIPS TYPE"])
 
-pm_options = {}
+# pm_options = {}
 
-with tab1:
-    col_c, col_s = st.columns(2)
+# with tab1:
+#     col_c, col_s = st.columns(2)
 
-    with col_c:
-        pm_options["EYES TYPE"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
-        pm_options["EYES TYPE"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+    # with col_c:
+    #     pm_options["EYES TYPE"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+    #     pm_options["EYES TYPE"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+
+col1, col2 = st.tabs(["EYES TYPE","LIPS TYPE"])
+
+with col1:
+    pm_options["EYES TYPE"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+    pm_options["EYES TYPE"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+
+    
+
 
 # 1-2. 메인 컨트롤 패널 (여기가 사이드바를 대체함)
 # st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
