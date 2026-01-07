@@ -1,6 +1,7 @@
 import requests
 import time
 import base64 
+import streamlit as st
 
 BASE_URL = "https://api.runcomfy.net/prod/v1"
 DUMMY_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
