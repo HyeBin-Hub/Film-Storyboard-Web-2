@@ -206,7 +206,7 @@ if "processing" not in st.session_state: st.session_state.processing = False
 #     pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
 #     pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
 
-st.header(f"STEP 1 : 👤 CHARACTER PROFILE")
+st.header(f"🎬 Cinematic Storyboard AI")
 
 tab1, tab2, tab3, tab4 = st.tabs(["Step1: 👤 CHARACTER PROFILE", "Step2: 👗 CLOTHING TRANSLATE", "Step3: 🏞️ BACKGROUND GENERATION", "Step4: 📝 SCRIPT"])
 
