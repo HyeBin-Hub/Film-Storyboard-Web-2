@@ -114,7 +114,7 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
 def run_workflow(
     api_key: str,
     deployment_id: str,
-    overrides: Dict[str, Any],
+    overrides: Dict[str, Any]
 ) -> List[str]:
     request_id = submit_inference(api_key, deployment_id, overrides)
     # poll_until_done(api_key, deployment_id, request_id)
@@ -123,8 +123,7 @@ def run_workflow(
         return {"done": False, "request_id": request_id, "urls": []}
     
     result = fetch_result(api_key, deployment_id, request_id)
-    urls = extract_image_urls(result)
-    return {"done": True, "request_id": request_id, "urls": urls}
+    return extract_image_urls(result)}
     # return extract_image_urls(result)
 
 
@@ -132,13 +131,13 @@ def run_workflow(
 # High-level functions for app.py
 # -----------------------------
 def generate_faces(
-    base_prompt: str,
     api_key: str,
     deployment_id: str,
     width: int,
     height: int,
     batch_size: int,
-    base_prompt: str | None = None,   # ✅ optional
+    pm_options: Dict[str, Any],
+    base_prompt: Optional[str] = None,
 ) -> List[str]:
     """
     Step1 (Switch=1): Portrait generation.
@@ -149,8 +148,8 @@ def generate_faces(
     """
 
     DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
-    
     prompt = base_prompt or DEFAULT_BASE_PROMPT
+ 
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
