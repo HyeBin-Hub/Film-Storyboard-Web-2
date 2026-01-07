@@ -235,42 +235,45 @@ height = 1152
 # [TAB 1] 배우 캐스팅 (얼굴 생성)
 # ---------------------------------------------------------
 with tab1:
-    # col_left, divider, col_right = st.columns([1, 0.3, 2])
-    col_left, col_right = st.columns([3, 1])
-    
-    
-    with col_right:
-        st.markdown("#### Character Setting")
+    # col_left, divider, col_right = st.columns([1, 0.3, 2]).
+    if st.session_state.step == 1:
+        st.markdown("### 1. Define Your Actor Profile")
         
-        with st.expander("Portrait Setting"): 
-            with st.expander("Gender & Nationality"): 
-                pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
-                pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
-                pm_options["age"] = st.number_input("AGE", 10, 80, 25)
-            
-            with st.expander("Face & Body Type"): 
-                pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
-                pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
-            
-            with st.expander("Eyes Type"): 
-                pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
-                pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
-            
-            with st.expander("Lips Type"): 
-                pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
-                pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
-            
-            with st.expander("Hair Style"): 
-                pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
-                pm_options["Hair Color"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
-                pm_options["Hair Length"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
-    
-        st.markdown("#### Advanced Setting")
+        col_left, col_right = st.columns([3, 1])
         
-        with st.expander("Image Count"): 
-            batch_size = st.slider("Number of Images", 1, 4, 2)
-
-        # [ACTION] 생성 버튼
+        
+        with col_right:
+            st.markdown("#### Character Setting")
+            
+            with st.expander("Portrait Setting"): 
+                with st.expander("Gender & Nationality"): 
+                    pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
+                    pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
+                    pm_options["age"] = st.number_input("AGE", 10, 80, 25)
+                
+                with st.expander("Face & Body Type"): 
+                    pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
+                    pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
+                
+                with st.expander("Eyes Type"): 
+                    pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+                    pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+                
+                with st.expander("Lips Type"): 
+                    pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
+                    pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
+                
+                with st.expander("Hair Style"): 
+                    pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
+                    pm_options["Hair Color"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
+                    pm_options["Hair Length"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
+        
+            st.markdown("#### Advanced Setting")
+            
+            with st.expander("Image Count"): 
+                batch_size = st.slider("Number of Images", 1, 4, 2)
+    
+            # [ACTION] 생성 버튼
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🚀 CASTING START (Generate Faces)", use_container_width=True):
                 if not api_key or not deployment_id:
@@ -282,24 +285,24 @@ with tab1:
                         if imgs:
                             st.session_state.generated_faces = imgs
                             st.rerun()
-            
-
-    with col_left:
-        # [PREVIEW] 생성된 이미지 선택
-        with col_preview:
-            st.markdown("#### Casting Result")
-            if st.session_state.generated_faces:
-                # 2열로 이미지 나열
-                cols = st.columns(2)
-                for i, img_url in enumerate(st.session_state.generated_faces):
-                    with cols[i % 2]:
-                        st.image(img_url, use_container_width=True)
-                        if st.button(f"✅ Select Actor {i+1}", key=f"sel_{i}"):
-                            st.session_state.selected_face_url = img_url
-                            st.session_state.step = 2 # 다음 단계로 이동
-                            st.rerun()
-            else:
-                st.info("좌측 설정 후 'CASTING START'를 눌러주세요.")
+                
+    
+        with col_left:
+            # [PREVIEW] 생성된 이미지 선택
+            with col_preview:
+                st.markdown("#### Casting Result")
+                if st.session_state.generated_faces:
+                    # 2열로 이미지 나열
+                    cols = st.columns(2)
+                    for i, img_url in enumerate(st.session_state.generated_faces):
+                        with cols[i % 2]:
+                            st.image(img_url, use_container_width=True)
+                            if st.button(f"✅ Select Actor {i+1}", key=f"sel_{i}"):
+                                st.session_state.selected_face_url = img_url
+                                st.session_state.step = 2 # 다음 단계로 이동
+                                st.rerun()
+                else:
+                    st.info("좌측 설정 후 'CASTING START'를 눌러주세요.")
 
     else:
         st.success("✅ Actor Selected")
