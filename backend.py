@@ -114,11 +114,13 @@ def generate_faces(
     batch_size: int,
     pm_options: Dict[str, Any],
     base_prompt: Optional[str] = None,
+    seed: Optional[int] = None,   # ✅ 추가
 ) -> List[str]:
     DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
     prompt = base_prompt if base_prompt else DEFAULT_BASE_PROMPT
 
-    seed = random.randint(1, 10**15)
+    if seed is None:
+        seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
         "56": {"inputs": {"select": 1}},
