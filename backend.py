@@ -34,24 +34,33 @@ def _run_inference(overrides, api_key, deployment_id):
     
     try:
       # 1. inference 요청
+        print("🚀 Sending Inference Request...")
         res = requests.post(
             f"{BASE_URL}/deployments/{deployment_id}/inference",
             headers=headers,
             json=payload
         )
         res.raise_for_status()
+        request_id = res.json().get("request_id")
         request_id = res.json()["request_id"]
+        print(f"✅ Request Sent! ID: {request_id}")
 
       # 2. 상태 풀링
         while True:
             time.sleep(3)
+            
             status_res = requests.get(f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status", headers=headers)
             status_res.raise_for_status()
-            status = status_res.json().get("status", "").lower()
+            
+            status_data = status_res.json() # [수정] 변수에 할당
+            status = status_data.get("status", "").lower()
+
+            print(f"⏳ Status: {status}")
             
             if status == "completed": 
                 break
             elif status in ["failed", "error"]: 
+                # [수정] status_data 변수 사용
                 print(f"❌ 생성 실패: {status_data.get('error_message', 'Unknown error')}")
                 return None
               
@@ -76,27 +85,29 @@ def _extract_images(outputs, target_node_id):
         return image_urls
       
     else:
-        print(f"⚠️ 노드 {target_id_str}번의 결과물을 찾을 수 없습니다. (현재 노드: {list(outputs.keys())})")
+        print(f"⚠️ 노드 {target_node_id}번의 결과물을 찾을 수 없습니다. (현재 노드: {list(outputs.keys())})")
         return []
+
+# =========================================================
+# [메인 기능 함수]
+# =========================================================
 
 # --- Step 1: Portrait Generation ---
 def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, height, batch_size=4):
     overrides = {        
         "12": {"inputs": {"text": prompt_text}},
         "3": {"inputs": {
-              "gender": pm_options.get("gender", "Woman"), 
-              "nationality_1": pm_options.get("nationality_1", "Korean"),
-              "body_type": pm_options.get("body_type", "Fit"),
-              "eyes_color": pm_options.get("eyes_color", "Brown"),
-              "eyes_shape": pm_options.get("eyes_shape", "Round Eyes Shape"),
-              "lips_color": pm_options.get("lips_color", "Red Lips"),
-              "lips_shape": pm_options.get("lips_shape", "Regular"),
-              "face_shape": pm_options.get("face_shape", "Oval"),
-              "hair_style": pm_options.get("hair_style", "Long straight"),
-              "hair_color": pm_options.get("hair_color", "Black"),
-              "hair_length": pm_options.get("hair_length", "Long"),
-              "beard": pm_options.get("beard", "Clean Shaven"), 
-              "beard_color": pm_options.get("beard_color", "Black")
+              "gender": pm_options.get("Gender", "Woman"), 
+              "nationality_1": pm_options.get("Nationality", "Korean"),
+              "body_type": pm_options.get("Body Type", "Fit"),
+              "eyes_color": pm_options.get("Eyes Color", "Brown"),
+              "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
+              "lips_color": pm_options.get("Lips Color", "Red Lips"),
+              "lips_shape": pm_options.get("Lips Shape", "Regular"),
+              "face_shape": pm_options.get("Face Shape", "Oval"),
+              "hair_style": pm_options.get("Hair Style", "Long straight"),
+              "hair_color": pm_options.get("Hair Color", "Black"),
+              "hair_length": pm_options.get("Hair Length", "Long"),
         }},
         "13" : {"inputs":{"width": width, "height": height, "batch_size": batch_size}},
         "11": {"inputs": {"steps": 25}},
@@ -142,7 +153,7 @@ def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1,
     base64_face_image_2 = _url_to_base64(face_image_url_2)
     base64_background_image_1 = _url_to_base64(background_image_url_1)
     
-    if not all([b64_face1, b64_face2, b64_bg]):
+    if not all([base64_face_image_1, base64_face_image_2, base64_background_image_1]):
         print("❌ 이미지 변환에 실패하여 작업을 중단합니다.")
         return []
 
