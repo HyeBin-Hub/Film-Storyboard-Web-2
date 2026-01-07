@@ -70,6 +70,7 @@ def _run_inference(overrides, api_key, deployment_id):
                 print(f"⚠️ Polling connection issue: {e}, retrying...")
                 time.sleep(2)
                 continue
+            retry_count += 1
               
       # 3. 결과 가져오기 
         result_res = requests.get(f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/result", headers=headers)
@@ -80,7 +81,7 @@ def _run_inference(overrides, api_key, deployment_id):
     except Exception as e:
         print(f"❌ API Error: {e}")
         return None
-    retry_count += 1
+    
 
 
 def _extract_images(outputs, target_node_id):
@@ -119,6 +120,7 @@ def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, heigh
             "hair_style": pm_options.get("Hair Style", "Long straight"),
             "hair_color": pm_options.get("Hair Color", "Black"),
             "hair_length": pm_options.get("Hair Length", "Long"),
+            "shot": "Half-length portrait" # 기본값
         }},
         "13" : {"inputs":{"width": width, "height": height, "batch_size": batch_size}},
 
@@ -198,4 +200,4 @@ def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1,
     if not outputs: 
       return []
 
-    return _extract_images(outputs, "22")
+    return _extract_images(outputs, "15")
