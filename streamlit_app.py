@@ -137,15 +137,15 @@ st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE")
     #     pm_options["EYES TYPE"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
     #     pm_options["EYES TYPE"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
 
-col1, col2 = st.cols(["EYES TYPE","LIPS TYPE"])
+col1, col2 = st.columns(["EYES TYPE","LIPS TYPE"])
 
 with col1:
     pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
     pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
 
 with col2:
-    pm_options["Lips Color"] = st.selectbox("Lips Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
-    pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+    pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
+    pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
 
     
 
