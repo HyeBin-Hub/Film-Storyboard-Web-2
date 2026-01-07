@@ -86,16 +86,49 @@ def _run_inference(overrides, api_key, deployment_id):
 def _extract_images(outputs, target_node_id):
   
     image_urls = []
-  
-    if target_node_id in outputs:
-        for img in outputs[target_node_id].get("images", []):
-            if img.get("url"): 
-                image_urls.append(img["url"])
-        return image_urls
-      
-    else:
-        st.warning(f"⚠️ 노드 {target_node_id}번의 결과물을 찾을 수 없습니다. (현재 노드: {list(outputs.keys())})")        
+
+    # 1. 노드 ID가 결과에 있는지 확인
+    if target_node_id not in outputs:
+        st.warning(f"⚠️ {target_node_id}번 노드의 결과가 없습니다. (전체 키: {list(outputs.keys())})")
         return []
+
+    # 2. 이미지 리스트 가져오기
+    images_list = outputs[target_node_id].get("images", [])
+
+    # 🚨 [디버깅] 실제 데이터 구조를 화면에 출력 (범인 색출!)
+    # 이 부분이 실행되면 화면에 JSON 데이터가 뜹니다. 확인 후 주석 처리하세요.
+    # st.write(f"🔍 [Debug] Node {target_node_id} Raw Data:", images_list)
+
+    for img in images_list:
+        # Case A: RunComfy가 제공하는 'url' 키가 있는 경우 (Best)
+        if img.get("url"):
+            image_urls.append(img["url"])
+
+        # Case B: 'url'은 없고 'filename'만 있는 경우 (ComfyUI 기본 반환값)
+        elif img.get("filename"):
+            st.warning(f"⚠️ URL은 없고 파일명만 있습니다: {img.get('filename')}")
+            st.info("이 경우 RunComfy 설정에서 'Enable Image Upload' 옵션을 켰는지 확인해야 합니다.")
+            # 임시로 파일명이라도 출력해봅니다 (화면엔 안 나올 수 있음)
+            # image_urls.append(img['filename']) 
+            
+            # 전체 데이터 구조를 보여줌
+            st.json(img)
+
+    if not image_urls and images_list:
+        st.error("❌ 이미지 데이터는 있는데, 'url' 키를 찾지 못했습니다.")
+        st.write("서버가 보낸 데이터:", images_list)
+
+    return image_urls
+  
+    # if target_node_id in outputs:
+    #     for img in outputs[target_node_id].get("images", []):
+    #         if img.get("url"): 
+    #             image_urls.append(img["url"])
+    #     return image_urls
+      
+    # else:
+    #     st.warning(f"⚠️ 노드 {target_node_id}번의 결과물을 찾을 수 없습니다. (현재 노드: {list(outputs.keys())})")        
+    #     return []
 
 # =========================================================
 # [메인 기능 함수]
