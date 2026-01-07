@@ -215,7 +215,7 @@ pm_options = {}
 with tab1:
     
     # col_left, divider, col_right = st.columns([1, 0.3, 2])
-    col_left, col_right = st.columns(2)
+    col_left, col_right = st.columns([3, 1])
     
     
     with col_right:
