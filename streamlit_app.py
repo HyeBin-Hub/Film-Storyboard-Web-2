@@ -125,7 +125,9 @@ if "processing" not in st.session_state: st.session_state.processing = False
 # =========================================================
 
 # 1-2. 메인 컨트롤 패널 (여기가 사이드바를 대체함)
-st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
+# st.markdown(f"### 🕹️ CONTROL CONSOLE | MODE: STEP {st.session_state.step}")
+
+st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE {st.session_state.step}")
 
 # 탭을 사용하여 공간 절약
 tab1, tab2, tab3, tab4 = st.tabs(["👤 CHARACTER PROFILE", "👗 CLOTHING TRANSLATE", "🏞️ BACKGROUND GENERATION", "📝 SCRIPT"])
