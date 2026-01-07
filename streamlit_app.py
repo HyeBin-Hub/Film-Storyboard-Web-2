@@ -284,7 +284,7 @@ with tab1:
 
                 # 멀티 캐릭터 확장용 슬라이더(현재 단일 생성에선 아직 미사용)
                 n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
-                batch_size = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
+                shots = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
 
                 if n_chars != st.session_state.num_characters:
                     st.session_state.num_characters = n_chars
@@ -304,18 +304,24 @@ with tab1:
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
                     with st.spinner("Casting in progress... (Switch Mode: 1)"):
-                        imgs = backend.generate_faces(
-                            api_key=api_key,
-                            deployment_id=deployment_id,
-                            width=DEFAULT_W,
-                            height=DEFAULT_H,
-                            batch_size=batch_size,
-                            pm_options=pm_options,
-                            base_prompt=base_prompt,      # ✅ 실제로 전달
-                            seed=fixed_seed,              # ✅ seed_mode 반영(backend가 받도록 필요)
-                        )
-                    if imgs:
-                        st.session_state.generated_faces = imgs
+                        all_imgs = []
+                        for _ in range(int(st.session_state.shots_per_character)):
+                            res = backend.generate_faces(
+                                api_key=api_key,
+                                deployment_id=deployment_id,
+                                width=DEFAULT_W,
+                                height=DEFAULT_H,
+                                batch_size=1,              # ✅ 고정
+                                pm_options=pm_options,
+                                base_prompt=base_prompt,
+                                seed=fixed_seed,
+                            )
+                            if res:
+                                # res가 List[str]라면
+                                all_imgs.extend(res)
+            
+                    if all_imgs:
+                        st.session_state.generated_faces = all_imgs
                         st.rerun()
                     else:
                         st.warning("이미지 URL을 받지 못했습니다. RunComfy result outputs를 확인하세요.")
