@@ -123,8 +123,9 @@ if "processing" not in st.session_state: st.session_state.processing = False
 # =========================================================
 # [SECTION 1] CHARACTER PROFILE
 # =========================================================
+st.header(f"### STEP 1 : 👤 CHARACTER PROFILE")
 
-st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE")
+# st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE")
 
 # tab1, tab2 = st.tabs(["EYES TYPE","LIPS TYPE"])
 
@@ -142,8 +143,8 @@ col_left, divider, col_right = st.columns([1, 0.3, 2])
 pm_options = {}
 
 with col_left:
-    st.header("Shot Settings")
-
+    st.markdown("Character Setting")
+    
     with st.expander("Gender & Nationality"): 
         pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
         pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
