@@ -170,7 +170,7 @@ with col_left:
     st.markdown("#### Advanced Setting")
     
     with st.expander("Gender & Nationality"): 
-        batch_size = st.slider("BATCH SIZE", 1, 4, 2)
+        batch_size = st.slider("Number of Images", 1, 4, 2)
         
 
 # col1, col2, col3, col4, col5 = st.columns(5)
