@@ -7,7 +7,7 @@ import requests
 from typing import Any, Dict, List, Optional
 
 BASE_URL = "https://api.runcomfy.net/prod/v1"
-
+ 
 # -----------------------------
 # RunComfy API (Queue) helpers
 # -----------------------------
