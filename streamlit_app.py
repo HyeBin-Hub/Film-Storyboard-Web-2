@@ -208,7 +208,7 @@ if "processing" not in st.session_state: st.session_state.processing = False
 
 st.header(f"🎬 Cinematic Storyboard AI")
 
-tab1, tab2, tab3, tab4 = st.tabs(["Step1| 👤 CHARACTER PROFILE", "Step2| 👗 CLOTHING TRANSLATE", "Step3| 🏞️ BACKGROUND GENERATION", "Step4| 📝 SCRIPT"])
+tab1, tab2, tab3, tab4 = st.tabs(["Step1 | 👤 CHARACTER PROFILE", "Step2 | 👗 CLOTHING TRANSLATE", "Step3 | 🏞️ BACKGROUND GENERATION", "Step4 | 📝 SCRIPT"])
 
 pm_options = {}
 
@@ -248,7 +248,30 @@ with tab1:
         
         with st.expander("Image Count"): 
             batch_size = st.slider("Number of Images", 1, 4, 2)
+
+    with col_left:
+        st.markdown('<div class="viewport-frame">', unsafe_allow_html=True)
         
+        # 이미지 표시 로직
+        display_img = None
+        overlay_text = "STANDBY"
+        
+        if st.session_state.step == 1 and st.session_state.generated_faces:
+            display_img = st.session_state.generated_faces[-1]
+            overlay_text = "CASTING COMPLETE"
+        elif st.session_state.step == 3: # 의상 단계
+            display_img = st.session_state.selected_face_url
+            overlay_text = "REFERENCE LOADED"
+        elif st.session_state.step == 4:
+            display_img = st.session_state.final_character_url
+            overlay_text = "FINAL RENDER"
+    
+        if display_img:
+            st.image(display_img, use_container_width=True)
+        else:
+            st.markdown(f"<h2 style='color:#333'>{overlay_text}</h2>", unsafe_allow_html=True)
+            
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------
 
