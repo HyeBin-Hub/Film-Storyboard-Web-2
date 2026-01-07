@@ -146,6 +146,38 @@ def generate_faces(
     return run_workflow(api_key, deployment_id, overrides)
 
 
+def generate_multiple_characters(
+    api_key: str,
+    deployment_id: str,
+    width: int,
+    height: int,
+    shots_per_character: int,
+    num_characters: int,
+    pm_options_list: Optional[List[Dict[str, Any]]] = None,
+    base_prompt: Optional[str] = None,
+) -> List[List[str]]:
+    """
+    Returns: characters[i] = list of shot URLs for character i
+    """
+    results: List[List[str]] = []
+
+    for i in range(num_characters):
+        opts = pm_options_list[i] if pm_options_list else {}
+
+        imgs = generate_faces(
+            api_key=api_key,
+            deployment_id=deployment_id,
+            width=width,
+            height=height,
+            batch_size=shots_per_character,
+            pm_options=opts,
+            base_prompt=base_prompt,
+        )
+        results.append(imgs)
+
+    return results
+
+
 def generate_full_body(
     face_url: str,
     outfit_prompt: str,
