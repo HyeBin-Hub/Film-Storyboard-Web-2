@@ -288,6 +288,9 @@ with tab1:
                 seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
                 fixed_seed = st.number_input("Fixed seed", min_value=0, value=42, step=1) if seed_mode == "Fixed" else None
 
+                n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
+                shots  = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
+
                 st.session_state.num_characters = int(n_chars)
                 st.session_state.shots_per_character = int(shots)
 
