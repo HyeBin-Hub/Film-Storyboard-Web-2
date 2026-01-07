@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
 import backend
- 
+
 # 1. secrets.toml 파일에서 먼저 찾아봄
 if "RUNCOMFY_API_KEY" in st.secrets:
     api_key = st.secrets["RUNCOMFY_API_KEY"]
@@ -35,9 +35,9 @@ st.markdown("""
     font-family: 'Rajdhani', sans-serif;
 }
 
-.stTextInput>div>div, 
-.stSelectbox>div>div, 
-.stNumberInput>div>div, 
+.stTextInput>div>div,
+.stSelectbox>div>div,
+.stNumberInput>div>div,
 .stTextArea>div>div {
     background-color: #1a1a1a !important;
     border: 1px solid #333 !important;
@@ -112,34 +112,112 @@ st.markdown("""
 # =========================================================
 if "step" not in st.session_state:
     st.session_state.step = 1
- 
-# Step1
+
+# 기존(멀티 캐릭터용) 상태들
 if "num_characters" not in st.session_state:
     st.session_state.num_characters = 2
 if "shots_per_character" not in st.session_state:
     st.session_state.shots_per_character = 2
-
 if "pm_options_list" not in st.session_state:
-    st.session_state.pm_options_list = []  # List[Dict[str, Any]] length=num_characters
-
+    st.session_state.pm_options_list = []
 if "casting_groups" not in st.session_state:
-    st.session_state.casting_groups = []  # List[List[str]]  (character i -> shot urls)
+    st.session_state.casting_groups = []
 if "selected_cast" not in st.session_state:
-    st.session_state.selected_cast = []  # List[Optional[str]] length=num_characters
-
-# Step2
+    st.session_state.selected_cast = []
 if "final_character_urls" not in st.session_state:
-    st.session_state.final_character_urls = []  # List[Optional[str]] length=num_characters
-
-# Step3
+    st.session_state.final_character_urls = []
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
+
+# ✅ 현재 UI(단일 캐릭터 플로우)에 필요한 상태들 누락되어 있었음
+if "generated_faces" not in st.session_state:
+    st.session_state.generated_faces = []
+if "selected_face_url" not in st.session_state:
+    st.session_state.selected_face_url = None
+if "final_character_url" not in st.session_state:
+    st.session_state.final_character_url = None
+
+
+def _default_pm_options(idx: int):
+    # (유지) 필요 없으면 나중에 제거 가능
+    if idx == 0:
+        return {
+            "Gender": "Man",
+            "Nationality": "Korean",
+            "age": 12,
+            "Face Shape": "Oval",
+            "Body Type": "Slim",
+            "Eyes Color": "Brown",
+            "Eyes Shape": "Monolid Eyes Shape",
+            "Lips Color": "Berry Lips",
+            "Lips Shape": "Thin Lips",
+            "Hair Style": "Buzz",
+            "Hair Color": "Black",
+            "Hair Length": "Short",
+        }
+    if idx == 1:
+        return {
+            "Gender": "Woman",
+            "Nationality": "Korean",
+            "age": 12,
+            "Face Shape": "Oval",
+            "Body Type": "Slim",
+            "Eyes Color": "Brown",
+            "Eyes Shape": "Monolid Eyes Shape",
+            "Lips Color": "Berry Lips",
+            "Lips Shape": "Thin Lips",
+            "Hair Style": "Long straight",
+            "Hair Color": "Black",
+            "Hair Length": "Long",
+        }
+    return {
+        "Gender": "Man",
+        "Nationality": "Korean",
+        "age": 25,
+        "Face Shape": "Oval",
+        "Body Type": "Fit",
+        "Eyes Color": "Brown",
+        "Eyes Shape": "Round Eyes Shape",
+        "Lips Color": "Red Lips",
+        "Lips Shape": "Thin Lips",
+        "Hair Style": "Short",
+        "Hair Color": "Black",
+        "Hair Length": "Short",
+    }
+
+
+def _ensure_character_lists(n: int) -> None:
+    # (유지) 멀티 캐릭터 확장 대비. 현재 단일 플로우에서도 호출해도 무해함.
+    if len(st.session_state.pm_options_list) != n:
+        new_list = []
+        for i in range(n):
+            if i < len(st.session_state.pm_options_list):
+                new_list.append(st.session_state.pm_options_list[i])
+            else:
+                new_list.append(_default_pm_options(i))
+        st.session_state.pm_options_list = new_list
+
+    if len(st.session_state.selected_cast) != n:
+        new_sel = []
+        for i in range(n):
+            new_sel.append(st.session_state.selected_cast[i] if i < len(st.session_state.selected_cast) else None)
+        st.session_state.selected_cast = new_sel
+
+    if len(st.session_state.final_character_urls) != n:
+        new_final = []
+        for i in range(n):
+            new_final.append(st.session_state.final_character_urls[i] if i < len(st.session_state.final_character_urls) else None)
+        st.session_state.final_character_urls = new_final
+
 
 # =========================================================
 # 3. 상수 (기본값)
 # =========================================================
 DEFAULT_W = 896
 DEFAULT_H = 1152
+
+DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
+DEFAULT_TEXT = DEFAULT_BASE_PROMPT  # ✅ NameError 방지용
 
 # =========================================================
 # 4. 메인 화면 (탭 구성)
@@ -154,6 +232,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 pm_options = {}
+
 # ---------------------------------------------------------
 # [TAB 1] 얼굴 생성
 # ---------------------------------------------------------
@@ -162,71 +241,78 @@ with tab1:
         st.markdown("### 1. Define Your Actor Profile")
 
         col_left, col_right = st.columns([3, 1])
- 
+
         with col_right:
-            
             st.markdown("#### Casting Config")
-            
-            with st.expander("Portrait Setting"): 
-                with st.expander("Gender & Nationality"): 
-                    pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
-                    pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
+
+            with st.expander("Portrait Setting"):
+                with st.expander("Gender & Nationality"):
+                    pm_options["Gender"] = st.selectbox("Gender", ["Man", "Woman"])
+                    pm_options["Nationality"] = st.selectbox(
+                        "Nationality",
+                        ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"]
+                    )
                     pm_options["age"] = st.number_input("AGE", 10, 80, 25)
-                
-                with st.expander("Face & Body Type"): 
+
+                with st.expander("Face & Body Type"):
                     pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
                     pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
-                
-                with st.expander("Eyes Type"): 
-                    pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+
+                with st.expander("Eyes Type"):
+                    pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino","Amber","Blue","Brown","Green","Gray","Hazel","Heterochromia","Red","Violet"])
                     pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
-                
-                with st.expander("Lips Type"): 
+
+                with st.expander("Lips Type"):
                     pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
                     pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
-                
-                with st.expander("Hair Style"): 
+
+                with st.expander("Hair Style"):
                     pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
                     pm_options["Hair Color"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
                     pm_options["Hair Length"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
 
             st.markdown("#### Advanced Setting")
-            
-            with st.expander("Image Count"): 
-                n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
-                shots = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
+
+            with st.expander("Image Count"):
                 batch_size = st.slider("Number of Images", 1, 4, 2)
+
                 seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
                 if seed_mode == "Fixed":
                     fixed_seed = st.number_input("Fixed seed", min_value=0, value=42, step=1)
                 else:
                     fixed_seed = None
 
-            # base_prompt = st.text_area(
-            #     "Base Portrait Prompt",
-            #     "Grey background, a 12-year-old Korean boy, white t-shirt, Buzz cut hair, documentary photograph, cinematic still frame",
-            #     height=140
-            # )
+                # 멀티 캐릭터 확장용 슬라이더(현재 단일 생성에선 아직 미사용)
+                n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
+                shots = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
+
+                if n_chars != st.session_state.num_characters:
+                    st.session_state.num_characters = n_chars
+                if shots != st.session_state.shots_per_character:
+                    st.session_state.shots_per_character = shots
+
+                _ensure_character_lists(st.session_state.num_characters)  # ✅ 들여쓰기/문법 수정
+
+            # ✅ 버튼 밖에서 prompt UI를 먼저 렌더링해야 상태가 정상 동작함
+            use_custom_prompt = st.checkbox("Use custom base prompt", value=False)
+            if use_custom_prompt:
+                base_prompt = st.text_area("Base Prompt", DEFAULT_TEXT, height=120)
+            else:
+                base_prompt = None
 
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
                     with st.spinner("Casting in progress... (Switch Mode: 1)"):
-                        
-                        use_custom_prompt = st.checkbox("Use custom base prompt", value=False)
-
-                        if use_custom_prompt:
-                            base_prompt = st.text_area("Base Prompt", DEFAULT_TEXT)
-                        else:
-                            base_prompt = None
-                        
                         imgs = backend.generate_faces(
                             api_key=api_key,
                             deployment_id=deployment_id,
                             width=DEFAULT_W,
                             height=DEFAULT_H,
                             batch_size=batch_size,
-                            pm_options=pm_options
+                            pm_options=pm_options,
+                            base_prompt=base_prompt,      # ✅ 실제로 전달
+                            seed=fixed_seed,              # ✅ seed_mode 반영(backend가 받도록 필요)
                         )
                     if imgs:
                         st.session_state.generated_faces = imgs
