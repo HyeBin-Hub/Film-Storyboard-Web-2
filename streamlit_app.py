@@ -134,9 +134,9 @@ st.header("🎬 Cinematic Storyboard AI")
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "Step1 | 👤 CHARACTER PROFILE",
-    "Step2 | 👗 CLOTHING TRANSLATE",
-    "Step3 | 🏞️ BACKGROUND GENERATION",
-    "Step4 | 📝 SCRIPT"
+    "Step2 | 👗 APPLY OUTFIT",
+    "Step3 | 🏞️ BACKGROUND",
+    "Step4 | 📝 STORYBOARD"
 ])
 
 # ---------------------------------------------------------
@@ -149,14 +149,47 @@ with tab1:
         col_left, col_right = st.columns([3, 1])
 
         with col_right:
-            st.markdown("#### Advanced Setting")
-            batch_size = st.slider("Number of Images", 1, 4, 2)
+            
+            st.markdown("#### Character Setting")
+            
+            with st.expander("Portrait Setting"): 
+                with st.expander("Gender & Nationality"): 
+                    pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
+                    pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
+                    pm_options["age"] = st.number_input("AGE", 10, 80, 25)
+                
+                with st.expander("Face & Body Type"): 
+                    pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
+                    pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
+                
+                with st.expander("Eyes Type"): 
+                    pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+                    pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+                
+                with st.expander("Lips Type"): 
+                    pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
+                    pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
+                
+                with st.expander("Hair Style"): 
+                    pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
+                    pm_options["Hair Color"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
+                    pm_options["Hair Length"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
 
-            base_prompt = st.text_area(
-                "Base Portrait Prompt",
-                "Grey background, a 12-year-old Korean boy, white t-shirt, Buzz cut hair, documentary photograph, cinematic still frame",
-                height=140
-            )
+            st.markdown("#### Advanced Setting")
+            
+            with st.expander("Image Count"): 
+                batch_size = st.slider("Number of Images", 1, 4, 2)
+                seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
+                if seed_mode == "Fixed":
+                    fixed_seed = st.number_input("Fixed seed", min_value=0, value=42, step=1)
+                else:
+                    fixed_seed = None
+
+            # base_prompt = st.text_area(
+            #     "Base Portrait Prompt",
+            #     "Grey background, a 12-year-old Korean boy, white t-shirt, Buzz cut hair, documentary photograph, cinematic still frame",
+            #     height=140
+            # )
 
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
