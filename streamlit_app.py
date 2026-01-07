@@ -142,8 +142,8 @@ col1, col2, col3, col4, col5 = st.columns(5)
 pm_options = {}
 
 with col1:
-    st.markdown(f"Gender & Nationality")
-    st.markdown(f"---")
+    st.markdown(f"Gender & Nationality \n---")
+    # st.markdown(f"---")
     pm_options["Face Shape"] = st.selectbox("Gender", ["Man","Woman"])
     pm_options["Face Shape"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
 
