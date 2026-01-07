@@ -1,287 +1,212 @@
-import requests
+# backend.py
+from __future__ import annotations
+
 import time
-import base64 
-import streamlit as st
+import random
+import requests
+from typing import Any, Dict, List, Optional
 
 BASE_URL = "https://api.runcomfy.net/prod/v1"
-DUMMY_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
 
-def _url_to_base64(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        # 바이너리 데이터를 base64로 인코딩
-        encoded_string = base64.b64encode(response.content).decode('utf-8')
-        # ComfyUI가 이해하는 형식(prefix)을 붙여줌
-        return f"data:image/png;base64,{encoded_string}"
-      
-    except Exception as e:
-        print(f"❌ 이미지 변환 실패: {e}")
-        return None
 
-# 내부 함수도 api_key와 deployment_id를 인자로 받도록 수정
-def _run_inference(overrides, api_key, deployment_id):
-    
-    if not api_key or not deployment_id:
-        print("❌ API Key 또는 Deployment ID가 없습니다.")
-        return None
-
-    headers = {
-        "Authorization": f"Bearer {api_key}",
+# -----------------------------
+# Low-level RunComfy API helpers
+# -----------------------------
+def _headers(api_key: str) -> Dict[str, str]:
+    return {
+        "Authorization": f"Bearer {api_key.strip()}",
         "Content-Type": "application/json",
     }
-    
+
+
+def submit_inference(
+    api_key: str,
+    deployment_id: str,
+    overrides: Dict[str, Any],
+) -> str:
+    """
+    POST /deployments/{deployment_id}/inference
+    Returns request_id.
+    """
+    url = f"{BASE_URL}/deployments/{deployment_id}/inference"
     payload = {"overrides": overrides}
-    
-    try:
-      # 1. inference 요청
-        print("🚀 Sending Inference Request...")
-        res = requests.post(
-            f"{BASE_URL}/deployments/{deployment_id}/inference",
-            headers=headers,
-            json=payload
-        )
-        res.raise_for_status()
-        request_id = res.json().get("request_id")
-        print(f"✅ Request Sent! ID: {request_id}")
 
-        retry_count = 0
-        max_retries = 120 # 약 6분 대기
-      # 2. 상태 풀링
-        status_text = st.empty()
-        while retry_count < max_retries:
-            time.sleep(3)
+    r = requests.post(url, headers=_headers(api_key), json=payload, timeout=60)
+    r.raise_for_status()
+    data = r.json()
 
-            try:
-                status_res = requests.get(f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status", headers=headers)
-                status_res.raise_for_status()
-                
-                status_data = status_res.json() # [수정] 변수에 할당
-                status = status_data.get("status", "").lower()
-    
-                print(f"⏳ Status: {status}")
-                
-                if status == "completed": 
-                    break
-                elif status in ["failed", "error"]: 
-                    # [수정] status_data 변수 사용
-                    print(f"❌ 생성 실패: {status_data.get('error_message', 'Unknown error')}")
-                    return None
-                    
-            except Exception as e:
-                print(f"⚠️ Polling connection issue: {e}, retrying...")
-                time.sleep(2)
-                continue
-            retry_count += 1
-              
-      # 3. 결과 가져오기 
-        result_res = requests.get(f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/result", headers=headers)
-        result_res.raise_for_status()
-      
-        return result_res.json().get("outputs", {})
+    # RunComfy returns request_id in response (per docs/examples)
+    request_id = data.get("request_id")
+    if not request_id:
+        raise RuntimeError(f"Missing request_id in response: {data}")
+    return request_id
 
-    except Exception as e:
-        print(f"❌ API Error: {e}")
-        return None
 
-def _extract_images(outputs, target_node_id):
-  
-    image_urls = []
+def poll_status(
+    api_key: str,
+    deployment_id: str,
+    request_id: str,
+    *,
+    poll_interval_sec: float = 1.5,
+    timeout_sec: int = 600,
+) -> str:
+    """
+    Polls GET /requests/{request_id}/status until completed or timeout.
+    """
+    url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status"
+    start = time.time()
 
-    # 1. 노드 ID가 결과에 있는지 확인
-    if target_node_id not in outputs:
-        st.warning(f"⚠️ {target_node_id}번 노드의 결과가 없습니다. (전체 키: {list(outputs.keys())})")
-        return []
+    while True:
+        r = requests.get(url, headers=_headers(api_key), timeout=30)
+        r.raise_for_status()
+        data = r.json()
 
-    # 2. 이미지 리스트 가져오기
-    images_list = outputs[target_node_id].get("images", [])
+        status = data.get("status", "")
+        # docs show: in_queue, in_progress, completed, cancelled
+        if status in {"completed", "cancelled"}:
+            return status
 
-    # 🚨 [디버깅] 실제 데이터 구조를 화면에 출력 (범인 색출!)
-    # 이 부분이 실행되면 화면에 JSON 데이터가 뜹니다. 확인 후 주석 처리하세요.
-    # st.write(f"🔍 [Debug] Node {target_node_id} Raw Data:", images_list)
+        if (time.time() - start) > timeout_sec:
+            raise TimeoutError(f"Timeout waiting for request {request_id} (last status={status})")
 
-    for img in images_list:
-        # Case A: RunComfy가 제공하는 'url' 키가 있는 경우 (Best)
-        if img.get("url"):
-            image_urls.append(img["url"])
+        time.sleep(poll_interval_sec)
 
-        # Case B: 'url'은 없고 'filename'만 있는 경우 (ComfyUI 기본 반환값)
-        elif img.get("filename"):
-            st.warning(f"⚠️ URL은 없고 파일명만 있습니다: {img.get('filename')}")
-            st.info("이 경우 RunComfy 설정에서 'Enable Image Upload' 옵션을 켰는지 확인해야 합니다.")
-            # 임시로 파일명이라도 출력해봅니다 (화면엔 안 나올 수 있음)
-            # image_urls.append(img['filename']) 
-            
-            # 전체 데이터 구조를 보여줌
-            st.json(img)
 
-    if not image_urls and images_list:
-        st.error("❌ 이미지 데이터는 있는데, 'url' 키를 찾지 못했습니다.")
-        st.write("서버가 보낸 데이터:", images_list)
+def fetch_result(
+    api_key: str,
+    deployment_id: str,
+    request_id: str,
+) -> Dict[str, Any]:
+    """
+    GET /requests/{request_id}/result
+    """
+    url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/result"
+    r = requests.get(url, headers=_headers(api_key), timeout=60)
+    r.raise_for_status()
+    return r.json()
 
-    return image_urls
-  
-    # if target_node_id in outputs:
-    #     for img in outputs[target_node_id].get("images", []):
-    #         if img.get("url"): 
-    #             image_urls.append(img["url"])
-    #     return image_urls
-      
-    # else:
-    #     st.warning(f"⚠️ 노드 {target_node_id}번의 결과물을 찾을 수 없습니다. (현재 노드: {list(outputs.keys())})")        
-    #     return []
 
-# =========================================================
-# [메인 기능 함수]
-# =========================================================
+def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
+    """
+    Extracts all image urls from RunComfy result format.
+    Per docs, outputs are keyed by node id and include images list with url/filename/etc. :contentReference[oaicite:2]{index=2}
+    """
+    outputs = result_json.get("outputs", {}) or {}
+    urls: List[str] = []
 
-# --- Step 1: Portrait Generation ---
-def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, height, batch_size=4):
-    overrides = {        
-        # "56": { "inputs": { "select": 1 } },
-        "12": {"inputs": {"text": prompt_text}},
-        "3": {"inputs": {
-            "age": pm_options.get("age", 25),
-            "gender": pm_options.get("Gender", "Woman"), 
-            "nationality_1": pm_options.get("Nationality", "Korean"),
-            "body_type": pm_options.get("Body Type", "Fit"),
-            "eyes_color": pm_options.get("Eyes Color", "Brown"),
-            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
-            "lips_color": pm_options.get("Lips Color", "Red Lips"),
-            "lips_shape": pm_options.get("Lips Shape", "Regular"),
-            "face_shape": pm_options.get("Face Shape", "Oval"),
-            "hair_style": pm_options.get("Hair Style", "Long straight"),
-            "hair_color": pm_options.get("Hair Color", "Black"),
-            "hair_length": pm_options.get("Hair Length", "Long"),
-            "shot": "Half-length portrait" # 기본값
-        }},
-        "13" : {"inputs":{"width": width, "height": height, "batch_size": batch_size}},
+    for _node_id, node_out in outputs.items():
+        imgs = (node_out or {}).get("images") or []
+        for img in imgs:
+            url = img.get("url")
+            if url:
+                urls.append(url)
 
-        # 🚀 [수정됨] Switch(56번) 사용 안 함! -> 15번(저장)을 16번(Step 1 결과)에 직접 연결
-        "15": { 
-            "inputs": { 
-                "images": ["16", 0] 
-            } 
-        },
+    return urls
 
-        # ✅ [핵심] Step 2, 3의 필수 입력 노드에 더미 이미지 주입 (에러 방지)
-        "32": { "inputs": { "image": DUMMY_IMAGE } }, # Step 2 LoadImage
-        "42": { "inputs": { "image": DUMMY_IMAGE } }, # Step 3 LoadImage 1
-        "43": { "inputs": { "image": DUMMY_IMAGE } }, # Step 3 LoadImage 2
-        "44": { "inputs": { "image": DUMMY_IMAGE } }, # Step 3 LoadImage 3 (배경)
 
-        # "11": {"inputs": {"steps": 25}},
-        # "85": {"inputs": {"image": DUMMY_IMAGE_BASE64}},
+# -----------------------------
+# High-level functions for app.py
+# -----------------------------
+def generate_faces(
+    base_prompt: str,
+    pm_options: Dict[str, Any],
+    api_key: str,
+    deployment_id: str,
+    width: int,
+    height: int,
+    batch_size: int,
+) -> List[str]:
+    """
+    Step1: Generate portrait faces (Switch Mode = 1).
+    Returns list of image URLs.
+    """
+    # Randomize seed for variety unless you want deterministic behavior.
+    seed = random.randint(1, 10**15)
+
+    # Minimal + safe overrides:
+    # - Switch select=1 (portrait branch)
+    # - node12: Base portrait prompt
+    # - node13: latent size & batch
+    # - node11 seed (sampler seed) optionally
+    overrides: Dict[str, Any] = {
+        "56": {"inputs": {"select": 1}},  # ImpactSwitch -> Portrait output
+        "12": {"inputs": {"text": base_prompt}},
+        "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
+        "11": {"inputs": {"seed": seed}},
     }
 
-    outputs = _run_inference(overrides, api_key, deployment_id)
-  
-    if not outputs: 
-      return []
+    # (Optional) If you want to reflect UI demographic into PortraitMaster node directly,
+    # you can add these overrides, but keep in mind the node may expect specific enum strings.
+    # We keep it conservative; base_prompt already carries identity constraints.
+    # Example:
+    # overrides["3"] = {"inputs": {"gender": pm_options.get("Gender", "-"), "nationality_1": pm_options.get("Nationality", "Korean")}}
 
-    return _extract_images(outputs, "15")
-  
-# --- Step 2: Clothing Translate ---
-def generate_full_body(face_image_url, outfit_keywords, api_key, deployment_id):
-    
-    print("🔄 이미지를 서버로 전송하기 위해 변환 중...")
-    base64_image = _url_to_base64(face_image_url)
-    
-    if not base64_image:
-        print("❌ 이미지 변환에 실패하여 작업을 중단합니다.")
-        return []
+    request_id = submit_inference(api_key, deployment_id, overrides)
+    poll_status(api_key, deployment_id, request_id)
+    result = fetch_result(api_key, deployment_id, request_id)
+    return extract_image_urls(result)
 
-    overrides = {
-        "3": {"inputs": {
-            "age": pm_options.get("age", 25),
-            "gender": pm_options.get("Gender", "Woman"), 
-            "nationality_1": pm_options.get("Nationality", "Korean"),
-            "body_type": pm_options.get("Body Type", "Fit"),
-            "eyes_color": pm_options.get("Eyes Color", "Brown"),
-            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
-            "lips_color": pm_options.get("Lips Color", "Red Lips"),
-            "lips_shape": pm_options.get("Lips Shape", "Regular"),
-            "face_shape": pm_options.get("Face Shape", "Oval"),
-            "hair_style": pm_options.get("Hair Style", "Long straight"),
-            "hair_color": pm_options.get("Hair Color", "Black"),
-            "hair_length": pm_options.get("Hair Length", "Long"),
-            "shot": "Half-length portrait" # 기본값
-        }},
-        # "56": { "inputs": { "select": 2 } },
-        "20": {"inputs": {"text": outfit_keywords}},
-        "32": { "inputs": { "image": base64_image } },
-        # "14": {"inputs": {"width": 896, "height": 1152, "batch_size": 1}}, 
 
-        # 🚀 [수정됨] 15번(저장)을 26번(Step 2 결과)에 직접 연결
-        "15": { 
-            "inputs": { 
-                "images": ["26", 0] 
-            } 
-        },
+def generate_full_body(
+    selected_face_url: str,
+    outfit_prompt: str,
+    api_key: str,
+    deployment_id: str,
+) -> List[str]:
+    """
+    Step2: Full-body generation with identity preserved (Switch Mode = 2).
+    Returns list of image URLs (usually batch_size=4 in your workflow node27).
+    """
+    seed = random.randint(1, 10**15)
 
-        # ✅ Step 3의 필수 입력 노드에 더미 이미지 주입
-        "42": { "inputs": { "image": DUMMY_IMAGE } },
-        "43": { "inputs": { "image": DUMMY_IMAGE } },
-        "44": { "inputs": { "image": DUMMY_IMAGE } },
-      # "9": {"inputs": {"steps": 30, "seed": 793834637229542}} 
-        }
-    
-    outputs = _run_inference(overrides, api_key, deployment_id)
-  
-    if not outputs: 
-      return []
+    overrides: Dict[str, Any] = {
+        "56": {"inputs": {"select": 2}},  # ImpactSwitch -> Full-body output
+        "20": {"inputs": {"text": outfit_prompt}},  # Base_Full_body_Prompt
+        "25": {"inputs": {"seed": seed}},  # Full_body_KSampler seed
+        # PuLID reference image: LoadImage node32 "image" can be overridden with a public URL (docs allow URL). :contentReference[oaicite:3]{index=3}
+        "32": {"inputs": {"image": selected_face_url}},
+    }
 
-    return _extract_images(outputs, "15")
+    request_id = submit_inference(api_key, deployment_id, overrides)
+    poll_status(api_key, deployment_id, request_id)
+    result = fetch_result(api_key, deployment_id, request_id)
+    return extract_image_urls(result)
 
-# --- Step 3: Final Storyboard ---
-def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1, story_prompt, api_key, deployment_id):
-    
-    print("🔄 이미지를 서버로 전송하기 위해 변환 중...")
-    base64_face_image_1 = _url_to_base64(face_image_url_1)
-    base64_face_image_2 = _url_to_base64(face_image_url_2)
-    base64_background_image_1 = _url_to_base64(background_image_url_1)
-    
-    if not all([base64_face_image_1, base64_face_image_2, b64_bg]):
-        print("❌ 이미지 변환에 실패하여 작업을 중단합니다.")
-        return []
 
-    overrides = {
-        "3": {"inputs": {
-            "age": pm_options.get("age", 25),
-            "gender": pm_options.get("Gender", "Woman"), 
-            "nationality_1": pm_options.get("Nationality", "Korean"),
-            "body_type": pm_options.get("Body Type", "Fit"),
-            "eyes_color": pm_options.get("Eyes Color", "Brown"),
-            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
-            "lips_color": pm_options.get("Lips Color", "Red Lips"),
-            "lips_shape": pm_options.get("Lips Shape", "Regular"),
-            "face_shape": pm_options.get("Face Shape", "Oval"),
-            "hair_style": pm_options.get("Hair Style", "Long straight"),
-            "hair_color": pm_options.get("Hair Color", "Black"),
-            "hair_length": pm_options.get("Hair Length", "Long"),
-            "shot": "Half-length portrait" # 기본값
-        }},
-       # "15": {"inputs": {"steps": 25}}, 
-        # "56": { "inputs": { "select": 3 } },
-        "42" : {"inputs": {"image": base64_face_image_1}},
-        "43" : {"inputs": {"image": base64_face_image_2}},
-        "44" : {"inputs": {"image": base64_background_image_1}},
+def final_storyboard(
+    char1_url: str,
+    char2_url: Optional[str],
+    bg_url: str,
+    story_prompt: str,
+    api_key: str,
+    deployment_id: str,
+) -> List[str]:
+    """
+    Step3: Final scene composition (Switch Mode = 3).
+    - image1: character 1
+    - image2: character 2 (if None, duplicate char1)
+    - image3: background
+    - prompt: story_prompt (your UI uses English; the translate node can pass through)
+    Returns list of image URLs.
+    """
+    seed = random.randint(1, 10**15)
+
+    if not char2_url:
+        char2_url = char1_url
+
+    overrides: Dict[str, Any] = {
+        "56": {"inputs": {"select": 3}},  # ImpactSwitch -> Final scene output
+        # LoadImage nodes for references (RunComfy allows overriding image inputs with URL). :contentReference[oaicite:4]{index=4}
+        "42": {"inputs": {"image": char1_url}},   # image1
+        "43": {"inputs": {"image": char2_url}},   # image2
+        "44": {"inputs": {"image": bg_url}},      # background (goes into ImageScaleToTotalPixels)
+        # Your pipeline: story_prompt -> GoogleTranslateTextNode(48) -> Groq(50) -> TextEncodeQwenImageEditPlus(52)
+        # If story_prompt is already English, translate(auto->en) should keep it stable.
         "48": {"inputs": {"text": story_prompt}},
-
-        # 🚀 [수정됨] 15번(저장)을 41번(Step 3 결과)에 직접 연결
-        "15": { 
-            "inputs": { 
-                "images": ["41", 0] 
-            } 
-        },
-
-        # ✅ Step 2의 필수 입력 노드에 더미 (Step 1은 보통 필수 아님)
-        "32": { "inputs": { "image": DUMMY_IMAGE } },
+        "40": {"inputs": {"seed": seed}},  # Qwen edit KSampler seed
     }
-    
-    outputs = _run_inference(overrides, api_key, deployment_id)
-  
-    if not outputs: 
-      return []
 
-    return _extract_images(outputs, "15")
+    request_id = submit_inference(api_key, deployment_id, overrides)
+    poll_status(api_key, deployment_id, request_id)
+    result = fetch_result(api_key, deployment_id, request_id)
+    return extract_image_urls(result)
