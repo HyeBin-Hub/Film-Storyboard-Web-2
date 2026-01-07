@@ -284,7 +284,7 @@ with tab1:
 
                 # 멀티 캐릭터 확장용 슬라이더(현재 단일 생성에선 아직 미사용)
                 n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
-                shots = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
+                batch_size = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
 
                 if n_chars != st.session_state.num_characters:
                     st.session_state.num_characters = n_chars
