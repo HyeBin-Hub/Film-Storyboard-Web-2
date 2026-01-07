@@ -289,20 +289,19 @@ with tab1:
     
         with col_left:
             # [PREVIEW] 생성된 이미지 선택
-            with col_preview:
-                st.markdown("#### Casting Result")
-                if st.session_state.generated_faces:
-                    # 2열로 이미지 나열
-                    cols = st.columns(2)
-                    for i, img_url in enumerate(st.session_state.generated_faces):
-                        with cols[i % 2]:
-                            st.image(img_url, use_container_width=True)
-                            if st.button(f"✅ Select Actor {i+1}", key=f"sel_{i}"):
-                                st.session_state.selected_face_url = img_url
-                                st.session_state.step = 2 # 다음 단계로 이동
-                                st.rerun()
-                else:
-                    st.info("좌측 설정 후 'CASTING START'를 눌러주세요.")
+            st.markdown("#### Casting Result")
+            if st.session_state.generated_faces:
+                # 2열로 이미지 나열
+                cols = st.columns(2)
+                for i, img_url in enumerate(st.session_state.generated_faces):
+                    with cols[i % 2]:
+                        st.image(img_url, use_container_width=True)
+                        if st.button(f"✅ Select Actor {i+1}", key=f"sel_{i}"):
+                            st.session_state.selected_face_url = img_url
+                            st.session_state.step = 2 # 다음 단계로 이동
+                            st.rerun()
+            else:
+                st.info("좌측 설정 후 'CASTING START'를 눌러주세요.")
 
     else:
         st.success("✅ Actor Selected")
