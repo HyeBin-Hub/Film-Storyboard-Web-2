@@ -304,14 +304,22 @@ st.markdown("### 🎬 ACTION")
 
 # Step 1: 생성하기
 if st.session_state.step == 1:
-    st.info("Define character profile above and start casting.")
-    if st.button("RUN CASTING\n(GENERATE)", use_container_width=True):
-        if not api_key:
-            st.error("⚠️ API KEY is missing! Check sidebar.")
+    # st.info("Define character profile above and start casting.")
+    # if st.button("RUN CASTING\n(GENERATE)", use_container_width=True):
+    if st.button("🚀 캐릭터 얼굴 생성 시작", use_container_width=True):
+        with st.spinner("ComfyUI가 열심히 그림을 그리고 있습니다... (약 20~40초 소요)"):
+        # if not api_key:
+        #     st.error("⚠️ API KEY is missing! Check sidebar.")
         else:
             with st.spinner("CASTING ACTORS..."):
                 # backend 함수 호출
-                imgs = backend.generate_faces(base_prompt, pm_options, api_key, deployment_id, width, height, batch_size)
+                imgs = backend.generate_faces(base_prompt, 
+                                              pm_options, 
+                                              api_key, 
+                                              deployment_id, 
+                                              width=width, 
+                                              height=height, 
+                                              batch_size=batch_size)
                 if imgs:
                     st.session_state.generated_faces = imgs
                     st.session_state.step = 2
