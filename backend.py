@@ -120,6 +120,13 @@ def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, heigh
             "hair_length": pm_options.get("Hair Length", "Long"),
         }},
         "13" : {"inputs":{"width": width, "height": height, "batch_size": batch_size}},
+
+        # ✅ [핵심] Step 2, 3의 필수 입력 노드에 더미 이미지 주입 (에러 방지)
+        "32": { "inputs": { "image": DUMMY_IMAGE } }, # Step 2 LoadImage
+        "42": { "inputs": { "image": DUMMY_IMAGE } }, # Step 3 LoadImage 1
+        "43": { "inputs": { "image": DUMMY_IMAGE } }, # Step 3 LoadImage 2
+        "44": { "inputs": { "image": DUMMY_IMAGE } }, # Step 3 LoadImage 3 (배경)
+
         # "11": {"inputs": {"steps": 25}},
         # "85": {"inputs": {"image": DUMMY_IMAGE_BASE64}},
     }
@@ -146,6 +153,11 @@ def generate_full_body(face_image_url, outfit_keywords, api_key, deployment_id):
         "20": {"inputs": {"text": outfit_keywords}},
         "32": { "inputs": { "image": base64_image } },
         "14": {"inputs": {"width": 896, "height": 1152, "batch_size": 1}}, 
+
+        # ✅ Step 3의 필수 입력 노드에 더미 이미지 주입
+        "42": { "inputs": { "image": DUMMY_IMAGE } },
+        "43": { "inputs": { "image": DUMMY_IMAGE } },
+        "44": { "inputs": { "image": DUMMY_IMAGE } },
       # "9": {"inputs": {"steps": 30, "seed": 793834637229542}} 
         }
     
@@ -175,6 +187,9 @@ def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1,
         "43" : {"inputs": {"image": base64_face_image_2}},
         "44" : {"inputs": {"image": base64_background_image_1}},
         "48": {"inputs": {"text": story_prompt}},
+
+        # ✅ Step 2의 필수 입력 노드에 더미 (Step 1은 보통 필수 아님)
+        "32": { "inputs": { "image": DUMMY_IMAGE } },
     }
     
     outputs = _run_inference(overrides, api_key, deployment_id)
