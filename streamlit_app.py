@@ -114,11 +114,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 3. 세션 상태 관리 ---
-if "step" not in st.session_state: st.session_state.step = 1
-if "generated_faces" not in st.session_state: st.session_state.generated_faces = []
-if "selected_face_url" not in st.session_state: st.session_state.selected_face_url = None
-if "final_character_url" not in st.session_state: st.session_state.final_character_url = None
-if "processing" not in st.session_state: st.session_state.processing = False
+if "step" not in st.session_state: 
+    st.session_state.step = 1
+if "generated_faces" not in st.session_state: 
+    st.session_state.generated_faces = []
+if "selected_face_url" not in st.session_state: 
+    st.session_state.selected_face_url = None
+if "final_character_url" not in st.session_state: 
+    st.session_state.final_character_url = None
+if "processing" not in st.session_state: 
+    st.session_state.processing = False
 
 # =========================================================
 # [SECTION 1] CHARACTER PROFILE
@@ -211,6 +216,9 @@ st.header(f"🎬 Cinematic Storyboard AI")
 tab1, tab2, tab3, tab4 = st.tabs(["Step1 | 👤 CHARACTER PROFILE", "Step2 | 👗 CLOTHING TRANSLATE", "Step3 | 🏞️ BACKGROUND GENERATION", "Step4 | 📝 SCRIPT"])
 
 pm_options = {}
+base_prompt = "Gray background, White t-shirt, 8k, highly detailed, photorealistic" # 기본값 설정
+width = 1024
+height = 1024
 
 with tab1:
     
@@ -220,6 +228,8 @@ with tab1:
     
     with col_right:
         st.markdown("#### Character Setting")
+
+        base_prompt = st.text_area("Base Style Prompt", base_prompt, height=100)
         
         with st.expander("Portrait Setting"): 
             with st.expander("Gender & Nationality"): 
@@ -241,8 +251,8 @@ with tab1:
             
             with st.expander("Hair Style"): 
                 pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
-                pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
-                pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
+                pm_options["Hair Color"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
+                pm_options["Hair Length"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
     
         st.markdown("#### Advanced Setting")
         
