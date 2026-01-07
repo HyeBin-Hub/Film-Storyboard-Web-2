@@ -208,41 +208,46 @@ if "processing" not in st.session_state: st.session_state.processing = False
 
 st.header(f"STEP 1 : 👤 CHARACTER PROFILE")
 
-# col_left, divider, col_right = st.columns([1, 0.3, 2])
-col_left, col_right = st.columns(2)
+tab1, tab2, tab3, tab4 = st.tabs(["👤 CHARACTER PROFILE", "👗 CLOTHING TRANSLATE", "🏞️ BACKGROUND GENERATION", "📝 SCRIPT"])
 
 pm_options = {}
 
-with col_right:
-    st.markdown("#### Character Setting")
+with tab1:
     
-    with st.expander("Portrait Setting"): 
-        with st.expander("Gender & Nationality"): 
-            pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
-            pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
-            pm_options["age"] = st.number_input("AGE", 10, 80, 25)
-        
-        with st.expander("Face & Body Type"): 
-            pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
-            pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
-        
-        with st.expander("Eyes Type"): 
-            pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
-            pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
-        
-        with st.expander("Lips Type"): 
-            pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
-            pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
-        
-        with st.expander("Hair Style"): 
-            pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
-            pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
-            pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
-
-    st.markdown("#### Advanced Setting")
+    # col_left, divider, col_right = st.columns([1, 0.3, 2])
+    col_left, col_right = st.columns(2)
     
-    with st.expander("Image Count"): 
-        batch_size = st.slider("Number of Images", 1, 4, 2)
+    
+    with col_right:
+        st.markdown("#### Character Setting")
+        
+        with st.expander("Portrait Setting"): 
+            with st.expander("Gender & Nationality"): 
+                pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
+                pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
+                pm_options["age"] = st.number_input("AGE", 10, 80, 25)
+            
+            with st.expander("Face & Body Type"): 
+                pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
+                pm_options["Body Type"] = st.selectbox("Body Type", ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"])
+            
+            with st.expander("Eyes Type"): 
+                pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+                pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+            
+            with st.expander("Lips Type"): 
+                pm_options["Lips Color"] = st.selectbox("Lips Color", ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"])
+                pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"])
+            
+            with st.expander("Hair Style"): 
+                pm_options["Hair Style"] = st.selectbox("Hair Style", ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"])
+                pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
+                pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
+    
+        st.markdown("#### Advanced Setting")
+        
+        with st.expander("Image Count"): 
+            batch_size = st.slider("Number of Images", 1, 4, 2)
         
 
 # -------------------------------------------------
