@@ -307,11 +307,12 @@ if st.session_state.step == 1:
     # st.info("Define character profile above and start casting.")
     # if st.button("RUN CASTING\n(GENERATE)", use_container_width=True):
     if st.button("🚀 캐릭터 얼굴 생성 시작", use_container_width=True):
-        with st.spinner("ComfyUI가 열심히 그림을 그리고 있습니다... (약 20~40초 소요)"):
         # if not api_key:
         #     st.error("⚠️ API KEY is missing! Check sidebar.")
         # else:
-        with st.spinner("CASTING ACTORS..."):
+            # with st.spinner("CASTING ACTORS..."):
+        with st.spinner("ComfyUI가 열심히 그림을 그리고 있습니다... (약 20~40초 소요)"):
+
             # backend 함수 호출
             imgs = backend.generate_faces(base_prompt, 
                                           pm_options, 
