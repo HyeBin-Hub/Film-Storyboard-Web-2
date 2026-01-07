@@ -42,27 +42,34 @@ def _run_inference(overrides, api_key, deployment_id):
         )
         res.raise_for_status()
         request_id = res.json().get("request_id")
-        request_id = res.json()["request_id"]
         print(f"✅ Request Sent! ID: {request_id}")
 
+        retry_count = 0
+        max_retries = 120 # 약 6분 대기
       # 2. 상태 풀링
-        while True:
+        while retry_count < max_retries:
             time.sleep(3)
-            
-            status_res = requests.get(f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status", headers=headers)
-            status_res.raise_for_status()
-            
-            status_data = status_res.json() # [수정] 변수에 할당
-            status = status_data.get("status", "").lower()
 
-            print(f"⏳ Status: {status}")
-            
-            if status == "completed": 
-                break
-            elif status in ["failed", "error"]: 
-                # [수정] status_data 변수 사용
-                print(f"❌ 생성 실패: {status_data.get('error_message', 'Unknown error')}")
-                return None
+            try:
+                status_res = requests.get(f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status", headers=headers)
+                status_res.raise_for_status()
+                
+                status_data = status_res.json() # [수정] 변수에 할당
+                status = status_data.get("status", "").lower()
+    
+                print(f"⏳ Status: {status}")
+                
+                if status == "completed": 
+                    break
+                elif status in ["failed", "error"]: 
+                    # [수정] status_data 변수 사용
+                    print(f"❌ 생성 실패: {status_data.get('error_message', 'Unknown error')}")
+                    return None
+                    
+            except Exception as e:
+                print(f"⚠️ Polling connection issue: {e}, retrying...")
+                time.sleep(2)
+                continue
               
       # 3. 결과 가져오기 
         result_res = requests.get(f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/result", headers=headers)
@@ -81,7 +88,8 @@ def _extract_images(outputs, target_node_id):
   
     if target_node_id in outputs:
         for img in outputs[target_node_id].get("images", []):
-            if img.get("url"): image_urls.append(img["url"])
+            if img.get("url"): 
+                image_urls.append(img["url"])
         return image_urls
       
     else:
@@ -97,20 +105,21 @@ def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, heigh
     overrides = {        
         "12": {"inputs": {"text": prompt_text}},
         "3": {"inputs": {
-              "gender": pm_options.get("Gender", "Woman"), 
-              "nationality_1": pm_options.get("Nationality", "Korean"),
-              "body_type": pm_options.get("Body Type", "Fit"),
-              "eyes_color": pm_options.get("Eyes Color", "Brown"),
-              "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
-              "lips_color": pm_options.get("Lips Color", "Red Lips"),
-              "lips_shape": pm_options.get("Lips Shape", "Regular"),
-              "face_shape": pm_options.get("Face Shape", "Oval"),
-              "hair_style": pm_options.get("Hair Style", "Long straight"),
-              "hair_color": pm_options.get("Hair Color", "Black"),
-              "hair_length": pm_options.get("Hair Length", "Long"),
+            "age": pm_options.get("age", 25),
+            "gender": pm_options.get("Gender", "Woman"), 
+            "nationality_1": pm_options.get("Nationality", "Korean"),
+            "body_type": pm_options.get("Body Type", "Fit"),
+            "eyes_color": pm_options.get("Eyes Color", "Brown"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
+            "lips_color": pm_options.get("Lips Color", "Red Lips"),
+            "lips_shape": pm_options.get("Lips Shape", "Regular"),
+            "face_shape": pm_options.get("Face Shape", "Oval"),
+            "hair_style": pm_options.get("Hair Style", "Long straight"),
+            "hair_color": pm_options.get("Hair Color", "Black"),
+            "hair_length": pm_options.get("Hair Length", "Long"),
         }},
         "13" : {"inputs":{"width": width, "height": height, "batch_size": batch_size}},
-        "11": {"inputs": {"steps": 25}},
+        # "11": {"inputs": {"steps": 25}},
         # "85": {"inputs": {"image": DUMMY_IMAGE_BASE64}},
     }
 
@@ -135,7 +144,7 @@ def generate_full_body(face_image_url, outfit_keywords, api_key, deployment_id):
       "12": {"inputs": {"text": outfit_keywords}}, 
       "6": {"inputs": {"image": base64_image}},
       "14": {"inputs": {"width": 896, "height": 1152, "batch_size": 1}}, 
-      "9": {"inputs": {"steps": 30, "seed": 793834637229542}} 
+      # "9": {"inputs": {"steps": 30, "seed": 793834637229542}} 
         }
     
     outputs = _run_inference(overrides, api_key, deployment_id)
@@ -153,12 +162,12 @@ def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1,
     base64_face_image_2 = _url_to_base64(face_image_url_2)
     base64_background_image_1 = _url_to_base64(background_image_url_1)
     
-    if not all([base64_face_image_1, base64_face_image_2, base64_background_image_1]):
+    if not all([base64_face_image_1, base64_face_image_2, b64_bg]):
         print("❌ 이미지 변환에 실패하여 작업을 중단합니다.")
         return []
 
     overrides = {
-        "15": {"inputs": {"steps": 25}}, 
+       # "15": {"inputs": {"steps": 25}}, 
         "4" : {"inputs": {"image": base64_face_image_1}},
         "5" : {"inputs": {"image": base64_face_image_2}},
         "3" : {"inputs": {"image": base64_background_image_1}},
