@@ -124,7 +124,7 @@ if "processing" not in st.session_state: st.session_state.processing = False
 # [SECTION 1] CHARACTER PROFILE
 # =========================================================
 
-st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE {st.session_state.step}")
+st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE")
 
 tab1, tab2 = st.tabs(["Eyes Type",""])
 
