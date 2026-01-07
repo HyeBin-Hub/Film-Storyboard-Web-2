@@ -1,38 +1,24 @@
 # backend.py
-from __future__ import annotations
-
 import time
 import random
 import requests
 from typing import Any, Dict, List, Optional
 
 BASE_URL = "https://api.runcomfy.net/prod/v1"
- 
-# -----------------------------
-# RunComfy API (Queue) helpers
-# -----------------------------
+
+
 def _headers(api_key: str) -> Dict[str, str]:
     return {
-        "Authorization": f"Bearer {api_key.strip()}",
+        "Authorization": "Bearer " + api_key.strip(),
         "Content-Type": "application/json",
     }
 
 
-def submit_inference(
-    api_key: str,
-    deployment_id: str,
-    overrides: Dict[str, Any],
-) -> str:
-    """
-    Submit inference request to RunComfy.
-    Returns request_id.
-    If submission fails, raises RuntimeError with full response payload for debugging.
-    """
+def submit_inference(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> str:
     url = f"{BASE_URL}/deployments/{deployment_id}/inference"
     payload = {"overrides": overrides}
 
     r = requests.post(url, headers=_headers(api_key), json=payload, timeout=60)
-
     if not r.ok:
         try:
             detail = r.json()
@@ -51,10 +37,9 @@ def poll_until_done(
     api_key: str,
     deployment_id: str,
     request_id: str,
-    *,
     poll_interval_sec: float = 1.5,
-    timeout_sec: int = 600,
-) -> None:
+    timeout_sec: int = 1800,
+) -> bool:
     url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status"
     t0 = time.time()
 
@@ -65,22 +50,17 @@ def poll_until_done(
 
         status = data.get("status", "")
         if status == "completed":
-            return
+            return True
         if status == "cancelled":
             raise RuntimeError(f"Request cancelled: {data}")
 
         if (time.time() - t0) > timeout_sec:
-            # raise TimeoutError(f"Timeout waiting for request_id={request_id}. Last status={data}")
-            return False   # ✅ 예외 대신 False
-            
+            return False
+
         time.sleep(poll_interval_sec)
 
 
-def fetch_result(
-    api_key: str,
-    deployment_id: str,
-    request_id: str,
-) -> Dict[str, Any]:
+def fetch_result(api_key: str, deployment_id: str, request_id: str) -> Dict[str, Any]:
     url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/result"
     r = requests.get(url, headers=_headers(api_key), timeout=60)
     r.raise_for_status()
@@ -88,10 +68,7 @@ def fetch_result(
 
 
 def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
-    """
-    Extract all output image URLs from RunComfy result.
-    """
-    outputs = result_json.get("outputs", {}) or {}
+    outputs = result_json.get("outputs") or {}
     urls: List[str] = []
 
     for _, node_out in outputs.items():
@@ -101,9 +78,9 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
             if u:
                 urls.append(u)
 
-    # 중복 제거(순서 유지)
+    # dedup (stable)
     seen = set()
-    dedup = []
+    dedup: List[str] = []
     for u in urls:
         if u not in seen:
             seen.add(u)
@@ -111,20 +88,19 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
     return dedup
 
 
-def run_workflow(
-    api_key: str,
-    deployment_id: str,
-    overrides: Dict[str, Any]
-) -> List[str]:
+def run_workflow(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> List[str]:
     request_id = submit_inference(api_key, deployment_id, overrides)
-    # poll_until_done(api_key, deployment_id, request_id)
+
     done = poll_until_done(api_key, deployment_id, request_id, timeout_sec=1800)
     if not done:
-        return {"done": False, "request_id": request_id, "urls": []}
-    
+        # Streamlit에서 사용자에게 안내할 수 있도록 request_id를 메시지로 포함
+        raise TimeoutError(
+            f"Timeout waiting for request_id={request_id}. "
+            f"Try increasing timeout or check status/result via RunComfy console."
+        )
+
     result = fetch_result(api_key, deployment_id, request_id)
-    return extract_image_urls(result)}
-    # return extract_image_urls(result)
+    return extract_image_urls(result)
 
 
 # -----------------------------
@@ -139,41 +115,34 @@ def generate_faces(
     pm_options: Dict[str, Any],
     base_prompt: Optional[str] = None,
 ) -> List[str]:
-    """
-    Step1 (Switch=1): Portrait generation.
-    - Node 56: ImpactSwitch.select = 1
-    - Node 12: base portrait prompt
-    - Node 13: latent size + batch
-    - Node 11: sampler seed
-    """
-
     DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
-    prompt = base_prompt or DEFAULT_BASE_PROMPT
- 
+    prompt = base_prompt if base_prompt else DEFAULT_BASE_PROMPT
+
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
-        "3": {"inputs": {
-            "age": pm_options.get("age", 25),
-            "gender": pm_options.get("Gender", "Woman"), 
-            "nationality_1": pm_options.get("Nationality", "Korean"),
-            "body_type": pm_options.get("Body Type", "Fit"),
-            "eyes_color": pm_options.get("Eyes Color", "Brown"),
-            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
-            "lips_color": pm_options.get("Lips Color", "Red Lips"),
-            "lips_shape": pm_options.get("Lips Shape", "Regular"),
-            "face_shape": pm_options.get("Face Shape", "Oval"),
-            "hair_style": pm_options.get("Hair Style", "Long straight"),
-            "hair_color": pm_options.get("Hair Color", "Black"),
-            "hair_length": pm_options.get("Hair Length", "Long"),
-            "shot": "Half-length portrait" 
-        }},
-        "11": {"inputs": {"seed": seed}},
+        "56": {"inputs": {"select": 1}},
         "12": {"inputs": {"text": prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
-        "56": {"inputs": {"select": 1}},
+        "11": {"inputs": {"seed": seed}},
+        # PortraitMasterBaseCharacter (node 3) override
+        "3": {"inputs": {
+            "age": pm_options.get("age", "-"),
+            "gender": pm_options.get("Gender", "-"),
+            "nationality_1": pm_options.get("Nationality", "Korean"),
+            "body_type": pm_options.get("Body Type", "-"),
+            "eyes_color": pm_options.get("Eyes Color", "Brown"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Monolid Eyes Shape"),
+            "lips_color": pm_options.get("Lips Color", "Berry Lips"),
+            "lips_shape": pm_options.get("Lips Shape", "Thin Lips"),
+            "face_shape": pm_options.get("Face Shape", "Square with Soft Jaw"),
+            "hair_style": pm_options.get("Hair Style", "-"),
+            "hair_color": pm_options.get("Hair Color", "Black"),
+            "hair_length": pm_options.get("Hair Length", "Short"),
+            "shot": "Half-length portrait",
+        }},
     }
-    
+
     return run_workflow(api_key, deployment_id, overrides)
 
 
@@ -183,20 +152,13 @@ def generate_full_body(
     api_key: str,
     deployment_id: str,
 ) -> List[str]:
-    """
-    Step2 (Switch=2): Full body generation.
-    - Node 56: select=2
-    - Node 20: outfit keywords (Groq가 확장)
-    - Node 58: LoadImageFromUrl (PuLID reference image)
-    - Node 25: sampler seed
-    """
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
-        "20": {"inputs": {"text": outfit_prompt}},
-        "25": {"inputs": {"seed": seed}},
-        "58": {"inputs": {"image": face_url}},  # ✅ URL 주입
         "56": {"inputs": {"select": 2}},
+        "20": {"inputs": {"text": outfit_prompt}},
+        "58": {"inputs": {"image": face_url}},
+        "25": {"inputs": {"seed": seed}},
     }
     return run_workflow(api_key, deployment_id, overrides)
 
@@ -209,25 +171,16 @@ def generate_scene(
     api_key: str,
     deployment_id: str,
 ) -> List[str]:
-    """
-    Step3 (Switch=3): Final storyboard scene (Qwen edit).
-    - Node 56: select=3
-    - Node 59: LoadImageFromUrl (image1 = boy)
-    - Node 61: LoadImageFromUrl (image2 = girl) -> if None, duplicate char1
-    - Node 60: LoadImageFromUrl (image3 = background)
-    - Node 48: GoogleTranslateTextNode.text (scene description)
-    - Node 40: sampler seed
-    """
     seed = random.randint(1, 10**15)
     if not char2_url:
         char2_url = char1_url
 
     overrides: Dict[str, Any] = {
-        "40": {"inputs": {"seed": seed}},
-        "48": {"inputs": {"text": story_prompt}},
         "56": {"inputs": {"select": 3}},
         "59": {"inputs": {"image": char1_url}},
-        "60": {"inputs": {"image": bg_url}},
         "61": {"inputs": {"image": char2_url}},
+        "60": {"inputs": {"image": bg_url}},
+        "48": {"inputs": {"text": story_prompt}},
+        "40": {"inputs": {"seed": seed}},
     }
     return run_workflow(api_key, deployment_id, overrides)
