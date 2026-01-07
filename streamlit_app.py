@@ -310,22 +310,22 @@ if st.session_state.step == 1:
         with st.spinner("ComfyUI가 열심히 그림을 그리고 있습니다... (약 20~40초 소요)"):
         # if not api_key:
         #     st.error("⚠️ API KEY is missing! Check sidebar.")
-        else:
-            with st.spinner("CASTING ACTORS..."):
-                # backend 함수 호출
-                imgs = backend.generate_faces(base_prompt, 
-                                              pm_options, 
-                                              api_key, 
-                                              deployment_id, 
-                                              width=width, 
-                                              height=height, 
-                                              batch_size=batch_size)
-                if imgs:
-                    st.session_state.generated_faces = imgs
-                    st.session_state.step = 2
-                    st.rerun()
-                else:
-                    st.error("Failed to generate images. Check logs.")
+        # else:
+        with st.spinner("CASTING ACTORS..."):
+            # backend 함수 호출
+            imgs = backend.generate_faces(base_prompt, 
+                                          pm_options, 
+                                          api_key, 
+                                          deployment_id, 
+                                          width=width, 
+                                          height=height, 
+                                          batch_size=batch_size)
+            if imgs:
+                st.session_state.generated_faces = imgs
+                st.session_state.step = 2
+                st.rerun()
+            else:
+                st.error("Failed to generate images. Check logs.")
 
 # Step 2: 선택하기 (새로 구현됨)
 elif st.session_state.step == 2:
