@@ -273,6 +273,47 @@ with tab1:
             
         st.markdown('</div>', unsafe_allow_html=True)
 
+
+st.markdown("### 🎬 ACTION")
+st.markdown("---")
+
+# 단계별 액션 버튼 로직
+if st.session_state.step == 1:
+    st.info("Define character profile above and start casting.")
+    if st.button("RUN CASTING\n(GENERATE)", use_container_width=True):
+        if not api_key:
+            st.error("API KEY REQUIRED")
+        else:
+            with st.spinner("CASTING ACTORS..."):
+                imgs = backend.generate_faces(base_prompt, pm_options, api_key, deployment_id, width, height, batch_size)
+                if imgs:
+                    st.session_state.generated_faces = imgs
+                    st.session_state.step = 2
+                    st.rerun()
+
+elif st.session_state.step == 2:
+    st.success("Select an actor from the Film Strip below.")
+    if st.button("↺ RESTART", use_container_width=True):
+        st.session_state.step = 1
+        st.rerun()
+
+elif st.session_state.step == 3:
+    outfit = st.text_area("WARDROBE", "White t-shirt, jeans, sneakers")
+    if st.button("APPLY COSTUME", use_container_width=True):
+        with st.spinner("FITTING..."):
+            res = backend.generate_full_body(st.session_state.selected_face_url, outfit, api_key, deployment_id)
+            if res:
+                st.session_state.final_character_url = res[-1]
+                st.session_state.step = 4
+                st.rerun()
+                
+elif st.session_state.step == 4:
+    st.balloons()
+    st.markdown("### ✅ SCENE CUT")
+    if st.button("NEW PROJECT", use_container_width=True):
+        st.session_state.step = 1
+        st.rerun()
+
 # -------------------------------------------------
 
 
