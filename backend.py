@@ -68,15 +68,48 @@ def fetch_result(api_key: str, deployment_id: str, request_id: str) -> Dict[str,
 
 
 def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
-    outputs = result_json.get("outputs") or {}
+    """
+    RunComfy/ComfyUI result schema variation 대응:
+    - outputs[node].images[].url / uri / s3_url / signed_url
+    - outputs[node].images[]가 filename/subfolder만 있는 경우는 무시(또는 별도 변환 필요)
+    - outputs가 list 형태이거나 result 키로 오는 경우도 대응
+    """
     urls: List[str] = []
 
-    for _, node_out in outputs.items():
-        imgs = (node_out or {}).get("images") or []
-        for img in imgs:
-            u = img.get("url")
-            if u:
-                urls.append(u)
+    def pick_url(d: Dict[str, Any]) -> Optional[str]:
+        if not isinstance(d, dict):
+            return None
+        for k in ("url", "uri", "signed_url", "s3_url", "download_url"):
+            v = d.get(k)
+            if isinstance(v, str) and v.startswith("http"):
+                return v
+        return None
+
+    def walk(obj: Any):
+        if obj is None:
+            return
+        if isinstance(obj, dict):
+            # images list
+            if "images" in obj and isinstance(obj["images"], list):
+                for it in obj["images"]:
+                    u = pick_url(it)
+                    if u:
+                        urls.append(u)
+            # some nodes may store files under "gifs" or "videos"
+            for k in ("gifs", "videos", "video", "files", "outputs", "result", "data"):
+                v = obj.get(k)
+                if v is not None:
+                    walk(v)
+
+            # generic dict traversal
+            for v in obj.values():
+                walk(v)
+
+        elif isinstance(obj, list):
+            for it in obj:
+                walk(it)
+
+    walk(result_json)
 
     # dedup (stable)
     seen = set()
@@ -88,19 +121,31 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
     return dedup
 
 
+
 def run_workflow(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> List[str]:
     request_id = submit_inference(api_key, deployment_id, overrides)
 
     done = poll_until_done(api_key, deployment_id, request_id, timeout_sec=1800)
     if not done:
-        # Streamlit에서 사용자에게 안내할 수 있도록 request_id를 메시지로 포함
         raise TimeoutError(
             f"Timeout waiting for request_id={request_id}. "
             f"Try increasing timeout or check status/result via RunComfy console."
         )
 
     result = fetch_result(api_key, deployment_id, request_id)
-    return extract_image_urls(result)
+    urls = extract_image_urls(result)
+
+    if not urls:
+        # result가 너무 크면 일부만
+        hint = {
+            "request_id": request_id,
+            "keys": list(result.keys()),
+            "outputs_keys": list((result.get("outputs") or {}).keys()) if isinstance(result.get("outputs"), dict) else type(result.get("outputs")).__name__,
+        }
+        raise RuntimeError(f"No image urls extracted. hint={hint}")
+
+    return urls
+
 
 
 # -----------------------------
