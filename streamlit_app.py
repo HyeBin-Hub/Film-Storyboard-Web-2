@@ -210,6 +210,7 @@ with tab1:
                             width=DEFAULT_W,
                             height=DEFAULT_H,
                             batch_size=batch_size,
+                            pm_options=pm_options
                         )
                     if imgs:
                         st.session_state.generated_faces = imgs
