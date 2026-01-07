@@ -217,8 +217,8 @@ tab1, tab2, tab3, tab4 = st.tabs(["Step1 | 👤 CHARACTER PROFILE", "Step2 | �
 
 pm_options = {}
 base_prompt = "Gray background, White t-shirt, 8k, highly detailed, photorealistic" # 기본값 설정
-width = 1024
-height = 1024
+width = 896
+height = 1152
 
 with tab1:
     
@@ -228,8 +228,6 @@ with tab1:
     
     with col_right:
         st.markdown("#### Character Setting")
-
-        base_prompt = st.text_area("Base Style Prompt", base_prompt, height=100)
         
         with st.expander("Portrait Setting"): 
             with st.expander("Gender & Nationality"): 
@@ -258,6 +256,7 @@ with tab1:
         
         with st.expander("Image Count"): 
             batch_size = st.slider("Number of Images", 1, 4, 2)
+            
 
     with col_left:
         st.markdown('<div class="viewport-frame">', unsafe_allow_html=True)
@@ -265,16 +264,30 @@ with tab1:
         # 이미지 표시 로직
         display_img = None
         overlay_text = "STANDBY"
-        
-        if st.session_state.step == 1 and st.session_state.generated_faces:
-            display_img = st.session_state.generated_faces[-1]
-            overlay_text = "CASTING COMPLETE"
-        elif st.session_state.step == 3: # 의상 단계
+
+        # 단계별 뷰포트 이미지 표시 로직
+        if st.session_state.step == 1:
+             overlay_text = "READY TO CAST"
+        elif st.session_state.step == 2 and st.session_state.generated_faces:
+            # 가장 마지막에 생성된 것 중 첫번째 보여주기 (임시)
+            display_img = st.session_state.generated_faces[0]
+            overlay_text = "REVIEWING..."
+        elif st.session_state.step == 3:
             display_img = st.session_state.selected_face_url
             overlay_text = "REFERENCE LOADED"
         elif st.session_state.step == 4:
             display_img = st.session_state.final_character_url
             overlay_text = "FINAL RENDER"
+        
+        # if st.session_state.step == 1 and st.session_state.generated_faces:
+        #     display_img = st.session_state.generated_faces[-1]
+        #     overlay_text = "CASTING COMPLETE"
+        # elif st.session_state.step == 3: # 의상 단계
+        #     display_img = st.session_state.selected_face_url
+        #     overlay_text = "REFERENCE LOADED"
+        # elif st.session_state.step == 4:
+        #     display_img = st.session_state.final_character_url
+        #     overlay_text = "FINAL RENDER"
     
         if display_img:
             st.image(display_img, use_container_width=True)
@@ -283,46 +296,91 @@ with tab1:
             
         st.markdown('</div>', unsafe_allow_html=True)
 
-
-st.markdown("### 🎬 ACTION")
+# =========================================================
+# [ACTION AREA] 하단 컨트롤러
+# =========================================================
 st.markdown("---")
+st.markdown("### 🎬 ACTION")
 
-# 단계별 액션 버튼 로직
+# Step 1: 생성하기
 if st.session_state.step == 1:
     st.info("Define character profile above and start casting.")
     if st.button("RUN CASTING\n(GENERATE)", use_container_width=True):
         if not api_key:
-            st.error("API KEY REQUIRED")
+            st.error("⚠️ API KEY is missing! Check sidebar.")
         else:
             with st.spinner("CASTING ACTORS..."):
+                # backend 함수 호출
                 imgs = backend.generate_faces(base_prompt, pm_options, api_key, deployment_id, width, height, batch_size)
                 if imgs:
                     st.session_state.generated_faces = imgs
                     st.session_state.step = 2
                     st.rerun()
+                else:
+                    st.error("Failed to generate images. Check logs.")
 
+# Step 2: 선택하기 (새로 구현됨)
 elif st.session_state.step == 2:
     st.success("Select an actor from the Film Strip below.")
-    if st.button("↺ RESTART", use_container_width=True):
+    # 이미지 갤러리 형태로 표시
+    if st.session_state.generated_faces:
+        cols = st.columns(len(st.session_state.generated_faces))
+        for idx, img_url in enumerate(st.session_state.generated_faces):
+            with cols[idx]:
+                st.image(img_url, use_container_width=True)
+                if st.button(f"✅ SELECT ACTOR #{idx+1}", key=f"sel_{idx}"):
+                    st.session_state.selected_face_url = img_url
+                    st.session_state.step = 3
+                    st.rerun()
+                    
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("↺ RESTART CASTING", use_container_width=True):
         st.session_state.step = 1
         st.rerun()
 
+    # if st.button("↺ RESTART", use_container_width=True):
+    #     st.session_state.step = 1
+    #     st.rerun()
+
+# Step 3: 의상 입히기
 elif st.session_state.step == 3:
-    outfit = st.text_area("WARDROBE", "White t-shirt, jeans, sneakers")
-    if st.button("APPLY COSTUME", use_container_width=True):
-        with st.spinner("FITTING..."):
-            res = backend.generate_full_body(st.session_state.selected_face_url, outfit, api_key, deployment_id)
-            if res:
-                st.session_state.final_character_url = res[-1]
-                st.session_state.step = 4
-                st.rerun()
-                
+    col_input, col_action = st.columns([3, 1])
+    with col_input:
+        outfit = st.text_area("WARDROBE DESCRIPTION", "White t-shirt, blue jeans, casual sneakers, standing pose")
+    with col_action:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("APPLY COSTUME", use_container_width=True):
+            with st.spinner("FITTING... (Img2Img Processing)"):
+                res = backend.generate_full_body(st.session_state.selected_face_url, outfit, api_key, deployment_id)
+                if res:
+                    st.session_state.final_character_url = res[0] # 결과가 리스트라고 가정
+                    st.session_state.step = 4
+                    st.rerun()
+    
+    # outfit = st.text_area("WARDROBE", "White t-shirt, jeans, sneakers")
+    # if st.button("APPLY COSTUME", use_container_width=True):
+    #     with st.spinner("FITTING..."):
+    #         res = backend.generate_full_body(st.session_state.selected_face_url, outfit, api_key, deployment_id)
+    #         if res:
+    #             st.session_state.final_character_url = res[-1]
+    #             st.session_state.step = 4
+    #             st.rerun()
+
+# Step 4: 완료
 elif st.session_state.step == 4:
     st.balloons()
-    st.markdown("### ✅ SCENE CUT")
-    if st.button("NEW PROJECT", use_container_width=True):
+    st.success("Scene generation complete!")
+    if st.button("🎬 START NEW PROJECT", use_container_width=True):
         st.session_state.step = 1
+        st.session_state.generated_faces = []
+        st.session_state.selected_face_url = None
         st.rerun()
+    
+    # st.balloons()
+    # st.markdown("### ✅ SCENE CUT")
+    # if st.button("NEW PROJECT", use_container_width=True):
+    #     st.session_state.step = 1
+    #     st.rerun()
 
 # -------------------------------------------------
 
