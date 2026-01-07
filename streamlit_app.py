@@ -471,7 +471,7 @@ with tab2:
         with col_face:
             st.markdown("#### Reference Actor")
             st.image(st.session_state.selected_face_url, use_container_width=True)
-            st.caption("이 얼굴을 유지하며 의상을 입힙니다.")
+            # st.caption("이 얼굴을 유지하며 의상을 입힙니다.")
             
         with col_outfit:
             st.markdown("#### Outfit Description")
@@ -498,12 +498,12 @@ with tab2:
             else:
                 st.info("의상 프롬프트를 입력하고 버튼을 누르세요.")
                 
-    elif st.session_state.step > 2:
-         st.success("✅ Costume Fitted")
-         if st.session_state.final_character_url:
-            st.image(st.session_state.final_character_url, width=150, caption="Final Character")
-    elif st.session_state.step < 2:
-        st.warning("Step 1을 먼저 완료해주세요.")
+    # elif st.session_state.step > 2:
+    #      st.success("✅ Costume Fitted")
+    #      if st.session_state.final_character_url:
+    #         st.image(st.session_state.final_character_url, width=150, caption="Final Character")
+    # elif st.session_state.step < 2:
+    #     st.warning("Step 1을 먼저 완료해주세요.")
 
 # ---------------------------------------------------------
 # [TAB 3] 씬 제작 (스토리보드)
