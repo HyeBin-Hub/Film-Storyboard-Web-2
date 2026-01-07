@@ -196,6 +196,14 @@ with tab1:
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
                     with st.spinner("Casting in progress... (Switch Mode: 1)"):
+                        
+                        use_custom_prompt = st.checkbox("Use custom base prompt", value=False)
+
+                        if use_custom_prompt:
+                            base_prompt = st.text_area("Base Prompt", DEFAULT_TEXT)
+                        else:
+                            base_prompt = None
+                        
                         imgs = backend.generate_faces(
                             api_key=api_key,
                             deployment_id=deployment_id,
