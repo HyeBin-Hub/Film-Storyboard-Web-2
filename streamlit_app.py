@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
 import backend
-
+ 
 # 1. secrets.toml 파일에서 먼저 찾아봄
 if "RUNCOMFY_API_KEY" in st.secrets:
     api_key = st.secrets["RUNCOMFY_API_KEY"]
