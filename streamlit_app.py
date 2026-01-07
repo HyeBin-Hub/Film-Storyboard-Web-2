@@ -26,6 +26,97 @@ st.set_page_config(
 )
 
 # --- 2. CSS 매직: 와이드 콘솔 디자인 ---
+st.markdown("""
+    <style>
+    /* [1] 폰트 불러오기 (Rajdhani: 제목용 / Roboto Mono: 코드 및 본문용) */
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;700&display=swap');
+
+    /* [2] 전체 앱 배경 설정 (Darkroom 느낌) */
+    .stApp {
+        background-color: #050505;
+        background-image: radial-gradient(#151515 1px, transparent 1px);
+        background-size: 40px 40px; /* 격자 패턴 */
+        color: #e0e0e0;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* [3] 입력 필드 스타일 (어둡게 + 금색 텍스트) */
+    .stTextInput>div>div, 
+    .stSelectbox>div>div, 
+    .stNumberInput>div>div, 
+    .stTextArea>div>div {
+        background-color: #1a1a1a !important;
+        border: 1px solid #333 !important;
+        color: #FFD700 !important; /* Gold Text */
+        border-radius: 4px;
+        font-family: 'Roboto Mono', monospace;
+    }
+    
+    /* 입력 필드 포커스 효과 */
+    .stTextInput>div>div:focus-within {
+        border-color: #FFD700 !important;
+        box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+
+    /* [4] 버튼 스타일 (핵심 수정 포함!) */
+    .stButton>button {
+        background: linear-gradient(90deg, #FFD700, #ffaa00) !important;
+        color: #000 !important;
+        border: none;
+        font-weight: 800;
+        font-size: 18px;
+        padding: 12px 24px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border-radius: 6px;
+        width: 100%;
+        
+        /* 👇 [핵심] 줄바꿈(\n)이 작동하도록 하는 설정 👇 */
+        white-space: pre-wrap; 
+        height: auto !important; 
+        min-height: 60px; /* 두 줄이 되어도 버튼이 찌그러지지 않게 최소 높이 확보 */
+        line-height: 1.4 !important; /* 줄 간격 조정 */
+    }
+
+    /* 버튼 호버 효과 (네온 글로우) */
+    .stButton>button:hover {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        transform: translateY(-2px);
+    }
+    
+    /* 버튼 클릭(Active) 효과 */
+    .stButton>button:active {
+        transform: translateY(1px);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
+    /* [5] 탭(Tab) 스타일 커스텀 */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        background-color: #111;
+        border-radius: 8px 8px 0 0;
+        border: 1px solid #333;
+        color: #888;
+        font-weight: bold;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #222 !important;
+        color: #FFD700 !important;
+        border-bottom: 2px solid #FFD700 !important;
+    }
+
+    /* [6] 이미지 갤러리 및 선택 효과 */
+    /* 선택된 이미지에 금색 테두리 */
+    .selected-img {
+        border: 3px solid #FFD700 !important;
+        border-radius: 8px;
+        box-shadow: 0 0
+# -----------------------------------------------
 # st.markdown("""
 #     <style>
 #     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;700&display=swap');
