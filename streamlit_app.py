@@ -112,12 +112,26 @@ st.markdown("""
 # =========================================================
 if "step" not in st.session_state:
     st.session_state.step = 1
-if "generated_faces" not in st.session_state:
-    st.session_state.generated_faces = []
-if "selected_face_url" not in st.session_state:
-    st.session_state.selected_face_url = None
-if "final_character_url" not in st.session_state:
-    st.session_state.final_character_url = None
+ 
+# Step1
+if "num_characters" not in st.session_state:
+    st.session_state.num_characters = 2
+if "shots_per_character" not in st.session_state:
+    st.session_state.shots_per_character = 2
+
+if "pm_options_list" not in st.session_state:
+    st.session_state.pm_options_list = []  # List[Dict[str, Any]] length=num_characters
+
+if "casting_groups" not in st.session_state:
+    st.session_state.casting_groups = []  # List[List[str]]  (character i -> shot urls)
+if "selected_cast" not in st.session_state:
+    st.session_state.selected_cast = []  # List[Optional[str]] length=num_characters
+
+# Step2
+if "final_character_urls" not in st.session_state:
+    st.session_state.final_character_urls = []  # List[Optional[str]] length=num_characters
+
+# Step3
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
@@ -151,7 +165,7 @@ with tab1:
  
         with col_right:
             
-            st.markdown("#### Character Setting")
+            st.markdown("#### Casting Config")
             
             with st.expander("Portrait Setting"): 
                 with st.expander("Gender & Nationality"): 
@@ -179,6 +193,8 @@ with tab1:
             st.markdown("#### Advanced Setting")
             
             with st.expander("Image Count"): 
+                n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
+                shots = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
                 batch_size = st.slider("Number of Images", 1, 4, 2)
                 seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
                 if seed_mode == "Fixed":
