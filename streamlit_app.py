@@ -97,12 +97,15 @@ st.markdown("""
         background-color: transparent;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 30px;
+        height: 50px;
         background-color: #111;
         border-radius: 8px 8px 0 0;
         border: 1px solid #333;
         color: #888;
         font-weight: bold;
+
+        flex-grow: 1;
+        text-align: center;
     }
     .stTabs [aria-selected="true"] {
         background-color: #222 !important;
