@@ -93,7 +93,7 @@ st.markdown("""
 
     /* [5] 탭(Tab) 스타일 커스텀 */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+        gap: 100px;
         background-color: transparent;
     }
     .stTabs [data-baseweb="tab"] {
