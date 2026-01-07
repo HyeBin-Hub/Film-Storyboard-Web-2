@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional
 
 BASE_URL = "https://api.runcomfy.net/prod/v1"
 
-
 # -----------------------------
 # RunComfy API (Queue) helpers
 # -----------------------------
@@ -71,8 +70,9 @@ def poll_until_done(
             raise RuntimeError(f"Request cancelled: {data}")
 
         if (time.time() - t0) > timeout_sec:
-            raise TimeoutError(f"Timeout waiting for request_id={request_id}. Last status={data}")
-
+            # raise TimeoutError(f"Timeout waiting for request_id={request_id}. Last status={data}")
+            return False   # ✅ 예외 대신 False
+            
         time.sleep(poll_interval_sec)
 
 
@@ -117,9 +117,15 @@ def run_workflow(
     overrides: Dict[str, Any],
 ) -> List[str]:
     request_id = submit_inference(api_key, deployment_id, overrides)
-    poll_until_done(api_key, deployment_id, request_id)
+    # poll_until_done(api_key, deployment_id, request_id)
+    done = poll_until_done(api_key, deployment_id, request_id, timeout_sec=1800)
+    if not done:
+        return {"done": False, "request_id": request_id, "urls": []}
+    
     result = fetch_result(api_key, deployment_id, request_id)
-    return extract_image_urls(result)
+    urls = extract_image_urls(result)
+    return {"done": True, "request_id": request_id, "urls": urls}
+    # return extract_image_urls(result)
 
 
 # -----------------------------
@@ -143,11 +149,27 @@ def generate_faces(
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
-        "56": {"inputs": {"select": 1}},
+        "3": {"inputs": {
+            "age": pm_options.get("age", 25),
+            "gender": pm_options.get("Gender", "Woman"), 
+            "nationality_1": pm_options.get("Nationality", "Korean"),
+            "body_type": pm_options.get("Body Type", "Fit"),
+            "eyes_color": pm_options.get("Eyes Color", "Brown"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
+            "lips_color": pm_options.get("Lips Color", "Red Lips"),
+            "lips_shape": pm_options.get("Lips Shape", "Regular"),
+            "face_shape": pm_options.get("Face Shape", "Oval"),
+            "hair_style": pm_options.get("Hair Style", "Long straight"),
+            "hair_color": pm_options.get("Hair Color", "Black"),
+            "hair_length": pm_options.get("Hair Length", "Long"),
+            "shot": "Half-length portrait" 
+        }},
+        "11": {"inputs": {"seed": seed}},
         "12": {"inputs": {"text": base_prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
-        "11": {"inputs": {"seed": seed}},
+        "56": {"inputs": {"select": 1}},
     }
+    
     return run_workflow(api_key, deployment_id, overrides)
 
 
@@ -167,10 +189,10 @@ def generate_full_body(
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
-        "56": {"inputs": {"select": 2}},
         "20": {"inputs": {"text": outfit_prompt}},
-        "58": {"inputs": {"image": face_url}},  # ✅ URL 주입
         "25": {"inputs": {"seed": seed}},
+        "58": {"inputs": {"image": face_url}},  # ✅ URL 주입
+        "56": {"inputs": {"select": 2}},
     }
     return run_workflow(api_key, deployment_id, overrides)
 
@@ -197,11 +219,11 @@ def generate_scene(
         char2_url = char1_url
 
     overrides: Dict[str, Any] = {
+        "40": {"inputs": {"seed": seed}},
+        "48": {"inputs": {"text": story_prompt}},
         "56": {"inputs": {"select": 3}},
         "59": {"inputs": {"image": char1_url}},
-        "61": {"inputs": {"image": char2_url}},
         "60": {"inputs": {"image": bg_url}},
-        "48": {"inputs": {"text": story_prompt}},
-        "40": {"inputs": {"seed": seed}},
+        "61": {"inputs": {"image": char2_url}},
     }
     return run_workflow(api_key, deployment_id, overrides)
