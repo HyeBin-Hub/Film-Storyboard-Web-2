@@ -148,6 +148,7 @@ with col_left:
     with st.expander("Gender & Nationality"): 
         pm_options["Gender"] = st.selectbox("Gender", ["Man","Woman"])
         pm_options["Nationality"] = st.selectbox("Nationality", ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"])
+        pm_options["age"] = st.number_input("AGE", 10, 80, 25)
     
     with st.expander("Face & Body Type"): 
         pm_options["Face Shape"] = st.selectbox("Face Shape", ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"])
@@ -166,7 +167,11 @@ with col_left:
         pm_options["Hair Style"] = st.selectbox("Hair Color", ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"])
         pm_options["Hair Style"] = st.selectbox("Hair Length", ["Short","Medium","Long"])
 
-    batch_size = st.slider("BATCH SIZE", 1, 4, 2)
+    st.markdown("#### Advanced Setting")
+    
+    with st.expander("Gender & Nationality"): 
+        batch_size = st.slider("BATCH SIZE", 1, 4, 2)
+        
 
 # col1, col2, col3, col4, col5 = st.columns(5)
 
