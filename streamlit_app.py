@@ -140,8 +140,12 @@ st.markdown(f"### STEP 1 : 👤 CHARACTER PROFILE")
 col1, col2 = st.tabs(["EYES TYPE","LIPS TYPE"])
 
 with col1:
-    pm_options["EYES TYPE"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
-    pm_options["EYES TYPE"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+    pm_options["Eyes Color"] = st.selectbox("Eyes Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+    pm_options["Eyes Shape"] = st.selectbox("Eyes Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
+
+with col2:
+    pm_options["Lips Color"] = st.selectbox("Lips Color", ["Albino", "Amber", "Blue", "Brown", "Green", "Gray", "Hazel", "Heterochromia", "Red", "Violet"])
+    pm_options["Lips Shape"] = st.selectbox("Lips Shape", ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"])
 
     
 
