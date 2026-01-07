@@ -275,7 +275,7 @@ with tab1:
     
             # [ACTION] 생성 버튼
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🚀 CASTING START (Generate Faces)", use_container_width=True):
+            if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 if not api_key or not deployment_id:
                     st.error("API Key와 ID를 확인해주세요!")
                 else:
