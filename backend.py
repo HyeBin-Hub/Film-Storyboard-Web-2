@@ -47,6 +47,7 @@ def _run_inference(overrides, api_key, deployment_id):
         retry_count = 0
         max_retries = 120 # 약 6분 대기
       # 2. 상태 풀링
+        status_text = st.empty()
         while retry_count < max_retries:
             time.sleep(3)
 
@@ -81,8 +82,6 @@ def _run_inference(overrides, api_key, deployment_id):
     except Exception as e:
         print(f"❌ API Error: {e}")
         return None
-    
-
 
 def _extract_images(outputs, target_node_id):
   
@@ -95,7 +94,7 @@ def _extract_images(outputs, target_node_id):
         return image_urls
       
     else:
-        print(f"⚠️ 노드 {target_node_id}번의 결과물을 찾을 수 없습니다. (현재 노드: {list(outputs.keys())})")
+        st.warning(f"⚠️ 노드 {target_node_id}번의 결과물을 찾을 수 없습니다. (현재 노드: {list(outputs.keys())})")        
         return []
 
 # =========================================================
@@ -105,7 +104,7 @@ def _extract_images(outputs, target_node_id):
 # --- Step 1: Portrait Generation ---
 def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, height, batch_size=4):
     overrides = {        
-        "56": { "inputs": { "select": 1 } },
+        # "56": { "inputs": { "select": 1 } },
         "12": {"inputs": {"text": prompt_text}},
         "3": {"inputs": {
             "age": pm_options.get("age", 25),
@@ -123,6 +122,13 @@ def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, heigh
             "shot": "Half-length portrait" # 기본값
         }},
         "13" : {"inputs":{"width": width, "height": height, "batch_size": batch_size}},
+
+        # 🚀 [수정됨] Switch(56번) 사용 안 함! -> 15번(저장)을 16번(Step 1 결과)에 직접 연결
+        "15": { 
+            "inputs": { 
+                "images": ["16", 0] 
+            } 
+        },
 
         # ✅ [핵심] Step 2, 3의 필수 입력 노드에 더미 이미지 주입 (에러 방지)
         "32": { "inputs": { "image": DUMMY_IMAGE } }, # Step 2 LoadImage
@@ -152,10 +158,32 @@ def generate_full_body(face_image_url, outfit_keywords, api_key, deployment_id):
         return []
 
     overrides = {
-        "56": { "inputs": { "select": 2 } },
+        "3": {"inputs": {
+            "age": pm_options.get("age", 25),
+            "gender": pm_options.get("Gender", "Woman"), 
+            "nationality_1": pm_options.get("Nationality", "Korean"),
+            "body_type": pm_options.get("Body Type", "Fit"),
+            "eyes_color": pm_options.get("Eyes Color", "Brown"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
+            "lips_color": pm_options.get("Lips Color", "Red Lips"),
+            "lips_shape": pm_options.get("Lips Shape", "Regular"),
+            "face_shape": pm_options.get("Face Shape", "Oval"),
+            "hair_style": pm_options.get("Hair Style", "Long straight"),
+            "hair_color": pm_options.get("Hair Color", "Black"),
+            "hair_length": pm_options.get("Hair Length", "Long"),
+            "shot": "Half-length portrait" # 기본값
+        }},
+        # "56": { "inputs": { "select": 2 } },
         "20": {"inputs": {"text": outfit_keywords}},
         "32": { "inputs": { "image": base64_image } },
-        "14": {"inputs": {"width": 896, "height": 1152, "batch_size": 1}}, 
+        # "14": {"inputs": {"width": 896, "height": 1152, "batch_size": 1}}, 
+
+        # 🚀 [수정됨] 15번(저장)을 26번(Step 2 결과)에 직접 연결
+        "15": { 
+            "inputs": { 
+                "images": ["26", 0] 
+            } 
+        },
 
         # ✅ Step 3의 필수 입력 노드에 더미 이미지 주입
         "42": { "inputs": { "image": DUMMY_IMAGE } },
@@ -184,12 +212,34 @@ def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1,
         return []
 
     overrides = {
+        "3": {"inputs": {
+            "age": pm_options.get("age", 25),
+            "gender": pm_options.get("Gender", "Woman"), 
+            "nationality_1": pm_options.get("Nationality", "Korean"),
+            "body_type": pm_options.get("Body Type", "Fit"),
+            "eyes_color": pm_options.get("Eyes Color", "Brown"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
+            "lips_color": pm_options.get("Lips Color", "Red Lips"),
+            "lips_shape": pm_options.get("Lips Shape", "Regular"),
+            "face_shape": pm_options.get("Face Shape", "Oval"),
+            "hair_style": pm_options.get("Hair Style", "Long straight"),
+            "hair_color": pm_options.get("Hair Color", "Black"),
+            "hair_length": pm_options.get("Hair Length", "Long"),
+            "shot": "Half-length portrait" # 기본값
+        }},
        # "15": {"inputs": {"steps": 25}}, 
-        "56": { "inputs": { "select": 3 } },
+        # "56": { "inputs": { "select": 3 } },
         "42" : {"inputs": {"image": base64_face_image_1}},
         "43" : {"inputs": {"image": base64_face_image_2}},
         "44" : {"inputs": {"image": base64_background_image_1}},
         "48": {"inputs": {"text": story_prompt}},
+
+        # 🚀 [수정됨] 15번(저장)을 41번(Step 3 결과)에 직접 연결
+        "15": { 
+            "inputs": { 
+                "images": ["41", 0] 
+            } 
+        },
 
         # ✅ Step 2의 필수 입력 노드에 더미 (Step 1은 보통 필수 아님)
         "32": { "inputs": { "image": DUMMY_IMAGE } },
