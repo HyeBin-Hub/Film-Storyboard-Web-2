@@ -103,6 +103,7 @@ def _extract_images(outputs, target_node_id):
 # --- Step 1: Portrait Generation ---
 def generate_faces(prompt_text, pm_options, api_key, deployment_id, width, height, batch_size=4):
     overrides = {        
+        "56": { "inputs": { "select": 1 } },
         "12": {"inputs": {"text": prompt_text}},
         "3": {"inputs": {
             "age": pm_options.get("age", 25),
@@ -141,9 +142,10 @@ def generate_full_body(face_image_url, outfit_keywords, api_key, deployment_id):
         return []
 
     overrides = {
-      "12": {"inputs": {"text": outfit_keywords}}, 
-      "6": {"inputs": {"image": base64_image}},
-      "14": {"inputs": {"width": 896, "height": 1152, "batch_size": 1}}, 
+        "56": { "inputs": { "select": 2 } },
+        "20": {"inputs": {"text": outfit_keywords}},
+        "32": { "inputs": { "image": base64_image } },
+        "14": {"inputs": {"width": 896, "height": 1152, "batch_size": 1}}, 
       # "9": {"inputs": {"steps": 30, "seed": 793834637229542}} 
         }
     
@@ -152,7 +154,7 @@ def generate_full_body(face_image_url, outfit_keywords, api_key, deployment_id):
     if not outputs: 
       return []
 
-    return _extract_images(outputs, "11")
+    return _extract_images(outputs, "15")
 
 # --- Step 3: Final Storyboard ---
 def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1, story_prompt, api_key, deployment_id):
@@ -168,10 +170,11 @@ def final_storyboard(face_image_url_1, face_image_url_2, background_image_url_1,
 
     overrides = {
        # "15": {"inputs": {"steps": 25}}, 
-        "4" : {"inputs": {"image": base64_face_image_1}},
-        "5" : {"inputs": {"image": base64_face_image_2}},
-        "3" : {"inputs": {"image": base64_background_image_1}},
-        "19": {"inputs": {"text": story_prompt}},
+        "56": { "inputs": { "select": 3 } },
+        "42" : {"inputs": {"image": base64_face_image_1}},
+        "43" : {"inputs": {"image": base64_face_image_2}},
+        "44" : {"inputs": {"image": base64_background_image_1}},
+        "48": {"inputs": {"text": story_prompt}},
     }
     
     outputs = _run_inference(overrides, api_key, deployment_id)
