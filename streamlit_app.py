@@ -115,7 +115,27 @@ st.markdown("""
     .selected-img {
         border: 3px solid #FFD700 !important;
         border-radius: 8px;
-        box-shadow: 0 0
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        transition: all 0.3s;
+    }
+    
+    /* 일반 이미지 프레임 */
+    .viewport-frame {
+        background-color: #000;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+    }
+
+    /* [7] Expander (접이식 메뉴) 스타일 */
+    .streamlit-expanderHeader {
+        background-color: #111 !important;
+        color: #e0e0e0 !important;
+        border-radius: 4px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 # -----------------------------------------------
 # st.markdown("""
 #     <style>
