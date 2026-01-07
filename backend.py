@@ -148,11 +148,7 @@ def generate_faces(
     - Node 11: sampler seed
     """
 
-    DEFAULT_BASE_PROMPT = (
-        "Grey background, a 12-year-old Korean boy, "
-        "white t-shirt, buzz cut hair, "
-        "documentary photograph, cinematic still frame"
-    )
+    DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
     
     prompt = base_prompt or DEFAULT_BASE_PROMPT
     seed = random.randint(1, 10**15)
