@@ -175,7 +175,7 @@ with tab1:
                 if seed_mode == "Fixed":
                     fixed_seed = st.number_input("Fixed Seed", min_value=0, max_value=2**31-1, value=12345, step=1, key="fixed_seed")
 
-                st.markdown("<hr style='margin:6px 0; border:0; border-top:5px solid #333;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin:15px 0; border:0; border-top:1px solid #333;'>", unsafe_allow_html=True)
 
                 
                 # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
