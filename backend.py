@@ -208,19 +208,28 @@ def run_workflow(
     poll_until_done(api_key, deployment_id, request_id)
     result = fetch_result(api_key, deployment_id, request_id)
 
+    # ✅ 1) RunComfy가 result에 error를 넣어주는 케이스를 최우선으로 잡아냄
+    #    (status=completed 여도 error가 있으면 "실패"로 처리해야 함)
+    err = result.get("error")
+    if err:
+        raise RuntimeError(
+            "RunComfy workflow error returned in /result. "
+            f"hint={{'request_id': '{request_id}', 'error': {err}}}"
+        )
+
     outputs = result.get("outputs") or {}
 
-    # 1) SaveImage(15) 우선
+    # 2) SaveImage(15) 우선
     urls, debug = extract_images_from_target_node(outputs, primary_image_node_id)
     if urls:
         return urls
 
-    # 2) outputs 전체 스캔 (예전 방식)
+    # 3) outputs 전체 스캔 (예전 방식)
     urls_any = extract_images_from_outputs_any(outputs)
     if urls_any:
         return urls_any
 
-    # 3) JSON 전체 재귀 탐색
+    # 4) JSON 전체 재귀 탐색
     urls_recursive = extract_image_urls(result)
     if urls_recursive:
         return urls_recursive
@@ -233,6 +242,7 @@ def run_workflow(
         f"'outputs_keys': {list(outputs.keys()) if isinstance(outputs, dict) else None}, "
         f"'primary_node_debug': {debug}}}"
     )
+
 
 # =========================================================
 # Node IDs (ALIGNED WITH YOUR JSON)
