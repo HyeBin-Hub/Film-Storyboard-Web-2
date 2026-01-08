@@ -146,31 +146,6 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "Step4 | 📝 STORYBOARD SCRIPT"
 ])
 
-
-# ========================================================================
-
-
-def _ensure_lists(n: int):
-    # pm_options_list
-    if len(st.session_state.pm_options_list) < n:
-        for i in range(len(st.session_state.pm_options_list), n):
-            st.session_state.pm_options_list.append(_default_pm_options(i))
-    elif len(st.session_state.pm_options_list) > n:
-        st.session_state.pm_options_list = st.session_state.pm_options_list[:n]
-
-    # casting_groups
-    if len(st.session_state.casting_groups) < n:
-        st.session_state.casting_groups.extend([[] for _ in range(n - len(st.session_state.casting_groups))])
-    elif len(st.session_state.casting_groups) > n:
-        st.session_state.casting_groups = st.session_state.casting_groups[:n]
-
-    # selected_cast
-    if len(st.session_state.selected_cast) < n:
-        st.session_state.selected_cast.extend([None for _ in range(n - len(st.session_state.selected_cast))])
-    elif len(st.session_state.selected_cast) > n:
-        st.session_state.selected_cast = st.session_state.selected_cast[:n]
-
-
 # ---------------------------------------------------------
 # [TAB 1] Step1: 얼굴 생성
 # ---------------------------------------------------------
@@ -188,14 +163,22 @@ with tab1:
 
         with col_right:
             st.markdown("#### Advanced Setting")
-            
-            batch_size = st.slider("Number of Images", 1, 4, 2)
 
-            base_prompt = st.text_area(
-                "Base Portrait Prompt",
-                "Grey background, a 12-year-old Korean boy, white t-shirt, Buzz cut hair, documentary photograph, cinematic still frame",
-                height=140
-            )
+            # ---------체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
+            DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
+
+            use_custom_base_prompt = st.checkbox("Use custom base prompt", value=False)
+            
+            if use_custom_base_prompt:
+                base_prompt = st.text_area(
+                    "Base Portrait Prompt",
+                    DEFAULT_BASE_PROMPT,
+                    height=140
+                )
+            else:
+                base_prompt = DEFAULT_BASE_PROMPT
+                st.caption("Using default base prompt.")
+            # ----------------------------------------------------------------------------------------------------------------
 
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
