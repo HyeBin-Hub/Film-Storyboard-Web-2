@@ -1,22 +1,13 @@
 # app.py
+import base64
+import mimetypes
 import streamlit as st
+import requests
 import backend
 
 # =========================================================
-# 0. RunComfy Key/Deployment 로드
-# =========================================================
-if "RUNCOMFY_API_KEY" in st.secrets:
-    api_key = st.secrets["RUNCOMFY_API_KEY"]
-    deployment_id = st.secrets["DEPLOYMENT_ID"]
-else:
-    api_key = st.sidebar.text_input("RunComfy API Key", type="password")
-    deployment_id = st.sidebar.text_input("Deployment ID")
-    if not api_key or not deployment_id:
-        st.sidebar.warning("API Key와 Deployment ID를 입력해주세요.")
-        st.stop()
-
-# =========================================================
 # 1. 페이지 설정 및 디자인 (절대 변경하지 않음)
+#   ⚠️ Streamlit 규칙: set_page_config는 파일 최상단에서 1회 호출 권장
 # =========================================================
 st.set_page_config(
     page_title="Neon Darkroom: Director's Suite",
@@ -110,6 +101,62 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================================================
+# 0. RunComfy Key/Deployment 로드 (UI 변경 없음)
+# =========================================================
+if "RUNCOMFY_API_KEY" in st.secrets:
+    api_key = st.secrets["RUNCOMFY_API_KEY"]
+    deployment_id = st.secrets["DEPLOYMENT_ID"]
+else:
+    api_key = st.sidebar.text_input("RunComfy API Key", type="password")
+    deployment_id = st.sidebar.text_input("Deployment ID")
+    if not api_key or not deployment_id:
+        st.sidebar.warning("API Key와 Deployment ID를 입력해주세요.")
+        st.stop()
+
+# =========================================================
+# (필수) 동작 안정성: busy 플래그 (UI 변화 없음)
+# =========================================================
+if "busy" not in st.session_state:
+    st.session_state.busy = False
+
+def _set_busy(v: bool):
+    st.session_state.busy = v
+
+
+# =========================================================
+# (필수) 외부 URL 403 회피: URL -> data URI 변환
+#   - RunComfy 서버가 외부 URL을 못 가져오는 경우가 많음(Unsplash/위키 등)
+#   - Streamlit 서버가 직접 가져와서 base64로 넘기면 안정적
+# =========================================================
+def _guess_mime_from_url(url: str) -> str:
+    # URL 확장자 기반 추정 (fallback: image/jpeg)
+    t, _ = mimetypes.guess_type(url.split("?", 1)[0])
+    return t or "image/jpeg"
+
+def url_to_data_uri(url: str, timeout: int = 30) -> str:
+    """
+    외부 이미지 URL을 서버에서 다운로드 후 data URI로 변환.
+    - 이미 data:image/... 형태면 그대로 반환.
+    """
+    if not url:
+        return url
+    if url.startswith("data:image/"):
+        return url
+
+    r = requests.get(url, timeout=timeout, stream=True)
+    r.raise_for_status()
+
+    content_type = r.headers.get("Content-Type", "").split(";")[0].strip()
+    if not content_type.startswith("image/"):
+        # 헤더가 이상하면 URL로 추정
+        content_type = _guess_mime_from_url(url)
+
+    b = r.content
+    b64 = base64.b64encode(b).decode("utf-8")
+    return f"data:{content_type};base64,{b64}"
+
+
+# =========================================================
 # 2. 세션 상태 초기화
 # =========================================================
 if "step" not in st.session_state:
@@ -139,7 +186,6 @@ if "final_scene_url" not in st.session_state:
 
 
 def _default_pm_options(idx: int):
-    # 필요하면 idx별 기본값 커스터마이즈 가능
     if idx == 0:
         return {
             "Gender": "Man",
@@ -187,20 +233,17 @@ def _default_pm_options(idx: int):
 
 
 def _ensure_lists(n: int):
-    # pm_options_list
     if len(st.session_state.pm_options_list) < n:
         for i in range(len(st.session_state.pm_options_list), n):
             st.session_state.pm_options_list.append(_default_pm_options(i))
     elif len(st.session_state.pm_options_list) > n:
         st.session_state.pm_options_list = st.session_state.pm_options_list[:n]
 
-    # casting_groups
     if len(st.session_state.casting_groups) < n:
         st.session_state.casting_groups.extend([[] for _ in range(n - len(st.session_state.casting_groups))])
     elif len(st.session_state.casting_groups) > n:
         st.session_state.casting_groups = st.session_state.casting_groups[:n]
 
-    # selected_cast
     if len(st.session_state.selected_cast) < n:
         st.session_state.selected_cast.extend([None for _ in range(n - len(st.session_state.selected_cast))])
     elif len(st.session_state.selected_cast) > n:
@@ -261,11 +304,10 @@ with tab1:
             st.markdown("#### Character Setting")
 
             char_idx = st.session_state.current_char_idx
-            pm_options = st.session_state.pm_options_list[char_idx]  # ✅ 캐릭터별 dict
+            pm_options = st.session_state.pm_options_list[char_idx]
 
             st.caption(f"Editing: Character {char_idx+1} / {st.session_state.num_characters}")
 
-            # ---- 여기부터: 너가 준 UI 블록을 '캐릭터별 key'만 추가해서 그대로 사용 ----
             with st.expander("Portrait Setting"):
                 with st.expander("Gender & Nationality"):
                     pm_options["Gender"] = st.selectbox(
@@ -355,16 +397,14 @@ with tab1:
                         index=hair_lengths.index(cur_hl) if cur_hl in hair_lengths else 0,
                         key=f"hair_len_{char_idx}",
                     )
-            # ---- 여기까지 UI 블록 ----
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            if st.button("🚀 CAST CURRENT CHARACTER", use_container_width=True):
+            if st.button("🚀 CAST CURRENT CHARACTER", use_container_width=True, disabled=st.session_state.busy):
                 try:
+                    _set_busy(True)
                     with st.spinner(f"Casting Character {char_idx+1}... (Switch Mode: 1)"):
-                        # Fixed seed면 캐릭터별로 다르게
                         seed = (fixed_seed + char_idx * 1000) if fixed_seed is not None else None
-
                         imgs = backend.generate_faces(
                             api_key=api_key,
                             deployment_id=deployment_id,
@@ -377,25 +417,26 @@ with tab1:
                         )
 
                     st.session_state.casting_groups[char_idx] = imgs
-                    st.session_state.selected_cast[char_idx] = None  # 생성했으니 선택 초기화
+                    st.session_state.selected_cast[char_idx] = None
                     st.rerun()
                 except Exception as e:
                     st.error(str(e))
+                finally:
+                    _set_busy(False)
 
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("⬅️ PREV CHARACTER", use_container_width=True):
+                if st.button("⬅️ PREV CHARACTER", use_container_width=True, disabled=st.session_state.busy):
                     st.session_state.current_char_idx = max(0, st.session_state.current_char_idx - 1)
                     st.rerun()
             with c2:
-                if st.button("➡️ NEXT CHARACTER", use_container_width=True):
+                if st.button("➡️ NEXT CHARACTER", use_container_width=True, disabled=st.session_state.busy):
                     st.session_state.current_char_idx = min(
                         st.session_state.num_characters - 1,
                         st.session_state.current_char_idx + 1,
                     )
                     st.rerun()
 
-        # ---------------- LEFT: results + selection ----------------
         with col_left:
             st.markdown("#### Casting Result")
 
@@ -414,20 +455,20 @@ with tab1:
 
                         is_selected = (st.session_state.selected_cast[ci] == img_url)
                         label = "✅ SELECTED" if is_selected else f"✅ SELECT (CHAR {ci+1} / #{si+1})"
-                        if st.button(label, key=f"sel_{ci}_{si}"):
+                        if st.button(label, key=f"sel_{ci}_{si}", disabled=st.session_state.busy):
                             st.session_state.selected_cast[ci] = img_url
                             st.rerun()
 
             st.markdown("---")
             if _all_selected():
-                if st.button("➡️ PROCEED TO STEP2", use_container_width=True):
+                if st.button("➡️ PROCEED TO STEP2", use_container_width=True, disabled=st.session_state.busy):
                     st.session_state.step = 2
                     st.rerun()
             else:
                 st.info("각 Character마다 1장씩 선택해주세요.")
 
 # ----------------------------
-# Step2 (Apply Outfit) - 모든 캐릭터 처리
+# Step2
 # ----------------------------
 with tab2:
     if st.session_state.step != 2:
@@ -452,8 +493,9 @@ with tab2:
                 "white background, white t-shirt, black pants, yellow sneakers",
                 height=160,
             )
-            if st.button("👗 APPLY OUTFIT (ALL)", use_container_width=True):
+            if st.button("👗 APPLY OUTFIT (ALL)", use_container_width=True, disabled=st.session_state.busy):
                 try:
+                    _set_busy(True)
                     with st.spinner("Fitting room... (Switch Mode: 2)"):
                         final_urls = [None] * n
                         for i in range(n):
@@ -472,6 +514,8 @@ with tab2:
                     st.rerun()
                 except Exception as e:
                     st.error(str(e))
+                finally:
+                    _set_busy(False)
 
         with col_result:
             st.markdown("#### Fitted Results")
@@ -481,14 +525,14 @@ with tab2:
                         st.image(u, use_container_width=True, caption=f"Final Character {i+1}")
 
                 if all(u is not None for u in st.session_state.final_character_urls):
-                    if st.button("✨ CONFIRM & GO TO SET", use_container_width=True):
+                    if st.button("✨ CONFIRM & GO TO SET", use_container_width=True, disabled=st.session_state.busy):
                         st.session_state.step = 3
                         st.rerun()
             else:
                 st.info("의상 프롬프트 입력 후 실행하세요.")
 
 # ----------------------------
-# Step3 (Scene) - char1/char2 + background
+# Step3 (Scene)
 # ----------------------------
 with tab3:
     if st.session_state.step != 3:
@@ -522,24 +566,36 @@ with tab3:
                 "소년과 소녀가 카메라 오른쪽 방향으로 나란히 걸어가고 있습니다.",
                 height=140,
             )
-            if st.button("🎬 ACTION! (Generate Scene)", use_container_width=True):
+            if st.button("🎬 ACTION! (Generate Scene)", use_container_width=True, disabled=st.session_state.busy):
                 try:
                     if not char1_url:
                         st.error("Character 1이 없습니다. Step2 전신 생성이 필요합니다.")
                     else:
+                        _set_busy(True)
+
+                        # ✅ (필수) bg_url을 data URI로 변환해서 RunComfy 서버 403 회피
+                        # UI는 그대로, backend로 넘어가는 값만 안전하게 바꿈
+                        bg_input = bg_url
+                        if bg_input and bg_input.startswith(("http://", "https://")):
+                            with st.spinner("Fetching background image..."):
+                                bg_input = url_to_data_uri(bg_input)
+
                         with st.spinner("Shooting the scene... (Switch Mode: 3)"):
                             imgs = backend.generate_scene(
                                 char1_url=char1_url,
                                 char2_url=char2_url,
-                                bg_url=bg_url,
+                                bg_url=bg_input,          # ✅ 변환된 data URI or 기존 값
                                 story_prompt=story_prompt,
                                 api_key=api_key,
                                 deployment_id=deployment_id,
                             )
+
                         st.session_state.final_scene_url = imgs[0] if imgs else None
                         st.rerun()
                 except Exception as e:
                     st.error(str(e))
+                finally:
+                    _set_busy(False)
 
         with col_final:
             st.markdown("#### 🏁 Final Cut")
