@@ -134,6 +134,26 @@ if "final_scene_url" not in st.session_state:
 DEFAULT_W = 896
 DEFAULT_H = 1152
 
+def _ensure_lists(n: int):
+    # pm_options_list
+    if len(st.session_state.pm_options_list) < n:
+        for i in range(len(st.session_state.pm_options_list), n):
+            st.session_state.pm_options_list.append(_default_pm_options(i))
+    elif len(st.session_state.pm_options_list) > n:
+        st.session_state.pm_options_list = st.session_state.pm_options_list[:n]
+
+    # casting_groups
+    if len(st.session_state.casting_groups) < n:
+        st.session_state.casting_groups.extend([[] for _ in range(n - len(st.session_state.casting_groups))])
+    elif len(st.session_state.casting_groups) > n:
+        st.session_state.casting_groups = st.session_state.casting_groups[:n]
+
+    # selected_cast
+    if len(st.session_state.selected_cast) < n:
+        st.session_state.selected_cast.extend([None for _ in range(n - len(st.session_state.selected_cast))])
+    elif len(st.session_state.selected_cast) > n:
+        st.session_state.selected_cast = st.session_state.selected_cast[:n]
+
 # ========================================================================
 #                           5. 메인 화면 (탭 구성)
 # ========================================================================
@@ -164,6 +184,21 @@ with tab1:
         with col_right:
             st.markdown("#### Advanced Setting")
 
+            n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
+            shots = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
+
+            st.session_state.num_characters = int(n_chars)
+            st.session_state.shots_per_character = int(shots)
+
+            _ensure_lists(st.session_state.num_characters)
+            st.session_state.current_char_idx = min(st.session_state.current_char_idx, st.session_state.num_characters - 1)
+
+            seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
+            fixed_seed = st.number_input("Fixed seed", min_value=0, value=42, step=1) if seed_mode == "Fixed" else None
+
+            use_custom_prompt = st.checkbox("Use custom base prompt", value=False)
+            base_prompt = st.text_area("Base Prompt", DEFAULT_BASE_PROMPT, height=120) if use_custom_prompt else DEFAULT_BASE_PROMPT
+
             # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
             DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
 
@@ -183,6 +218,11 @@ with tab1:
             # ------------------------------ Character Setting UI (ADD) ------------------------------
             st.markdown("### Character Setting")
             st.caption("Editing Character")
+
+            char_idx = st.session_state.current_char_idx
+            pm_options = st.session_state.pm_options_list[char_idx]  # ✅ 캐릭터별 dict
+
+            st.caption(f"Editing: Character {char_idx+1} / {st.session_state.num_characters}")
 
             # pm_options / char_idx 준비 (ADD)
             char_idx = 1
