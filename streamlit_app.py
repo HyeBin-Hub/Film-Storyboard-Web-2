@@ -343,6 +343,12 @@ with tab1:
                 try:
                     with st.spinner("Casting in progress... \n (Switch Mode: 1)"):
                         for char_i in range(num_characters):
+
+                            # seed 결정
+                            seed_value = None
+                            if seed_mode == "Fixed":
+                                seed_value = backend.derive_seed(fixed_seed, char_i)  # fixed_seed + char_i
+
                             imgs = backend.generate_faces(
                                 base_prompt=base_prompt,
                                 api_key=api_key,
@@ -350,6 +356,8 @@ with tab1:
                                 width=DEFAULT_W,
                                 height=DEFAULT_H,
                                 batch_size=batch_size,
+                                seed=seed_value,  # ✅ 추가
+                                
                             )
                             st.session_state.generated_faces_by_char[char_i] = imgs or []
                     st.rerun()
@@ -449,11 +457,19 @@ with tab2:
                 if st.button("👗 APPLY OUTFIT", use_container_width=True, key=f"apply_outfit_{char_i}"):
                     try:
                         with st.spinner("Fitting room... \n (Switch Mode: 2)"):
+
+                            # seed 결정
+                            seed_value = None
+                            if st.session_state.get("seed_mode") == "Fixed":
+                                fixed_seed = st.session_state.get("fixed_seed", 12345)
+                                seed_value = backend.derive_seed(fixed_seed + 1000, char_i)  # ✅ Step1과 분리
+
                             res = backend.generate_full_body(
                                 face_url=selected[char_i],
                                 outfit_prompt=outfit_prompt,
                                 api_key=api_key,
                                 deployment_id=deployment_id,
+                                seed=seed_value,  # ✅ 추가
                             )
                         if res:
                             st.session_state.final_character_urls[char_i] = res[0]
@@ -539,6 +555,13 @@ with tab3:
             if st.button("🎬 ACTION! (Generate Scene)", use_container_width=True, key="generate_scene"):
                 try:
                     with st.spinner("Shooting the scene... (Switch Mode: 3)"):
+                        
+                        # seed 결정
+                        seed_value = None
+                        if st.session_state.get("seed_mode") == "Fixed":
+                            fixed_seed = st.session_state.get("fixed_seed", 12345)
+                            seed_value = fixed_seed + 2000  # ✅ Step1/2와 분리
+
                         final_imgs = backend.generate_scene(
                             char1_url=char1_url,
                             char2_url=char2_url,
@@ -546,6 +569,7 @@ with tab3:
                             story_prompt=story_prompt,
                             api_key=api_key,
                             deployment_id=deployment_id,
+                            seed=seed_value,  # ✅ 추가
                         )
                     if final_imgs:
                         st.session_state.final_scene_url = final_imgs[0]
