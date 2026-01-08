@@ -342,19 +342,17 @@ with tab1:
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
                     with st.spinner("Casting in progress... \n (Switch Mode: 1)"):
-                        imgs = backend.generate_faces(
-                            base_prompt=base_prompt,
-                            api_key=api_key,
-                            deployment_id=deployment_id,
-                            width=DEFAULT_W,
-                            height=DEFAULT_H,
-                            batch_size=batch_size,
-                        )
-                    if imgs:
-                        st.session_state.generated_faces_by_char[0] = imgs
-                        st.rerun()
-                    else:
-                        st.warning("이미지 URL을 받지 못했습니다. RunComfy result outputs를 확인하세요.")
+                        for char_i in range(num_characters):
+                            imgs = backend.generate_faces(
+                                base_prompt=base_prompt,
+                                api_key=api_key,
+                                deployment_id=deployment_id,
+                                width=DEFAULT_W,
+                                height=DEFAULT_H,
+                                batch_size=batch_size,
+                            )
+                            st.session_state.generated_faces_by_char[char_i] = imgs or []
+                    st.rerun()
                 except Exception as e:
                     st.error(str(e))
 
@@ -448,7 +446,7 @@ with tab2:
                 st.session_state.outfit_prompts[char_i] = outfit_prompt
     
                 st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("👗 APPLY OUTFIT", use_container_width=True):
+                if st.button("👗 APPLY OUTFIT", use_container_width=True, key=f"apply_outfit_{char_i}"):
                     try:
                         with st.spinner("Fitting room... \n (Switch Mode: 2)"):
                             res = backend.generate_full_body(
