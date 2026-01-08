@@ -144,9 +144,19 @@ if "outfit_prompts" not in st.session_state:
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
-# 캐릭터 옵션 저장소 (선택)
-if "pm_options" not in st.session_state:
-    st.session_state.pm_options = {}
+# # 캐릭터 옵션 저장소 (선택)
+# if "pm_options" not in st.session_state:
+#     st.session_state.pm_options = {}
+
+# Step1: 현재 편집/생성 중인 캐릭터 인덱스 (0-based)
+if "current_char_idx" not in st.session_state:
+    st.session_state.current_char_idx = 0
+
+# 캐릭터별 Portrait 옵션 저장소
+# List[Dict[str, Any]]
+if "pm_options_by_char" not in st.session_state:
+    st.session_state.pm_options_by_char = []
+
 
 
 # ========================================================================
@@ -171,243 +181,253 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # ---------------------------------------------------------
 # [TAB 1] Step1: 얼굴 생성
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# [TAB 1] Step1: 얼굴 생성 (순차 캐릭터 캐스팅)
+# ---------------------------------------------------------
 with tab1:
-    # 현재 단계가 1이 아니라면 "✅ Step 1 Completed"를 보여줍니다.
     if st.session_state.step != 1:
         st.success("✅ Step 1 Completed")
-        
-    # 현재 단계가 1일 때만 “얼굴 생성 UI”를 보여줍니다.
+
     if st.session_state.step == 1:
-        
         st.markdown("### 1. Define Your Actor Profile")
 
         col_left, col_right = st.columns([3, 1])
-        
+
         # ============================
-        # Right: Advanced Setting
+        # Right: Advanced + Navigator + Portrait Setting
         # ============================
         with col_right:
             st.markdown("#### Advanced Setting")
-            st.caption("Advanced Setting")
 
             with st.expander("Advanced Setting", expanded=True):
-
                 num_characters = st.slider("Number of Characters", 1, 2, 2, key="num_characters")
                 shots_per_character = st.slider("Shots per Character", 1, 4, 2, key="shots_per_character")
-
-                # ✅ 여기에 추가
                 batch_size = shots_per_character
-    
+
                 seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0, key="seed_mode")
                 if seed_mode == "Fixed":
-                    fixed_seed = st.number_input("Fixed Seed", min_value=0, max_value=2**31-1, value=12345, step=1, key="fixed_seed")
+                    fixed_seed = st.number_input(
+                        "Fixed Seed",
+                        min_value=0, max_value=2**31-1,
+                        value=12345, step=1,
+                        key="fixed_seed"
+                    )
 
                 st.markdown("<hr style='margin:6px 0; border:10; border-top:1px solid #333;'>", unsafe_allow_html=True)
 
-                # 길이 맞추기
-                while len(st.session_state.generated_faces_by_char) < num_characters:
-                    st.session_state.generated_faces_by_char.append([])
-                while len(st.session_state.selected_face_urls) < num_characters:
-                    st.session_state.selected_face_urls.append(None)
-                while len(st.session_state.final_character_urls) < num_characters:
-                    st.session_state.final_character_urls.append(None)
-                while len(st.session_state.outfit_prompts) < num_characters:
-                    st.session_state.outfit_prompts.append("")
-    
-                # 캐릭터 수 줄였을 때 잘라내기
-                st.session_state.generated_faces_by_char = st.session_state.generated_faces_by_char[:num_characters]
-                st.session_state.selected_face_urls = st.session_state.selected_face_urls[:num_characters]
-                st.session_state.final_character_urls = st.session_state.final_character_urls[:num_characters]
-                st.session_state.outfit_prompts = st.session_state.outfit_prompts[:num_characters]
-
-                
-                # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
                 DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
-    
                 use_custom_base_prompt = st.checkbox("Use custom base prompt", value=False)
-                
+
                 if use_custom_base_prompt:
-                    base_prompt = st.text_area(
-                        "Base Portrait Prompt",
-                        DEFAULT_BASE_PROMPT,
-                        height=140
-                    )
+                    base_prompt = st.text_area("Base Portrait Prompt", DEFAULT_BASE_PROMPT, height=140)
                 else:
                     base_prompt = DEFAULT_BASE_PROMPT
                     st.caption("Using default base prompt.")
-                # ----------------------------------------------------------------------------------------------------------------
 
-            # ------------------------------ Character Setting UI (ADD) ------------------------------
-            
-            # =============================================
-            # (선택) Character Setting UI (현재는 1명만 편집)
-            # =============================================
-            st.markdown("### Character Setting")
-            st.caption("Editing Character")
+            # ---- 길이 맞추기 (캐릭터 수 변경 대응) ----
+            # faces
+            while len(st.session_state.generated_faces_by_char) < num_characters:
+                st.session_state.generated_faces_by_char.append([])
+            st.session_state.generated_faces_by_char = st.session_state.generated_faces_by_char[:num_characters]
 
-            # pm_options / char_idx 준비 (ADD)
-            char_idx = 1
-            pm_options = st.session_state.pm_options
-            
+            # selected
+            while len(st.session_state.selected_face_urls) < num_characters:
+                st.session_state.selected_face_urls.append(None)
+            st.session_state.selected_face_urls = st.session_state.selected_face_urls[:num_characters]
+
+            # pm options
+            while len(st.session_state.pm_options_by_char) < num_characters:
+                st.session_state.pm_options_by_char.append({})
+            st.session_state.pm_options_by_char = st.session_state.pm_options_by_char[:num_characters]
+
+            # current index clamp
+            if st.session_state.current_char_idx >= num_characters:
+                st.session_state.current_char_idx = num_characters - 1
+
+            cur = st.session_state.current_char_idx  # 0-based
+            pm_options = st.session_state.pm_options_by_char[cur]
+
+            # ============================
+            # Navigator: Prev / Next
+            # ============================
+            st.markdown("### Character Navigator")
+            nav1, nav2 = st.columns(2)
+
+            with nav1:
+                if st.button("⬅️ PREV\nCHARACTER", use_container_width=True, disabled=(cur == 0), key="prev_char"):
+                    st.session_state.current_char_idx = max(0, cur - 1)
+                    st.rerun()
+
+            with nav2:
+                if st.button("NEXT\nCHARACTER ➡️", use_container_width=True, disabled=(cur == num_characters - 1), key="next_char"):
+                    st.session_state.current_char_idx = min(num_characters - 1, cur + 1)
+                    st.rerun()
+
+            st.caption(f"Editing: Character {cur + 1} / {num_characters}")
+
+            # ============================
+            # Portrait Setting (현재 캐릭터만 편집)
+            # ============================
+            st.markdown("### Portrait Setting")
 
             with st.expander("Portrait Setting", expanded=True):
-            
                 with st.expander("Gender & Nationality"):
                     pm_options["Gender"] = st.selectbox(
                         "Gender", ["Man", "Woman"],
                         index=["Man", "Woman"].index(pm_options.get("Gender", "Man")),
-                        key=f"gender_{char_idx}",
+                        key=f"gender_{cur}",
                     )
                     nat_list = ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"]
                     cur_nat = pm_options.get("Nationality", "Korean")
                     pm_options["Nationality"] = st.selectbox(
                         "Nationality", nat_list,
                         index=nat_list.index(cur_nat) if cur_nat in nat_list else nat_list.index("Korean"),
-                        key=f"nat_{char_idx}",
+                        key=f"nat_{cur}",
                     )
                     pm_options["age"] = st.number_input(
                         "AGE", 10, 80, int(pm_options.get("age", 25)),
-                        key=f"age_{char_idx}",
+                        key=f"age_{cur}",
                     )
-            
+
                 with st.expander("Face & Body Type"):
                     face_shapes = ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"]
                     cur_face = pm_options.get("Face Shape", "Oval")
                     pm_options["Face Shape"] = st.selectbox(
                         "Face Shape", face_shapes,
                         index=face_shapes.index(cur_face) if cur_face in face_shapes else 0,
-                        key=f"face_{char_idx}",
+                        key=f"face_{cur}",
                     )
                     body_types = ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"]
                     cur_body = pm_options.get("Body Type", "Fit")
                     pm_options["Body Type"] = st.selectbox(
                         "Body Type", body_types,
                         index=body_types.index(cur_body) if cur_body in body_types else body_types.index("Fit"),
-                        key=f"body_{char_idx}",
+                        key=f"body_{cur}",
                     )
-            
+
                 with st.expander("Eyes Type"):
                     eye_colors = ["Albino","Amber","Blue","Brown","Green","Gray","Hazel","Heterochromia","Red","Violet"]
                     cur_ec = pm_options.get("Eyes Color", "Brown")
                     pm_options["Eyes Color"] = st.selectbox(
                         "Eyes Color", eye_colors,
                         index=eye_colors.index(cur_ec) if cur_ec in eye_colors else eye_colors.index("Brown"),
-                        key=f"eye_color_{char_idx}",
+                        key=f"eye_color_{cur}",
                     )
                     eye_shapes = ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"]
                     cur_es = pm_options.get("Eyes Shape", "Monolid Eyes Shape")
                     pm_options["Eyes Shape"] = st.selectbox(
                         "Eyes Shape", eye_shapes,
                         index=eye_shapes.index(cur_es) if cur_es in eye_shapes else 0,
-                        key=f"eye_shape_{char_idx}",
+                        key=f"eye_shape_{cur}",
                     )
-            
+
                 with st.expander("Lips Type"):
                     lips_colors = ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"]
                     cur_lc = pm_options.get("Lips Color", "Berry Lips")
                     pm_options["Lips Color"] = st.selectbox(
                         "Lips Color", lips_colors,
                         index=lips_colors.index(cur_lc) if cur_lc in lips_colors else 0,
-                        key=f"lips_color_{char_idx}",
+                        key=f"lips_color_{cur}",
                     )
                     lips_shapes = ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"]
                     cur_ls = pm_options.get("Lips Shape", "Thin Lips")
                     pm_options["Lips Shape"] = st.selectbox(
                         "Lips Shape", lips_shapes,
                         index=lips_shapes.index(cur_ls) if cur_ls in lips_shapes else 1,
-                        key=f"lips_shape_{char_idx}",
+                        key=f"lips_shape_{cur}",
                     )
-            
+
                 with st.expander("Hair Style"):
                     hair_styles = ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"]
                     cur_hs = pm_options.get("Hair Style", "Buzz")
                     pm_options["Hair Style"] = st.selectbox(
                         "Hair Style", hair_styles,
                         index=hair_styles.index(cur_hs) if cur_hs in hair_styles else 1,
-                        key=f"hair_style_{char_idx}",
+                        key=f"hair_style_{cur}",
                     )
                     hair_colors = ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"]
                     cur_hc = pm_options.get("Hair Color", "Black")
                     pm_options["Hair Color"] = st.selectbox(
                         "Hair Color", hair_colors,
                         index=hair_colors.index(cur_hc) if cur_hc in hair_colors else 0,
-                        key=f"hair_color_{char_idx}",
+                        key=f"hair_color_{cur}",
                     )
                     hair_lengths = ["Short","Medium","Long"]
                     cur_hl = pm_options.get("Hair Length", "Short")
                     pm_options["Hair Length"] = st.selectbox(
                         "Hair Length", hair_lengths,
                         index=hair_lengths.index(cur_hl) if cur_hl in hair_lengths else 0,
-                        key=f"hair_len_{char_idx}",
+                        key=f"hair_len_{cur}",
                     )
-            # ------------------------------ Character Setting UI (END) ------------------------------
 
             # ============================
-            # CASTING START (현재: Character 1만 생성)
+            # Generate Faces (현재 캐릭터만 생성)
             # ============================
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
+
+            if st.button("🚀 GENERATE FACES\n(Current Character)", use_container_width=True, key="gen_faces_cur"):
                 try:
-                    with st.spinner("Casting in progress... \n (Switch Mode: 1)"):
-                        for char_i in range(num_characters):
+                    with st.spinner(f"Casting in progress... (Character {cur+1})"):
+                        seed_value = None
+                        if st.session_state.get("seed_mode") == "Fixed":
+                            fixed_seed = st.session_state.get("fixed_seed", 12345)
+                            seed_value = backend.derive_seed(fixed_seed, cur)
 
-                            # seed 결정
-                            seed_value = None
-                            if seed_mode == "Fixed":
-                                seed_value = backend.derive_seed(fixed_seed, char_i)  # fixed_seed + char_i
-
-                            imgs = backend.generate_faces(
-                                base_prompt=base_prompt,
-                                api_key=api_key,
-                                deployment_id=deployment_id,
-                                width=DEFAULT_W,
-                                height=DEFAULT_H,
-                                batch_size=batch_size,
-                                seed=seed_value,  # ✅ 추가
-                                
-                            )
-                            st.session_state.generated_faces_by_char[char_i] = imgs or []
+                        imgs = backend.generate_faces(
+                            base_prompt=base_prompt,
+                            api_key=api_key,
+                            deployment_id=deployment_id,
+                            width=DEFAULT_W,
+                            height=DEFAULT_H,
+                            batch_size=batch_size,
+                            seed=seed_value,
+                        )
+                        st.session_state.generated_faces_by_char[cur] = imgs or []
                     st.rerun()
                 except Exception as e:
                     st.error(str(e))
 
         # ============================
-        # Left: Casting Result (num_characters만큼 출력)
+        # Left: 현재 캐릭터의 후보 + 선택
         # ============================
         with col_left:
-            st.markdown("#### Casting Result")
+            cur = st.session_state.current_char_idx
+            st.markdown(f"#### Casting Result — Character {cur+1}")
 
-            for char_i in range(num_characters):
-                st.markdown(f"**Character {char_i+1}**")
+            faces = st.session_state.generated_faces_by_char[cur]
+            if faces:
+                cols = st.columns(2)
+                for i, img_url in enumerate(faces):
+                    with cols[i % 2]:
+                        st.image(img_url, use_container_width=True)
 
-                faces = st.session_state.generated_faces_by_char[char_i]
+                        if st.button(f"✅ Select Actor {i+1}", key=f"sel_{cur}_{i}"):
+                            st.session_state.selected_face_urls[cur] = img_url
 
-                if faces:
-                    cols = st.columns(2)
-                    for i, img_url in enumerate(faces):
-                        with cols[i%2]:
-                            st.image(img_url, use_container_width=True)
-                            if st.button(f"✅ Select Actor {i+1}", key=f"sel_{char_i}_{i}"):
-                                st.session_state.selected_face_urls[char_i] = img_url
-
-                                # 전원 선택 완료 → Step2 이동
+                            # 다음 캐릭터로 자동 이동(마지막이면 Step2)
+                            if cur < st.session_state.get("num_characters", 1) - 1:
+                                st.session_state.current_char_idx = cur + 1
+                            else:
+                                # 전원 선택 완료면 Step2
                                 if all(st.session_state.selected_face_urls):
                                     st.session_state.step = 2
-                                st.rerun()
-                else:
-                    st.info("No footage available for this character.")
-                    
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.info("각 Character마다 1장씩 선택해주세요.")
+                            st.rerun()
+            else:
+                st.info("No footage available. Generate faces for this character.")
 
-    # Step1이 끝난 상태(= step != 1)일 때, 선택 결과 요약 표시
+            # 상태 요약(선택 여부)
+            st.markdown("---")
+            st.markdown("#### Selection Status")
+            n = st.session_state.get("num_characters", 1)
+            for idx in range(n):
+                status = "✅ Selected" if st.session_state.selected_face_urls[idx] else "— Not selected"
+                st.caption(f"Character {idx+1}: {status}")
+
     else:
+        # Step1 완료 요약
         st.success("✅ Actor Selected")
-
-        # num_characters는 Step1 UI에서만 생기므로 세션에서 가져오거나 기본값 사용
         n = st.session_state.get("num_characters", 2)
         selected = st.session_state.get("selected_face_urls", [])
-
         cols = st.columns(n)
         for i in range(n):
             with cols[i]:
@@ -416,6 +436,7 @@ with tab1:
                     st.image(url, use_container_width=True, caption=f"Character {i+1}")
                 else:
                     st.caption(f"Character {i+1}: Not selected")
+
 
 # ---------------------------------------------------------
 # [TAB 2] Step 2: 전신 생성 - 다중 캐릭
