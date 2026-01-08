@@ -2,7 +2,9 @@
 import streamlit as st
 import backend
 
-# 1. secrets.toml 파일에서 먼저 찾아봄
+# ========================================================================
+#        1. secrets.toml 파일에서 API Key / Deployment ID 찾아봄
+# ========================================================================
 if "RUNCOMFY_API_KEY" in st.secrets:
     api_key = st.secrets["RUNCOMFY_API_KEY"]
     deployment_id = st.secrets["DEPLOYMENT_ID"]
@@ -13,9 +15,9 @@ else:
         st.sidebar.warning("API Key와 Deployment ID를 입력해주세요.")
         st.stop()
 
-# =========================================================
-# 1. 페이지 설정 및 디자인
-# =========================================================
+# ========================================================================
+#                       2. 페이지 설정 및 디자인
+# ========================================================================
 st.set_page_config(
     page_title="Neon Darkroom: Director's Suite",
     page_icon="🎬",
@@ -107,49 +109,86 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
-# 2. 세션 상태 초기화
-# =========================================================
+# ========================================================================
+#                      3. 세션 상태 초기화 (앱 상태 유지)
+# ========================================================================
+# 현재 단계(1~3)를 저장 - 최초 실행은 1로 시작 
 if "step" not in st.session_state:
     st.session_state.step = 1
+# 얼굴 후보 이미지 URL 리스트(예정: 2장)
 if "generated_faces" not in st.session_state:
     st.session_state.generated_faces = []
+# 사용자가 선택한 얼굴 1장의 URL
 if "selected_face_url" not in st.session_state:
     st.session_state.selected_face_url = None
+# 의상 적용 후 전신 캐릭터 1장의 URL
 if "final_character_url" not in st.session_state:
     st.session_state.final_character_url = None
+# 최종 씬 결과 이미지 1장의 URL
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
-# =========================================================
-# 3. 상수 (기본값)
-# =========================================================
+# ========================================================================
+#                             4. 상수 (기본값) 
+# ========================================================================
 DEFAULT_W = 896
 DEFAULT_H = 1152
 
-# =========================================================
-# 4. 메인 화면 (탭 구성)
-# =========================================================
+# ========================================================================
+#                           5. 메인 화면 (탭 구성)
+# ========================================================================
 st.header("🎬 Cinematic Storyboard AI")
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "Step1 | 👤 CHARACTER PROFILE",
-    "Step2 | 👗 CLOTHING TRANSLATE",
-    "Step3 | 🏞️ BACKGROUND GENERATION",
-    "Step4 | 📝 SCRIPT"
+    "Step2 | 👗 APPLY OUTFIT",
+    "Step3 | 🏞️ BACKGROUND",
+    "Step4 | 📝 STORYBOARD SCRIPT"
 ])
 
+
+# ========================================================================
+
+
+def _ensure_lists(n: int):
+    # pm_options_list
+    if len(st.session_state.pm_options_list) < n:
+        for i in range(len(st.session_state.pm_options_list), n):
+            st.session_state.pm_options_list.append(_default_pm_options(i))
+    elif len(st.session_state.pm_options_list) > n:
+        st.session_state.pm_options_list = st.session_state.pm_options_list[:n]
+
+    # casting_groups
+    if len(st.session_state.casting_groups) < n:
+        st.session_state.casting_groups.extend([[] for _ in range(n - len(st.session_state.casting_groups))])
+    elif len(st.session_state.casting_groups) > n:
+        st.session_state.casting_groups = st.session_state.casting_groups[:n]
+
+    # selected_cast
+    if len(st.session_state.selected_cast) < n:
+        st.session_state.selected_cast.extend([None for _ in range(n - len(st.session_state.selected_cast))])
+    elif len(st.session_state.selected_cast) > n:
+        st.session_state.selected_cast = st.session_state.selected_cast[:n]
+
+
 # ---------------------------------------------------------
-# [TAB 1] 얼굴 생성
+# [TAB 1] Step1: 얼굴 생성
 # ---------------------------------------------------------
 with tab1:
+    # 현재 단계가 1이 아니라면 "✅ Step 1 Completed"를 보여줍니다.
+    if st.session_state.step != 1:
+        st.success("✅ Step 1 Completed")
+        
+    # 현재 단계가 1일 때만 “얼굴 생성 UI”를 보여줍니다.
     if st.session_state.step == 1:
+        
         st.markdown("### 1. Define Your Actor Profile")
 
         col_left, col_right = st.columns([3, 1])
 
         with col_right:
             st.markdown("#### Advanced Setting")
+            
             batch_size = st.slider("Number of Images", 1, 4, 2)
 
             base_prompt = st.text_area(
