@@ -180,6 +180,110 @@ with tab1:
                 st.caption("Using default base prompt.")
             # ----------------------------------------------------------------------------------------------------------------
 
+            # ------------------------------ Character Setting UI (ADD) ------------------------------
+            st.markdown("### Character Setting")
+            st.caption("Editing Character")
+
+            # pm_options / char_idx 준비 (ADD)
+            char_idx = 1
+            if "pm_options" not in st.session_state:
+                st.session_state.pm_options = {}
+            
+            pm_options = st.session_state.pm_options
+
+            with st.expander("Portrait Setting", expanded=True):
+            
+                with st.expander("Gender & Nationality"):
+                    pm_options["Gender"] = st.selectbox(
+                        "Gender", ["Man", "Woman"],
+                        index=["Man", "Woman"].index(pm_options.get("Gender", "Man")),
+                        key=f"gender_{char_idx}",
+                    )
+                    nat_list = ["Chinese","Japanese","Korean","South Korean","Indian","Saudi","British","French","German","Italian","Spanish","American","Canadian","Brazilian","Mexican","Argentine","Egyptian","South African","Nigerian","Kenyan","Moroccan","Australian","New Zealander","Fijian","Samoan","Tongan"]
+                    cur_nat = pm_options.get("Nationality", "Korean")
+                    pm_options["Nationality"] = st.selectbox(
+                        "Nationality", nat_list,
+                        index=nat_list.index(cur_nat) if cur_nat in nat_list else nat_list.index("Korean"),
+                        key=f"nat_{char_idx}",
+                    )
+                    pm_options["age"] = st.number_input(
+                        "AGE", 10, 80, int(pm_options.get("age", 25)),
+                        key=f"age_{char_idx}",
+                    )
+            
+                with st.expander("Face & Body Type"):
+                    face_shapes = ["Oval","Round","Square","Heart","Diamond","Triangle","Inverted Triangle","Pear","Rectangle","Oblong","Long"]
+                    cur_face = pm_options.get("Face Shape", "Oval")
+                    pm_options["Face Shape"] = st.selectbox(
+                        "Face Shape", face_shapes,
+                        index=face_shapes.index(cur_face) if cur_face in face_shapes else 0,
+                        key=f"face_{char_idx}",
+                    )
+                    body_types = ["Chubby","Curvy","Fat","Fit","Hefty","Large","Lanky","Muscular","Obese","Overweight","Petite","Plump","Short","Skinny","Slight","Slim","Small","Stout","Stocky","Tall","Thick","Tiny","Underweight","Well-built"]
+                    cur_body = pm_options.get("Body Type", "Fit")
+                    pm_options["Body Type"] = st.selectbox(
+                        "Body Type", body_types,
+                        index=body_types.index(cur_body) if cur_body in body_types else body_types.index("Fit"),
+                        key=f"body_{char_idx}",
+                    )
+            
+                with st.expander("Eyes Type"):
+                    eye_colors = ["Albino","Amber","Blue","Brown","Green","Gray","Hazel","Heterochromia","Red","Violet"]
+                    cur_ec = pm_options.get("Eyes Color", "Brown")
+                    pm_options["Eyes Color"] = st.selectbox(
+                        "Eyes Color", eye_colors,
+                        index=eye_colors.index(cur_ec) if cur_ec in eye_colors else eye_colors.index("Brown"),
+                        key=f"eye_color_{char_idx}",
+                    )
+                    eye_shapes = ["Almond Eyes Shape","Asian Eyes Shape","Close-Set Eyes Shape","Deep Set Eyes Shape","Downturned Eyes Shape","Double Eyelid Eyes Shape","Hooded Eyes Shape","Monolid Eyes Shape","Oval Eyes Shape","Protruding Eyes Shape","Round Eyes Shape","Upturned Eyes Shape"]
+                    cur_es = pm_options.get("Eyes Shape", "Monolid Eyes Shape")
+                    pm_options["Eyes Shape"] = st.selectbox(
+                        "Eyes Shape", eye_shapes,
+                        index=eye_shapes.index(cur_es) if cur_es in eye_shapes else 0,
+                        key=f"eye_shape_{char_idx}",
+                    )
+            
+                with st.expander("Lips Type"):
+                    lips_colors = ["Berry Lips","Black Lips","Blue Lips","Brown Lips","Burgundy Lips","Coral Lips","Glossy Red Lips","Mauve Lips","Orange Lips","Peach Lips","Pink Lips","Plum Lips","Purple Lips","Red Lips","Yellow Lips"]
+                    cur_lc = pm_options.get("Lips Color", "Berry Lips")
+                    pm_options["Lips Color"] = st.selectbox(
+                        "Lips Color", lips_colors,
+                        index=lips_colors.index(cur_lc) if cur_lc in lips_colors else 0,
+                        key=f"lips_color_{char_idx}",
+                    )
+                    lips_shapes = ["Full Lips","Thin Lips","Plump Lips","Small Lips","Large Lips","Wide Lips","Round Lips","Heart-shaped Lips","Cupid's Bow Lips"]
+                    cur_ls = pm_options.get("Lips Shape", "Thin Lips")
+                    pm_options["Lips Shape"] = st.selectbox(
+                        "Lips Shape", lips_shapes,
+                        index=lips_shapes.index(cur_ls) if cur_ls in lips_shapes else 1,
+                        key=f"lips_shape_{char_idx}",
+                    )
+            
+                with st.expander("Hair Style"):
+                    hair_styles = ["Bald","Buzz","Crew","Pixie","Bob","Long bob","Long straight","Wavy","Curly","Afro","Faded afro","Braided","Box braids","Cornrows","Dreadlocks","Pigtails","Ponytail","High ponytail","Bangs","Curtain bangs","Side-swept bangs","Mohawk","Faux hawk","Undercut","Pompadour","Quiff","Top Knot","Bun","Updo"]
+                    cur_hs = pm_options.get("Hair Style", "Buzz")
+                    pm_options["Hair Style"] = st.selectbox(
+                        "Hair Style", hair_styles,
+                        index=hair_styles.index(cur_hs) if cur_hs in hair_styles else 1,
+                        key=f"hair_style_{char_idx}",
+                    )
+                    hair_colors = ["Black","Jet Black","Blonde","Platinum","Brown","Chestnut","Auburn","Red","Strawberry","Gray","Silver","White","Salt and pepper"]
+                    cur_hc = pm_options.get("Hair Color", "Black")
+                    pm_options["Hair Color"] = st.selectbox(
+                        "Hair Color", hair_colors,
+                        index=hair_colors.index(cur_hc) if cur_hc in hair_colors else 0,
+                        key=f"hair_color_{char_idx}",
+                    )
+                    hair_lengths = ["Short","Medium","Long"]
+                    cur_hl = pm_options.get("Hair Length", "Short")
+                    pm_options["Hair Length"] = st.selectbox(
+                        "Hair Length", hair_lengths,
+                        index=hair_lengths.index(cur_hl) if cur_hl in hair_lengths else 0,
+                        key=f"hair_len_{char_idx}",
+                    )
+            # ------------------------------ Character Setting UI (END) ------------------------------
+
+            
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
