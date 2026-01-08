@@ -143,31 +143,10 @@ def generate_faces(
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
-        # NODE_SWITCH
         "56": {"inputs": {"select": 1}},
-        # NODE_BASE_PROMPT
         "12": {"inputs": {"text": base_prompt}},
-        # NODE_LATENT
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
-        # NODE_PORTRAIT_KSAMPLER
         "11": {"inputs": {"seed": seed}},
-        # NODE_PORTRAIT_MASTER
-        "3 ": {"inputs": {                                                               
-            "shot": "Half-length portrait",
-            "gender": pm_options.get("Gender", "Woman"),
-            "age": pm_options.get("age", "25"),
-            "nationality_1": pm_options.get("Nationality", "Korean"),
-            "body_type": pm_options.get("Body Type", "Fit"),
-            "eyes_color": pm_options.get("Eyes Color", "Brown"),
-            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
-            "lips_color": pm_options.get("Lips Color", "Red Lips"),
-            "lips_shape": pm_options.get("Lips Shape", "Regulars"),
-            "face_shape": pm_options.get("Face Shape", "Oval"),
-            "hair_style": pm_options.get("Hair Style", "Long straight"),
-            "hair_color": pm_options.get("Hair Color", "Black"),
-            "hair_length": pm_options.get("Hair Length", "Short"),
-        }},
-        
     }
     return run_workflow(api_key, deployment_id, overrides)
 
@@ -188,13 +167,9 @@ def generate_full_body(
     seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
-        # NODE_SWITCH
         "56": {"inputs": {"select": 2}},
-        # NODE_OUTFIT_PROMPT
         "20": {"inputs": {"text": outfit_prompt}},
-        # NODE_FACE_URL
-        "58": {"inputs": {"image": face_url}}, 
-        # NODE_FULLBODY_KSAMPLER
+        "58": {"inputs": {"image": face_url}},  # ✅ URL 주입
         "25": {"inputs": {"seed": seed}},
     }
     return run_workflow(api_key, deployment_id, overrides)
@@ -222,17 +197,11 @@ def generate_scene(
         char2_url = char1_url
 
     overrides: Dict[str, Any] = {
-        # NODE_SWITCH
         "56": {"inputs": {"select": 3}},
-         # NODE_CHAR1_URL
         "59": {"inputs": {"image": char1_url}},
-        # NODE_CHAR2_URL
         "61": {"inputs": {"image": char2_url}},
-        # NODE_BG_URL
         "60": {"inputs": {"image": bg_url}},
-        # NODE_SCENE_TEXT
         "48": {"inputs": {"text": story_prompt}},
-        #  NODE_SCENE_KSAMPLER
         "40": {"inputs": {"seed": seed}},
     }
     return run_workflow(api_key, deployment_id, overrides)
