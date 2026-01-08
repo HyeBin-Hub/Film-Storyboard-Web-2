@@ -381,7 +381,7 @@ with tab1:
                     st.rerun()
     
             with nav2:
-                if st.button("NEXT\nCHARACTER ➡️", use_container_width=True, disabled=(cur == num_characters - 1), key="next_char"):
+                if st.button("➡️ NEXT\nCHARACTER ", use_container_width=True, disabled=(cur == num_characters - 1), key="next_char"):
                     st.session_state.current_char_idx = min(num_characters - 1, cur + 1)
                     st.rerun()
     
