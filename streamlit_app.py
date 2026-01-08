@@ -379,9 +379,11 @@ with tab1:
                 if st.button("⬅️ PREV\nCHARACTER", use_container_width=True, disabled=(cur == 0), key="prev_char"):
                     st.session_state.current_char_idx = max(0, cur - 1)
                     st.rerun()
-    
+
+            disabled_next = (cur == num_characters - 1) or (st.session_state.selected_face_urls[cur] is None)
+
             with nav2:
-                if st.button("➡️ NEXT\nCHARACTER ", use_container_width=True, disabled=(cur == num_characters - 1), key="next_char"):
+                if st.button("➡️ NEXT\nCHARACTER ", use_container_width=True, disabled=disabled_next,, key="next_char"):
                     st.session_state.current_char_idx = min(num_characters - 1, cur + 1)
                     st.rerun()
     
