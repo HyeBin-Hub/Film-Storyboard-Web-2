@@ -1,15 +1,14 @@
-# backend.py (STABLE FINAL VERSION)
+# backend.py
 from __future__ import annotations
 
 import time
 import random
-import base64
-import mimetypes
 import requests
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urlparse
 
 BASE_URL = "https://api.runcomfy.net/prod/v1"
+
 
 # =========================================================
 # HTTP helpers
@@ -20,39 +19,62 @@ def _headers(api_key: str) -> Dict[str, str]:
         "Content-Type": "application/json",
     }
 
+
 def submit_inference(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> str:
     url = f"{BASE_URL}/deployments/{deployment_id}/inference"
-    r = requests.post(url, headers=_headers(api_key), json={"overrides": overrides}, timeout=60)
-    r.raise_for_status()
-    data = r.json()
-    if "request_id" not in data:
-        raise RuntimeError(f"Missing request_id: {data}")
-    return data["request_id"]
+    payload = {"overrides": overrides}
 
-def poll_until_done(
+    r = requests.post(url, headers=_headers(api_key), json=payload, timeout=60)
+    if not r.ok:
+        try:
+            detail = r.json()
+        except Exception:
+            detail = {"raw_text": r.text}
+        raise RuntimeError(f"RunComfy inference error / HTTP {r.status_code} / {detail}")
+
+    data = r.json()
+    request_id = data.get("request_id")
+    if not request_id:
+        raise RuntimeError(f"Missing request_id in response: {data}")
+    return request_id
+
+
+def poll_until_terminal(
     api_key: str,
     deployment_id: str,
     request_id: str,
-    poll_interval_sec: float = 2.0,
+    *,
+    poll_interval_sec: float = 1.5,
     timeout_sec: int = 1800,
-) -> None:
+) -> Dict[str, Any]:
+    """
+    RunComfy status endpoint를 폴링해서 terminal 상태가 될 때까지 기다립니다.
+    terminal: completed / cancelled
+    (주의) completed라고 해도 /result에서 failed가 나올 수 있어 result 검증이 필수입니다.
+    """
     url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status"
     t0 = time.time()
 
+    last_payload: Dict[str, Any] = {}
     while True:
         r = requests.get(url, headers=_headers(api_key), timeout=30)
         r.raise_for_status()
         data = r.json()
-        status = data.get("status")
+        last_payload = data
 
+        status = data.get("status", "")
         if status == "completed":
-            return
+            return data
         if status == "cancelled":
             raise RuntimeError(f"Request cancelled: {data}")
-        if time.time() - t0 > timeout_sec:
-            raise TimeoutError(f"Timeout waiting for request_id={request_id}")
+
+        if (time.time() - t0) > timeout_sec:
+            raise TimeoutError(
+                f"Timeout waiting for request_id={request_id}. Last status payload={last_payload}"
+            )
 
         time.sleep(poll_interval_sec)
+
 
 def fetch_result(api_key: str, deployment_id: str, request_id: str) -> Dict[str, Any]:
     url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/result"
@@ -60,67 +82,128 @@ def fetch_result(api_key: str, deployment_id: str, request_id: str) -> Dict[str,
     r.raise_for_status()
     return r.json()
 
+
 # =========================================================
-# Image helpers
+# URL extraction helpers
 # =========================================================
-_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp")
+_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+
 
 def _looks_like_url(x: Any) -> bool:
     return isinstance(x, str) and x.startswith(("http://", "https://"))
 
+
 def _path_has_image_ext(url: str) -> bool:
-    p = urlparse(url)
-    return any((p.path or "").lower().endswith(ext) for ext in _IMAGE_EXTS)
+    try:
+        p = urlparse(url)
+        path = (p.path or "").lower()
+        return any(path.endswith(ext) for ext in _IMAGE_EXTS)
+    except Exception:
+        u = url.split("?", 1)[0].split("#", 1)[0].lower()
+        return any(u.endswith(ext) for ext in _IMAGE_EXTS)
 
-def url_to_data_uri(url: str) -> str:
-    r = requests.get(url, timeout=30)
-    r.raise_for_status()
-    mime = r.headers.get("Content-Type") or mimetypes.guess_type(url)[0] or "application/octet-stream"
-    b64 = base64.b64encode(r.content).decode("utf-8")
-    return f"data:{mime};base64,{b64}"
 
-def extract_images_from_saveimage(outputs: Dict[str, Any], node_id: str) -> List[str]:
-    node = outputs.get(node_id)
-    if not isinstance(node, dict):
-        return []
-    imgs = node.get("images")
+def _dedup_keep_order(urls: List[str]) -> List[str]:
+    seen: Set[str] = set()
+    out: List[str] = []
+    for u in urls:
+        if u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+def extract_images_from_target_node(outputs: Dict[str, Any], node_id: str) -> Tuple[List[str], Dict[str, Any]]:
+    node_id = str(node_id)
+    debug: Dict[str, Any] = {
+        "target_node_id": node_id,
+        "available_output_keys": list(outputs.keys()) if isinstance(outputs, dict) else None,
+    }
+
+    if not isinstance(outputs, dict) or node_id not in outputs:
+        debug["error"] = "target node not found in outputs"
+        return [], debug
+
+    node_out = outputs.get(node_id)
+    if not isinstance(node_out, dict):
+        debug["error"] = "node_out is not dict"
+        debug["node_out_type"] = type(node_out).__name__
+        return [], debug
+
+    imgs = node_out.get("images")
     if not isinstance(imgs, list):
-        return []
-    urls = [img.get("url") for img in imgs if isinstance(img, dict) and _looks_like_url(img.get("url"))]
-    return list(dict.fromkeys(urls))  # dedup keep order
+        debug["error"] = "node_out has no images list"
+        debug["node_out_keys"] = list(node_out.keys())
+        return [], debug
 
-# =========================================================
-# Workflow runner
-# =========================================================
-def run_workflow(
-    api_key: str,
-    deployment_id: str,
-    overrides: Dict[str, Any],
-    primary_image_node_id: str = "15",
-) -> List[str]:
-    request_id = submit_inference(api_key, deployment_id, overrides)
-    poll_until_done(api_key, deployment_id, request_id)
-    result = fetch_result(api_key, deployment_id, request_id)
+    urls: List[str] = []
+    for img in imgs:
+        if not isinstance(img, dict):
+            continue
+        u = img.get("url")
+        if _looks_like_url(u) and _path_has_image_ext(u):
+            urls.append(u)
 
-    status = result.get("status")
-    if status != "completed":
-        raise RuntimeError(f"Run failed: {result.get('error')}")
-
-    outputs = result.get("outputs")
-    if not isinstance(outputs, dict):
-        raise RuntimeError("No outputs in result")
-
-    urls = extract_images_from_saveimage(outputs, primary_image_node_id)
     if not urls:
-        raise RuntimeError(f"No images written by SaveImage({primary_image_node_id})")
+        debug["images_len"] = len(imgs)
+        if imgs and isinstance(imgs[0], dict):
+            debug["first_image_keys"] = list(imgs[0].keys())
 
+    return _dedup_keep_order(urls), debug
+
+
+def extract_images_from_outputs_any(outputs: Dict[str, Any]) -> List[str]:
+    """
+    fallback: outputs 전체를 순회하며 images[].url 수집
+    """
+    if not isinstance(outputs, dict):
+        return []
+
+    urls: List[str] = []
+    for _, node_out in outputs.items():
+        if not isinstance(node_out, dict):
+            continue
+        imgs = node_out.get("images") or []
+        if not isinstance(imgs, list):
+            continue
+        for img in imgs:
+            if not isinstance(img, dict):
+                continue
+            u = img.get("url")
+            if _looks_like_url(u) and _path_has_image_ext(u):
+                urls.append(u)
+
+    return _dedup_keep_order(urls)
+
+
+def extract_urls_recursive(result_json: Dict[str, Any]) -> List[str]:
+    """
+    마지막 fallback: result JSON 전체를 재귀 탐색해서 이미지 URL처럼 보이는 문자열을 수집
+    """
+    urls: List[str] = []
+    seen: Set[str] = set()
+
+    def walk(x: Any) -> None:
+        if isinstance(x, dict):
+            for v in x.values():
+                walk(v)
+        elif isinstance(x, list):
+            for it in x:
+                walk(it)
+        elif _looks_like_url(x) and _path_has_image_ext(x):
+            if x not in seen:
+                seen.add(x)
+                urls.append(x)
+
+    walk(result_json)
     return urls
 
+
 # =========================================================
-# Node IDs
+# Node IDs (ALIGNED WITH YOUR JSON)
 # =========================================================
 NODE_SWITCH = "56"
-NODE_SAVE_IMAGE = "15"
+NODE_PREVIEW = "63"  # ✅ PreviewImage
 
 # Step1
 NODE_BASE_PROMPT = "12"
@@ -141,8 +224,66 @@ NODE_BG_URL = "60"
 NODE_SCENE_TEXT = "48"
 NODE_SCENE_KSAMPLER = "40"
 
+
 # =========================================================
-# Public APIs
+# Workflow runner (PreviewImage 우선)
+# =========================================================
+def run_workflow(
+    api_key: str,
+    deployment_id: str,
+    overrides: Dict[str, Any],
+    *,
+    primary_image_node_id: str = NODE_PREVIEW,
+) -> List[str]:
+    request_id = submit_inference(api_key, deployment_id, overrides)
+
+    status_payload = poll_until_terminal(api_key, deployment_id, request_id)
+    # status_payload는 참고용. 진짜 성공/실패는 result를 봐야 함.
+    result = fetch_result(api_key, deployment_id, request_id)
+
+    # 1) result가 error를 포함하면 즉시 실패 처리
+    if result.get("error"):
+        raise RuntimeError(
+            "RunComfy returned error in /result. "
+            f"hint={{'request_id': '{request_id}', 'status_payload': {status_payload}, 'error': {result.get('error')}}}"
+        )
+
+    # 2) result.status 자체가 failed인 케이스
+    if result.get("status") and result["status"] != "completed":
+        raise RuntimeError(
+            "RunComfy /result status is not completed. "
+            f"hint={{'request_id': '{request_id}', 'result_status': '{result.get('status')}', 'status_payload': {status_payload}, 'result_keys': {list(result.keys())}}}"
+        )
+
+    outputs = result.get("outputs") or {}
+
+    # ✅ 3) PreviewImage(63)에서 url 우선 추출
+    urls, debug = extract_images_from_target_node(outputs, primary_image_node_id)
+    if urls:
+        return urls
+
+    # 4) fallback: outputs 전체 스캔
+    urls_any = extract_images_from_outputs_any(outputs)
+    if urls_any:
+        return urls_any
+
+    # 5) last fallback: 재귀 탐색
+    urls_recursive = extract_urls_recursive(result)
+    if urls_recursive:
+        return urls_recursive
+
+    raise RuntimeError(
+        "No image urls extracted. "
+        f"hint={{'request_id': '{request_id}', "
+        f"'keys': {list(result.keys())}, "
+        f"'outputs_keys': {list(outputs.keys()) if isinstance(outputs, dict) else None}, "
+        f"'primary_node_debug': {debug}, "
+        f"'status_payload': {status_payload}}}"
+    )
+
+
+# =========================================================
+# Public APIs used by app.py
 # =========================================================
 def generate_faces(
     api_key: str,
@@ -152,33 +293,56 @@ def generate_faces(
     batch_size: int,
     pm_options: Dict[str, Any],
     base_prompt: Optional[str] = None,
+    seed: Optional[int] = None,
 ) -> List[str]:
-    seed = random.randint(1, 10**15)
-    prefix = f"portrait_{seed}_{int(time.time())}"
+    if seed is None:
+        seed = random.randint(1, 10**15)
+    if base_prompt is None:
+        base_prompt = "Grey background, white t-shirt, documentary photograph"
 
-    overrides = {
+    overrides: Dict[str, Any] = {
         NODE_SWITCH: {"inputs": {"select": 1}},
-        NODE_BASE_PROMPT: {"inputs": {"text": base_prompt or "Grey background, portrait"}},
+        NODE_BASE_PROMPT: {"inputs": {"text": base_prompt}},
         NODE_LATENT: {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
         NODE_PORTRAIT_SEED: {"inputs": {"seed": seed}},
         NODE_PORTRAIT_KSAMPLER: {"inputs": {"seed": seed}},
-        NODE_SAVE_IMAGE: {"inputs": {"filename_prefix": prefix}},
-        NODE_PORTRAIT_MASTER: {"inputs": pm_options},
+        NODE_PORTRAIT_MASTER: {"inputs": {
+            "shot": "Half-length portrait",
+            "gender": pm_options.get("Gender", "-"),
+            "age": pm_options.get("age", "-"),
+            "nationality_1": pm_options.get("Nationality", "Korean"),
+            "body_type": pm_options.get("Body Type", "-"),
+            "eyes_color": pm_options.get("Eyes Color", "Brown"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Monolid Eyes Shape"),
+            "lips_color": pm_options.get("Lips Color", "Berry Lips"),
+            "lips_shape": pm_options.get("Lips Shape", "Thin Lips"),
+            "face_shape": pm_options.get("Face Shape", "Square with Soft Jaw"),
+            "hair_style": pm_options.get("Hair Style", "-"),
+            "hair_color": pm_options.get("Hair Color", "Black"),
+            "hair_length": pm_options.get("Hair Length", "Short"),
+        }},
     }
-    return run_workflow(api_key, deployment_id, overrides)
 
-def generate_full_body(face_url: str, outfit_prompt: str, api_key: str, deployment_id: str) -> List[str]:
+    return run_workflow(api_key, deployment_id, overrides, primary_image_node_id=NODE_PREVIEW)
+
+
+def generate_full_body(
+    face_url: str,
+    outfit_prompt: str,
+    api_key: str,
+    deployment_id: str,
+) -> List[str]:
     seed = random.randint(1, 10**15)
-    prefix = f"fullbody_{seed}_{int(time.time())}"
 
-    overrides = {
+    overrides: Dict[str, Any] = {
         NODE_SWITCH: {"inputs": {"select": 2}},
         NODE_OUTFIT_PROMPT: {"inputs": {"text": outfit_prompt}},
-        NODE_FACE_URL: {"inputs": {"image": url_to_data_uri(face_url)}},
+        NODE_FACE_URL: {"inputs": {"image": face_url}},  # URL 주입
         NODE_FULLBODY_KSAMPLER: {"inputs": {"seed": seed}},
-        NODE_SAVE_IMAGE: {"inputs": {"filename_prefix": prefix}},
     }
-    return run_workflow(api_key, deployment_id, overrides)
+
+    return run_workflow(api_key, deployment_id, overrides, primary_image_node_id=NODE_PREVIEW)
+
 
 def generate_scene(
     char1_url: str,
@@ -189,15 +353,16 @@ def generate_scene(
     deployment_id: str,
 ) -> List[str]:
     seed = random.randint(1, 10**15)
-    prefix = f"scene_{seed}_{int(time.time())}"
+    if not char2_url:
+        char2_url = char1_url
 
-    overrides = {
+    overrides: Dict[str, Any] = {
         NODE_SWITCH: {"inputs": {"select": 3}},
-        NODE_CHAR1_URL: {"inputs": {"image": url_to_data_uri(char1_url)}},
-        NODE_CHAR2_URL: {"inputs": {"image": url_to_data_uri(char2_url or char1_url)}},
-        NODE_BG_URL: {"inputs": {"image": url_to_data_uri(bg_url)}},
+        NODE_CHAR1_URL: {"inputs": {"image": char1_url}},
+        NODE_CHAR2_URL: {"inputs": {"image": char2_url}},
+        NODE_BG_URL: {"inputs": {"image": bg_url}},
         NODE_SCENE_TEXT: {"inputs": {"text": story_prompt}},
         NODE_SCENE_KSAMPLER: {"inputs": {"seed": seed}},
-        NODE_SAVE_IMAGE: {"inputs": {"filename_prefix": prefix}},
     }
-    return run_workflow(api_key, deployment_id, overrides)
+
+    return run_workflow(api_key, deployment_id, overrides, primary_image_node_id=NODE_PREVIEW)
