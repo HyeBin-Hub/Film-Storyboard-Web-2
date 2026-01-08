@@ -165,6 +165,7 @@ with tab1:
 
         with col_right:
             st.markdown("#### Advanced Setting")
+            st.caption("Advanced Setting")
 
             with st.expander("Portrait Setting", expanded=True):
 
