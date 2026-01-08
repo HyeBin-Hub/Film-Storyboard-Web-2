@@ -372,7 +372,7 @@ with tab1:
             # ============================
             # Navigator: Prev / Next
             # ============================
-            st.markdown("### Character Navigator")
+            # st.markdown("### Character Navigator")
             nav1, nav2 = st.columns(2)
     
             with nav1:
