@@ -1,4 +1,4 @@
-# backend.py (JSON-aligned, robust)
+# backend.py (HYBRID: SaveImage(15) 우선 + 전체 outputs fallback)
 from __future__ import annotations
 
 import time
@@ -19,11 +19,6 @@ def _headers(api_key: str) -> Dict[str, str]:
     }
 
 def submit_inference(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> str:
-    """
-    POST /deployments/{deployment_id}/inference
-    payload: {"overrides": {...}}
-    returns: request_id
-    """
     url = f"{BASE_URL}/deployments/{deployment_id}/inference"
     payload = {"overrides": overrides}
 
@@ -49,9 +44,6 @@ def poll_until_done(
     poll_interval_sec: float = 1.5,
     timeout_sec: int = 1800,
 ) -> None:
-    """
-    GET /deployments/{deployment_id}/requests/{request_id}/status until completed
-    """
     url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/status"
     t0 = time.time()
 
@@ -72,18 +64,13 @@ def poll_until_done(
         time.sleep(poll_interval_sec)
 
 def fetch_result(api_key: str, deployment_id: str, request_id: str) -> Dict[str, Any]:
-    """
-    GET /deployments/{deployment_id}/requests/{request_id}/result
-    """
     url = f"{BASE_URL}/deployments/{deployment_id}/requests/{request_id}/result"
     r = requests.get(url, headers=_headers(api_key), timeout=60)
     r.raise_for_status()
     return r.json()
 
 # =========================================================
-# URL extraction
-#   - Primary: outputs[target_node_id].images[*].url (RunComfy export)
-#   - Fallback: recursive scan for image URLs
+# URL extraction helpers
 # =========================================================
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
 
@@ -92,7 +79,7 @@ def _looks_like_url(x: Any) -> bool:
 
 def _path_has_image_ext(url: str) -> bool:
     """
-    https://.../image.png?X-Goog-... -> path만 보고 확장자 판별
+    https://.../image.png?X-Goog-... 처럼 query가 붙어도 path만 보고 확장자 판단
     """
     try:
         p = urlparse(url)
@@ -102,66 +89,89 @@ def _path_has_image_ext(url: str) -> bool:
         u = url.split("?", 1)[0].split("#", 1)[0].lower()
         return any(u.endswith(ext) for ext in _IMAGE_EXTS)
 
-def extract_images_by_node(
-    outputs: Dict[str, Any],
-    target_node_id: str,
-) -> Tuple[List[str], Dict[str, Any]]:
+def _dedup_keep_order(urls: List[str]) -> List[str]:
+    seen: Set[str] = set()
+    out: List[str] = []
+    for u in urls:
+        if u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+def extract_images_from_outputs_any(outputs: Dict[str, Any]) -> List[str]:
     """
-    outputs[target_node_id]에서 images.url들을 추출.
-    반환: (urls, debug_info)
+    예전 방식과 동일: outputs 전체를 돌면서 node_out.images[*].url을 수집
     """
-    target_node_id = str(target_node_id)
+    if not isinstance(outputs, dict):
+        return []
+
+    urls: List[str] = []
+    for _, node_out in outputs.items():
+        if not isinstance(node_out, dict):
+            continue
+        imgs = node_out.get("images") or []
+        if not isinstance(imgs, list):
+            continue
+        for img in imgs:
+            if not isinstance(img, dict):
+                continue
+            u = img.get("url")
+            if _looks_like_url(u) and _path_has_image_ext(u):
+                urls.append(u)
+
+    return _dedup_keep_order(urls)
+
+def extract_images_from_target_node(outputs: Dict[str, Any], node_id: str) -> Tuple[List[str], Dict[str, Any]]:
+    """
+    특정 node_id(outputs[node_id])에서 images.url을 뽑는다.
+    실패 시 debug 정보를 함께 반환한다.
+    """
+    node_id = str(node_id)
     debug: Dict[str, Any] = {
-        "target_node_id": target_node_id,
+        "target_node_id": node_id,
         "available_output_keys": list(outputs.keys()) if isinstance(outputs, dict) else None,
     }
 
-    if not isinstance(outputs, dict):
-        debug["error"] = "outputs is not a dict"
+    if not isinstance(outputs, dict) or node_id not in outputs:
+        debug["error"] = "target node not found in outputs"
         return [], debug
 
-    if target_node_id not in outputs:
-        debug["error"] = "target_node_id not in outputs"
-        return [], debug
-
-    node_out = outputs.get(target_node_id)
-    debug["node_out_type"] = type(node_out).__name__
-
+    node_out = outputs.get(node_id)
     if not isinstance(node_out, dict):
-        debug["error"] = "node_out is not a dict"
+        debug["error"] = "node_out is not dict"
+        debug["node_out_type"] = type(node_out).__name__
         return [], debug
 
-    images = node_out.get("images")
-    if not isinstance(images, list):
+    imgs = node_out.get("images")
+    if not isinstance(imgs, list):
         debug["error"] = "node_out has no images list"
         debug["node_out_keys"] = list(node_out.keys())
         return [], debug
 
     urls: List[str] = []
-    for img in images:
+    filenames: List[str] = []
+    for img in imgs:
         if not isinstance(img, dict):
             continue
         u = img.get("url")
         if _looks_like_url(u) and _path_has_image_ext(u):
             urls.append(u)
+        fn = img.get("filename")
+        if isinstance(fn, str):
+            filenames.append(fn)
 
-    # url이 없고 filename만 있는 경우 힌트 제공
-    if not urls and images:
-        debug["images_len"] = len(images)
-        first = images[0] if images else None
-        debug["first_image_keys"] = list(first.keys()) if isinstance(first, dict) else None
-        filenames = []
-        for img in images:
-            if isinstance(img, dict) and isinstance(img.get("filename"), str):
-                filenames.append(img["filename"])
+    if not urls:
+        debug["images_len"] = len(imgs)
+        if imgs and isinstance(imgs[0], dict):
+            debug["first_image_keys"] = list(imgs[0].keys())
         if filenames:
             debug["filenames_only"] = filenames
 
-    return urls, debug
+    return _dedup_keep_order(urls), debug
 
-def extract_image_urls_fallback(result_json: Dict[str, Any]) -> List[str]:
+def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
     """
-    결과 JSON 전체를 재귀 탐색하여 이미지 URL을 찾는 fallback.
+    (Fallback 2) 결과 JSON 전체를 재귀 탐색하며 URL 후보 수집
     """
     urls: List[str] = []
     seen: Set[str] = set()
@@ -182,75 +192,74 @@ def extract_image_urls_fallback(result_json: Dict[str, Any]) -> List[str]:
     return urls
 
 # =========================================================
-# Workflow Runner
+# Workflow runner (HYBRID)
+#   1) SaveImage(15) 우선
+#   2) outputs 전체 스캔 fallback (예전 방식)
+#   3) JSON 전체 재귀 탐색 마지막 fallback
 # =========================================================
 def run_workflow(
     api_key: str,
     deployment_id: str,
     overrides: Dict[str, Any],
     *,
-    image_node_id: Optional[str] = None,
+    primary_image_node_id: str = "15",
 ) -> List[str]:
-    """
-    1) submit -> poll -> fetch result
-    2) image_node_id 지정 시 해당 노드에서만 images.url 추출
-    3) 없으면 fallback 스캔
-    """
     request_id = submit_inference(api_key, deployment_id, overrides)
     poll_until_done(api_key, deployment_id, request_id)
     result = fetch_result(api_key, deployment_id, request_id)
 
     outputs = result.get("outputs") or {}
 
-    # (A) 지정 노드 우선 추출
-    if image_node_id is not None:
-        urls, debug = extract_images_by_node(outputs, image_node_id)
-        if urls:
-            return urls
-        raise RuntimeError(
-            "No image urls extracted from target node. "
-            f"hint={{'request_id': '{request_id}', 'image_node_id': '{image_node_id}', "
-            f"'outputs_keys': {list(outputs.keys())}, 'debug': {debug}}}"
-        )
-
-    # (B) fallback
-    urls = extract_image_urls_fallback(result)
+    # 1) SaveImage(15) 우선
+    urls, debug = extract_images_from_target_node(outputs, primary_image_node_id)
     if urls:
         return urls
 
+    # 2) outputs 전체 스캔 (예전 방식)
+    urls_any = extract_images_from_outputs_any(outputs)
+    if urls_any:
+        return urls_any
+
+    # 3) JSON 전체 재귀 탐색
+    urls_recursive = extract_image_urls(result)
+    if urls_recursive:
+        return urls_recursive
+
+    # 모두 실패면 debug 포함해서 에러
     raise RuntimeError(
         "No image urls extracted. "
-        f"hint={{'request_id': '{request_id}', 'keys': {list(result.keys())}, "
-        f"'outputs_keys': {list(outputs.keys())}}}"
+        f"hint={{'request_id': '{request_id}', "
+        f"'keys': {list(result.keys())}, "
+        f"'outputs_keys': {list(outputs.keys()) if isinstance(outputs, dict) else None}, "
+        f"'primary_node_debug': {debug}}}"
     )
 
 # =========================================================
 # Node IDs (ALIGNED WITH YOUR JSON)
 # =========================================================
-# Switch
-NODE_SWITCH = "56"                 # ImpactSwitch (Any)
+NODE_SWITCH = "56"
 
-# Step1 (portrait)
-NODE_BASE_PROMPT = "12"            # ttN text
-NODE_PORTRAIT_MASTER = "3"         # PortraitMasterBaseCharacter
-NODE_PORTRAIT_SEED = "4"           # Seed (rgthree)
-NODE_LATENT = "13"                 # EmptySD3LatentImage
-NODE_PORTRAIT_KSAMPLER = "11"      # KSampler
+# Step1
+NODE_BASE_PROMPT = "12"
+NODE_PORTRAIT_MASTER = "3"
+NODE_PORTRAIT_SEED = "4"
+NODE_LATENT = "13"
+NODE_PORTRAIT_KSAMPLER = "11"
 
-# Step2 (full body + PuLID)
-NODE_OUTFIT_PROMPT = "20"          # ttN text
-NODE_FACE_URL = "58"               # LoadImageFromUrl
-NODE_FULLBODY_KSAMPLER = "25"      # KSampler
+# Step2
+NODE_OUTFIT_PROMPT = "20"
+NODE_FACE_URL = "58"
+NODE_FULLBODY_KSAMPLER = "25"
 
-# Step3 (scene edit)
-NODE_CHAR1_URL = "59"              # LoadImageFromUrl (char1)
-NODE_CHAR2_URL = "61"              # LoadImageFromUrl (char2)
-NODE_BG_URL = "60"                 # LoadImageFromUrl (bg)
-NODE_SCENE_TEXT = "48"             # GoogleTranslateTextNode
-NODE_SCENE_KSAMPLER = "40"         # KSampler
+# Step3
+NODE_CHAR1_URL = "59"
+NODE_CHAR2_URL = "61"
+NODE_BG_URL = "60"
+NODE_SCENE_TEXT = "48"
+NODE_SCENE_KSAMPLER = "40"
 
-# ✅ Only SaveImage in this workflow
-NODE_SAVE_IMAGE = "15"             # SaveImage (images <- Switch output)
+# Primary output node (only SaveImage in JSON)
+NODE_SAVE_IMAGE = "15"
 
 # =========================================================
 # Public APIs used by app.py
@@ -266,11 +275,10 @@ def generate_faces(
     seed: Optional[int] = None,
 ) -> List[str]:
     """
-    Step1: select=1 => Switch input1(16) -> SaveImage(15)
+    Step1 (Switch=1): Portrait generation.
     """
     if seed is None:
         seed = random.randint(1, 10**15)
-
     if base_prompt is None:
         base_prompt = "Grey background, white t-shirt, documentary photograph"
 
@@ -297,8 +305,7 @@ def generate_faces(
         }},
     }
 
-    # ✅ SaveImage(15)에서만 URL 추출
-    return run_workflow(api_key, deployment_id, overrides, image_node_id=NODE_SAVE_IMAGE)
+    return run_workflow(api_key, deployment_id, overrides, primary_image_node_id=NODE_SAVE_IMAGE)
 
 def generate_full_body(
     face_url: str,
@@ -307,7 +314,7 @@ def generate_full_body(
     deployment_id: str,
 ) -> List[str]:
     """
-    Step2: select=2 => Switch input2(26) -> SaveImage(15)
+    Step2 (Switch=2): Full body generation.
     """
     seed = random.randint(1, 10**15)
 
@@ -318,7 +325,7 @@ def generate_full_body(
         NODE_FULLBODY_KSAMPLER: {"inputs": {"seed": seed}},
     }
 
-    return run_workflow(api_key, deployment_id, overrides, image_node_id=NODE_SAVE_IMAGE)
+    return run_workflow(api_key, deployment_id, overrides, primary_image_node_id=NODE_SAVE_IMAGE)
 
 def generate_scene(
     char1_url: str,
@@ -329,7 +336,7 @@ def generate_scene(
     deployment_id: str,
 ) -> List[str]:
     """
-    Step3: select=3 => Switch input3(41) -> SaveImage(15)
+    Step3 (Switch=3): Final storyboard scene (Qwen edit).
     """
     seed = random.randint(1, 10**15)
     if not char2_url:
@@ -344,4 +351,4 @@ def generate_scene(
         NODE_SCENE_KSAMPLER: {"inputs": {"seed": seed}},
     }
 
-    return run_workflow(api_key, deployment_id, overrides, image_node_id=NODE_SAVE_IMAGE)
+    return run_workflow(api_key, deployment_id, overrides, primary_image_node_id=NODE_SAVE_IMAGE)
