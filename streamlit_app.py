@@ -567,7 +567,7 @@ with tab3:
                         seed_value = None
                         if st.session_state.get("seed_mode") == "Fixed":
                             fixed_seed = st.session_state.get("fixed_seed", 12345)
-                            seed_value = fixed_seed + 2000  # ✅ Step1/2와 분리
+                            seed_value = backend.derive_seed(fixed_seed + 2000, 0)
 
                         final_imgs = backend.generate_scene(
                             char1_url=char1_url,
