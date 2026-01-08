@@ -295,6 +295,7 @@ def generate_faces(
     base_prompt: Optional[str] = None,
     seed: Optional[int] = None,
 ) -> List[str]:
+    
     if seed is None:
         seed = random.randint(1, 10**15)
     if base_prompt is None:
@@ -308,16 +309,16 @@ def generate_faces(
         NODE_PORTRAIT_KSAMPLER: {"inputs": {"seed": seed}},
         NODE_PORTRAIT_MASTER: {"inputs": {
             "shot": "Half-length portrait",
-            "gender": pm_options.get("Gender", "-"),
-            "age": pm_options.get("age", "-"),
+            "gender": pm_options.get("Gender", "Woman"),
+            "age": pm_options.get("age", "25"),
             "nationality_1": pm_options.get("Nationality", "Korean"),
-            "body_type": pm_options.get("Body Type", "-"),
+            "body_type": pm_options.get("Body Type", "Fit"),
             "eyes_color": pm_options.get("Eyes Color", "Brown"),
-            "eyes_shape": pm_options.get("Eyes Shape", "Monolid Eyes Shape"),
-            "lips_color": pm_options.get("Lips Color", "Berry Lips"),
-            "lips_shape": pm_options.get("Lips Shape", "Thin Lips"),
-            "face_shape": pm_options.get("Face Shape", "Square with Soft Jaw"),
-            "hair_style": pm_options.get("Hair Style", "-"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Round Eyes Shape"),
+            "lips_color": pm_options.get("Lips Color", "Red Lips"),
+            "lips_shape": pm_options.get("Lips Shape", "Regulars"),
+            "face_shape": pm_options.get("Face Shape", "Oval"),
+            "hair_style": pm_options.get("Hair Style", "Long straight"),
             "hair_color": pm_options.get("Hair Color", "Black"),
             "hair_length": pm_options.get("Hair Length", "Short"),
         }},
