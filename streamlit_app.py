@@ -166,21 +166,23 @@ with tab1:
         with col_right:
             st.markdown("#### Advanced Setting")
 
-            # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
-            DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
+            with st.expander("Portrait Setting", expanded=True):
 
-            use_custom_base_prompt = st.checkbox("Use custom base prompt", value=False)
-            
-            if use_custom_base_prompt:
-                base_prompt = st.text_area(
-                    "Base Portrait Prompt",
-                    DEFAULT_BASE_PROMPT,
-                    height=140
-                )
-            else:
-                base_prompt = DEFAULT_BASE_PROMPT
-                st.caption("Using default base prompt.")
-            # ----------------------------------------------------------------------------------------------------------------
+                # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
+                DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
+    
+                use_custom_base_prompt = st.checkbox("Use custom base prompt", value=False)
+                
+                if use_custom_base_prompt:
+                    base_prompt = st.text_area(
+                        "Base Portrait Prompt",
+                        DEFAULT_BASE_PROMPT,
+                        height=140
+                    )
+                else:
+                    base_prompt = DEFAULT_BASE_PROMPT
+                    st.caption("Using default base prompt.")
+                # ----------------------------------------------------------------------------------------------------------------
 
             # ------------------------------ Character Setting UI (ADD) ------------------------------
             st.markdown("### Character Setting")
