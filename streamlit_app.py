@@ -369,24 +369,24 @@ with tab1:
                 except Exception as e:
                     st.error(str(e))
                     
-        # ============================
-        # Navigator: Prev / Next
-        # ============================
-        st.markdown("### Character Navigator")
-        nav1, nav2 = st.columns(2)
-
-        with nav1:
-            if st.button("⬅️ PREV\nCHARACTER", use_container_width=True, disabled=(cur == 0), key="prev_char"):
-                st.session_state.current_char_idx = max(0, cur - 1)
-                st.rerun()
-
-        with nav2:
-            if st.button("NEXT\nCHARACTER ➡️", use_container_width=True, disabled=(cur == num_characters - 1), key="next_char"):
-                st.session_state.current_char_idx = min(num_characters - 1, cur + 1)
-                st.rerun()
-
-        st.caption(f"Editing: Character {cur + 1} / {num_characters}")
-        
+            # ============================
+            # Navigator: Prev / Next
+            # ============================
+            st.markdown("### Character Navigator")
+            nav1, nav2 = st.columns(2)
+    
+            with nav1:
+                if st.button("⬅️ PREV\nCHARACTER", use_container_width=True, disabled=(cur == 0), key="prev_char"):
+                    st.session_state.current_char_idx = max(0, cur - 1)
+                    st.rerun()
+    
+            with nav2:
+                if st.button("NEXT\nCHARACTER ➡️", use_container_width=True, disabled=(cur == num_characters - 1), key="next_char"):
+                    st.session_state.current_char_idx = min(num_characters - 1, cur + 1)
+                    st.rerun()
+    
+            st.caption(f"Editing: Character {cur + 1} / {num_characters}")
+            
         # ============================
         # Left: 현재 캐릭터의 후보 + 선택
         # ============================
