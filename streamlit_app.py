@@ -2,10 +2,8 @@
 import streamlit as st
 import backend
 
-
-
 # ========================================================================
-#                       2. 페이지 설정 및 디자인
+# 0. 페이지 설정 (반드시 첫 Streamlit 호출이어야 함)
 # ========================================================================
 st.set_page_config(
     page_title="Neon Darkroom: Director's Suite",
@@ -15,7 +13,7 @@ st.set_page_config(
 )
 
 # ========================================================================
-#        1. secrets.toml 파일에서 API Key / Deployment ID 찾아봄
+# 1. API Key / Deployment ID 로드
 # ========================================================================
 if "RUNCOMFY_API_KEY" in st.secrets:
     api_key = st.secrets["RUNCOMFY_API_KEY"]
@@ -26,7 +24,10 @@ else:
     if not api_key or not deployment_id:
         st.sidebar.warning("API Key와 Deployment ID를 입력해주세요.")
         st.stop()
-        
+
+# ========================================================================
+# 2. 디자인
+# ========================================================================        
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;700&display=swap');
@@ -142,6 +143,12 @@ if "outfit_prompts" not in st.session_state:
 # 최종 씬 결과 이미지 URL (Step3)
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
+
+# 캐릭터 옵션 저장소 (선택)
+if "pm_options" not in st.session_state:
+    st.session_state.pm_options = {}
+
+
 # ========================================================================
 #                             4. 상수 (기본값) 
 # ========================================================================
@@ -240,10 +247,8 @@ with tab1:
 
             # pm_options / char_idx 준비 (ADD)
             char_idx = 1
-            if "pm_options" not in st.session_state:
-                st.session_state.pm_options = {}
-            
             pm_options = st.session_state.pm_options
+            
 
             with st.expander("Portrait Setting", expanded=True):
             
