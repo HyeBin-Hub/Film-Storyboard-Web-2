@@ -110,30 +110,54 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ========================================================================
-#                      3. 세션 상태 초기화 (앱 상태 유지)
+# 3. 세션 상태 초기화 (앱 상태 유지) — 다중 캐릭터 정책 기준
 # ========================================================================
-# 현재 단계(1~3)를 저장 - 최초 실행은 1로 시작 
+
+# 현재 단계 (1~4)
 if "step" not in st.session_state:
     st.session_state.step = 1
-# 얼굴 후보 이미지 URL 리스트(예정: 2장)
-if "generated_faces" not in st.session_state:
-    st.session_state.generated_faces = []
-# 사용자가 선택한 얼굴 1장의 URL
-if "selected_face_url" not in st.session_state:
-    st.session_state.selected_face_url = None
-# 의상 적용 후 전신 캐릭터 1장의 URL
-if "final_character_url" not in st.session_state:
-    st.session_state.final_character_url = None
-# 최종 씬 결과 이미지 1장의 URL
+
+# 캐릭터별 얼굴 후보 이미지 URL 리스트
+# List[List[str]]
+if "generated_faces_by_char" not in st.session_state:
+    st.session_state.generated_faces_by_char = []
+
+# 캐릭터별 선택된 얼굴 URL
+# List[Optional[str]]
+if "selected_face_urls" not in st.session_state:
+    st.session_state.selected_face_urls = []
+
+# 캐릭터별 전신 결과 URL
+# List[Optional[str]]
+if "final_character_urls" not in st.session_state:
+    st.session_state.final_character_urls = []
+
+# 캐릭터별 의상 프롬프트 (Step2 유지용)
+# List[str]
+if "outfit_prompts" not in st.session_state:
+    st.session_state.outfit_prompts = []
+
+# 최종 씬 결과 이미지 URL (Step3)
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
-
+# ============================
+# (필수) 캐릭터별 세션 상태 준비/동기화
+# ============================
+if "generated_faces_by_char" not in st.session_state:
+    st.session_state.generated_faces_by_char = []
+if "selected_face_urls" not in st.session_state:
+    st.session_state.selected_face_urls = []
+if "final_character_urls" not in st.session_state:
+    st.session_state.final_character_urls = []
+if "outfit_prompts" not in st.session_state:
+    st.session_state.outfit_prompts = []
 # ========================================================================
 #                             4. 상수 (기본값) 
 # ========================================================================
 DEFAULT_W = 896
 DEFAULT_H = 1152
+
 
 # ========================================================================
 #                           5. 메인 화면 (탭 구성)
@@ -161,7 +185,10 @@ with tab1:
         st.markdown("### 1. Define Your Actor Profile")
 
         col_left, col_right = st.columns([3, 1])
-
+        
+        # ============================
+        # Right: Advanced Setting
+        # ============================
         with col_right:
             st.markdown("#### Advanced Setting")
             st.caption("Advanced Setting")
@@ -176,6 +203,24 @@ with tab1:
                     fixed_seed = st.number_input("Fixed Seed", min_value=0, max_value=2**31-1, value=12345, step=1, key="fixed_seed")
 
                 st.markdown("<hr style='margin:6px 0; border:10; border-top:1px solid #333;'>", unsafe_allow_html=True)
+
+
+    
+                # 길이 맞추기
+                while len(st.session_state.generated_faces_by_char) < num_characters:
+                    st.session_state.generated_faces_by_char.append([])
+                while len(st.session_state.selected_face_urls) < num_characters:
+                    st.session_state.selected_face_urls.append(None)
+                while len(st.session_state.final_character_urls) < num_characters:
+                    st.session_state.final_character_urls.append(None)
+                while len(st.session_state.outfit_prompts) < num_characters:
+                    st.session_state.outfit_prompts.append("")
+    
+                # 캐릭터 수 줄였을 때 잘라내기
+                st.session_state.generated_faces_by_char = st.session_state.generated_faces_by_char[:num_characters]
+                st.session_state.selected_face_urls = st.session_state.selected_face_urls[:num_characters]
+                st.session_state.final_character_urls = st.session_state.final_character_urls[:num_characters]
+                st.session_state.outfit_prompts = st.session_state.outfit_prompts[:num_characters]
 
                 
                 # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
@@ -195,6 +240,10 @@ with tab1:
                 # ----------------------------------------------------------------------------------------------------------------
 
             # ------------------------------ Character Setting UI (ADD) ------------------------------
+            
+            # =============================================
+            # (선택) Character Setting UI (현재는 1명만 편집)
+            # =============================================
             st.markdown("### Character Setting")
             st.caption("Editing Character")
 
@@ -297,7 +346,9 @@ with tab1:
                     )
             # ------------------------------ Character Setting UI (END) ------------------------------
 
-            
+            # ============================
+            # CASTING START (현재: Character 1만 생성)
+            # ============================
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
@@ -311,30 +362,58 @@ with tab1:
                             batch_size=batch_size,
                         )
                     if imgs:
-                        st.session_state.generated_faces = imgs
+                        st.session_state.generated_faces_by_char[0] = imgs
                         st.rerun()
                     else:
                         st.warning("이미지 URL을 받지 못했습니다. RunComfy result outputs를 확인하세요.")
                 except Exception as e:
                     st.error(str(e))
 
+        # ============================
+        # Left: Casting Result (num_characters만큼 출력)
+        # ============================
         with col_left:
             st.markdown("#### Casting Result")
-            if st.session_state.generated_faces:
-                cols = st.columns(2)
-                for i, img_url in enumerate(st.session_state.generated_faces):
-                    with cols[i % 2]:
-                        st.image(img_url, use_container_width=True)
-                        if st.button(f"✅ Select Actor {i+1}", key=f"sel_{i}"):
-                            st.session_state.selected_face_url = img_url
-                            st.session_state.step = 2
-                            st.rerun()
-            else:
-                st.info("오른쪽에서 프롬프트 설정 후 'CASTING START'를 눌러주세요.")
+
+            for char_i in range(num_characters):
+                st.markdown(f"**Character {char_i+1}**")
+
+                faces = st.session_state.generated_faces_by_char[char_i]
+
+                if faces:
+                    cols = st.columns(2)
+                    for i, img_url in enumerate(faces):
+                        with cols[i%2]:
+                            st.image(img_url, use_container_width=True)
+                            if st.button(f"✅ Select Actor {i+1}", key=f"sel_{char_i}_{i}"):
+                                st.session_state.selected_face_urls[char_i] = img_url
+
+                                # 전원 선택 완료 → Step2 이동
+                                if all(st.session_state.selected_face_urls):
+                                    st.session_state.step = 2
+                                st.rerun()
+                else:
+                    st.info("No footage available for this character.")
+                    
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info("각 Character마다 1장씩 선택해주세요.")
+
+    # Step1이 끝난 상태(= step != 1)일 때, 선택 결과 요약 표시
     else:
         st.success("✅ Actor Selected")
-        if st.session_state.selected_face_url:
-            st.image(st.session_state.selected_face_url, width=160, caption="Main Actor")
+
+        # num_characters는 Step1 UI에서만 생기므로 세션에서 가져오거나 기본값 사용
+        n = st.session_state.get("num_characters", 2)
+        selected = st.session_state.get("selected_face_urls", [])
+
+        cols = st.columns(n)
+        for i in range(n):
+            with cols[i]:
+                url = selected[i] if i < len(selected) else None
+                if url:
+                    st.image(url, use_container_width=True, caption=f"Character {i+1}")
+                else:
+                    st.caption(f"Character {i+1}: Not selected")
 
 # ---------------------------------------------------------
 # [TAB 2] 전신 생성
