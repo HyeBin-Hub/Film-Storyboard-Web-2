@@ -128,37 +128,6 @@ if "final_character_url" not in st.session_state:
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
-if "num_characters" not in st.session_state:
-    st.session_state.num_characters = 2
-if "shots_per_character" not in st.session_state:
-    st.session_state.shots_per_character = 2
-
-if "current_char_idx" not in st.session_state:
-    st.session_state.current_char_idx = 0
-
-if "pm_options_list" not in st.session_state:
-    st.session_state.pm_options_list = []
-
-def _ensure_lists(n: int):
-    # pm_options_list
-    if len(st.session_state.pm_options_list) < n:
-        for i in range(len(st.session_state.pm_options_list), n):
-            st.session_state.pm_options_list.append(_default_pm_options(i))
-    elif len(st.session_state.pm_options_list) > n:
-        st.session_state.pm_options_list = st.session_state.pm_options_list[:n]
-
-    # casting_groups
-    if len(st.session_state.casting_groups) < n:
-        st.session_state.casting_groups.extend([[] for _ in range(n - len(st.session_state.casting_groups))])
-    elif len(st.session_state.casting_groups) > n:
-        st.session_state.casting_groups = st.session_state.casting_groups[:n]
-
-    # selected_cast
-    if len(st.session_state.selected_cast) < n:
-        st.session_state.selected_cast.extend([None for _ in range(n - len(st.session_state.selected_cast))])
-    elif len(st.session_state.selected_cast) > n:
-        st.session_state.selected_cast = st.session_state.selected_cast[:n]
-
 # ========================================================================
 #                             4. 상수 (기본값) 
 # ========================================================================
@@ -194,18 +163,6 @@ with tab1:
 
         with col_right:
             st.markdown("#### Advanced Setting")
-
-            n_chars = st.slider("Number of Characters", 1, 5, st.session_state.num_characters)
-            shots = st.slider("Shots per Character", 1, 4, st.session_state.shots_per_character)
-
-            st.session_state.num_characters = int(n_chars)
-            st.session_state.shots_per_character = int(shots)
-
-            _ensure_lists(st.session_state.num_characters)
-            st.session_state.current_char_idx = min(st.session_state.current_char_idx, st.session_state.num_characters - 1)
-
-            seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
-            fixed_seed = st.number_input("Fixed seed", min_value=0, value=42, step=1) if seed_mode == "Fixed" else None
 
             # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
             DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
