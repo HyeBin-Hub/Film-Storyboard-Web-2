@@ -8,6 +8,28 @@ from typing import Any, Dict, List, Optional
 
 BASE_URL = "https://api.runcomfy.net/prod/v1"
 
+# -----------------------------
+# Seed helpers
+# -----------------------------
+def derive_seed(base_seed: int, index: int = 0) -> int:
+    """
+    Deterministically derive a per-index seed from base_seed.
+    - Ensures stable but distinct seeds per character/step.
+    - Keeps it within a reasonable 64-bit-ish range.
+    """
+    # 1) sanitize
+    b = int(base_seed) if base_seed is not None else 0
+    i = int(index) if index is not None else 0
+
+    # 2) simple mixing (stable, reproducible)
+    mixed = (b * 1000003) ^ (i * 9176) ^ 0x9E3779B97F4A7C15
+
+    # 3) clamp to positive range used by your workflow (you used up to 10**15 before)
+    mixed = abs(mixed) % (10**15)
+    if mixed == 0:
+        mixed = 1
+    return mixed
+
 
 # -----------------------------
 # RunComfy API (Queue) helpers
@@ -121,25 +143,6 @@ def run_workflow(
     result = fetch_result(api_key, deployment_id, request_id)
     return extract_image_urls(result)
 
-# -----------------------------
-# Seed helpers (optional)
-# -----------------------------
-def _resolve_seed(seed: Optional[int]) -> int:
-    """
-    If seed is provided, use it; otherwise generate a random seed.
-    """
-    if seed is None:
-        return random.randint(1, 10**15)
-    # Defensive: ensure int
-    return int(seed)
-
-def derive_seed(base_seed: int, char_idx: int = 0) -> int:
-    """
-    Optional helper: make per-character seeds from a single base seed.
-    Example usage in app.py:
-        seed_i = backend.derive_seed(fixed_seed, char_i)
-    """
-    return int(base_seed) + int(char_idx)
 
 # -----------------------------
 # High-level functions for app.py
@@ -161,13 +164,14 @@ def generate_faces(
     - Node 13: latent size + batch
     - Node 11: sampler seed
     """
-    s = _resolve_seed(seed)
+    if seed is None:
+        seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
         "56": {"inputs": {"select": 1}},
         "12": {"inputs": {"text": base_prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
-        "11": {"inputs": {"seed": s}},
+        "11": {"inputs": {"seed": int(seed)}},  # ✅ seed 주입
     }
     return run_workflow(api_key, deployment_id, overrides)
 
@@ -187,13 +191,14 @@ def generate_full_body(
     - Node 58: LoadImageFromUrl (PuLID reference image)
     - Node 25: sampler seed
     """
-    s = _resolve_seed(seed)
+    if seed is None:
+        seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
         "56": {"inputs": {"select": 2}},
         "20": {"inputs": {"text": outfit_prompt}},
         "58": {"inputs": {"image": face_url}},
-        "25": {"inputs": {"seed": s}},
+        "25": {"inputs": {"seed": int(seed)}},  # ✅ seed 주입
     }
     return run_workflow(api_key, deployment_id, overrides)
 
@@ -217,7 +222,9 @@ def generate_scene(
     - Node 48: GoogleTranslateTextNode.text (scene description)
     - Node 40: sampler seed
     """
-    s = _resolve_seed(seed)
+    if seed is None:
+        seed = random.randint(1, 10**15)
+            
     if not char2_url:
         char2_url = char1_url
 
@@ -227,6 +234,6 @@ def generate_scene(
         "61": {"inputs": {"image": char2_url}},
         "60": {"inputs": {"image": bg_url}},
         "48": {"inputs": {"text": story_prompt}},
-        "40": {"inputs": {"seed": s}},
+        "40": {"inputs": {"seed": int(seed)}},  # ✅ seed 주입
     }
     return run_workflow(api_key, deployment_id, overrides)
