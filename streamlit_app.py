@@ -130,7 +130,6 @@ if "final_scene_url" not in st.session_state:
 
 if "num_characters" not in st.session_state:
     st.session_state.num_characters = 2
-    
 if "shots_per_character" not in st.session_state:
     st.session_state.shots_per_character = 2
 
@@ -139,12 +138,6 @@ if "current_char_idx" not in st.session_state:
 
 if "pm_options_list" not in st.session_state:
     st.session_state.pm_options_list = []
-
-# ========================================================================
-#                             4. 상수 (기본값) 
-# ========================================================================
-DEFAULT_W = 896
-DEFAULT_H = 1152
 
 def _ensure_lists(n: int):
     # pm_options_list
@@ -165,6 +158,12 @@ def _ensure_lists(n: int):
         st.session_state.selected_cast.extend([None for _ in range(n - len(st.session_state.selected_cast))])
     elif len(st.session_state.selected_cast) > n:
         st.session_state.selected_cast = st.session_state.selected_cast[:n]
+
+# ========================================================================
+#                             4. 상수 (기본값) 
+# ========================================================================
+DEFAULT_W = 896
+DEFAULT_H = 1152
 
 # ========================================================================
 #                           5. 메인 화면 (탭 구성)
@@ -207,9 +206,6 @@ with tab1:
 
             seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0)
             fixed_seed = st.number_input("Fixed seed", min_value=0, value=42, step=1) if seed_mode == "Fixed" else None
-
-            use_custom_prompt = st.checkbox("Use custom base prompt", value=False)
-            base_prompt = st.text_area("Base Prompt", DEFAULT_BASE_PROMPT, height=120) if use_custom_prompt else DEFAULT_BASE_PROMPT
 
             # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
             DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
