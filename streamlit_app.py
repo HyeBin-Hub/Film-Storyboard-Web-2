@@ -129,7 +129,6 @@ if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
 
-
 # ========================================================================
 #                             4. 상수 (기본값) 
 # ========================================================================
@@ -176,9 +175,7 @@ with tab1:
                 if seed_mode == "Fixed":
                     fixed_seed = st.number_input("Fixed Seed", min_value=0, max_value=2**31-1, value=12345, step=1, key="fixed_seed")
 
-                st.markdown("---")
-
-
+                
                 # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
                 DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
     
