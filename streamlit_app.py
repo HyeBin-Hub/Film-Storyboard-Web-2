@@ -169,6 +169,16 @@ with tab1:
 
             with st.expander("Portrait Setting", expanded=True):
 
+                num_characters = st.slider("Number of Characters", 1, 6, 2, key="num_characters")
+                shots_per_character = st.slider("Shots per Character", 1, 10, 2, key="shots_per_character")
+
+                seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0, key="seed_mode")
+                if seed_mode == "Fixed":
+                    fixed_seed = st.number_input("Fixed Seed", min_value=0, max_value=2**31-1, value=12345, step=1, key="fixed_seed")
+
+                st.markdown("---")
+
+
                 # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
                 DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
     
