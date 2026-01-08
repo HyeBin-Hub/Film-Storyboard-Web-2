@@ -168,8 +168,8 @@ with tab1:
 
             with st.expander("Portrait Setting", expanded=True):
 
-                num_characters = st.slider("Number of Characters", 1, 6, 2, key="num_characters")
-                shots_per_character = st.slider("Shots per Character", 1, 10, 2, key="shots_per_character")
+                num_characters = st.slider("Number of Characters", 1, 2, 2, key="num_characters")
+                shots_per_character = st.slider("Shots per Character", 1, 4, 2, key="shots_per_character")
 
                 seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0, key="seed_mode")
                 if seed_mode == "Fixed":
