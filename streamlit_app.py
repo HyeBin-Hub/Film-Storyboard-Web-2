@@ -2,6 +2,18 @@
 import streamlit as st
 import backend
 
+
+
+# ========================================================================
+#                       2. 페이지 설정 및 디자인
+# ========================================================================
+st.set_page_config(
+    page_title="Neon Darkroom: Director's Suite",
+    page_icon="🎬",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
 # ========================================================================
 #        1. secrets.toml 파일에서 API Key / Deployment ID 찾아봄
 # ========================================================================
@@ -14,17 +26,7 @@ else:
     if not api_key or not deployment_id:
         st.sidebar.warning("API Key와 Deployment ID를 입력해주세요.")
         st.stop()
-
-# ========================================================================
-#                       2. 페이지 설정 및 디자인
-# ========================================================================
-st.set_page_config(
-    page_title="Neon Darkroom: Director's Suite",
-    page_icon="🎬",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
+        
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Roboto+Mono:wght@400;700&display=swap');
