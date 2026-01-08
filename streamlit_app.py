@@ -128,8 +128,6 @@ if "final_character_url" not in st.session_state:
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
-if "pm_options_list" not in st.session_state:
-    st.session_state.pm_options_list = []
 
 
 # ========================================================================
@@ -191,7 +189,7 @@ with tab1:
             char_idx = st.session_state.current_char_idx
             pm_options = st.session_state.pm_options_list[char_idx]  # ✅ 캐릭터별 dict
 
-            st.caption(f"Editing: Character {char_idx+1} / {st.session_state.num_characters}")
+            # st.caption(f"Editing: Character {char_idx+1} / {st.session_state.num_characters}")
 
             # pm_options / char_idx 준비 (ADD)
             char_idx = 1
