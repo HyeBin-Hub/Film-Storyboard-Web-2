@@ -121,6 +121,25 @@ def run_workflow(
     result = fetch_result(api_key, deployment_id, request_id)
     return extract_image_urls(result)
 
+# -----------------------------
+# Seed helpers (optional)
+# -----------------------------
+def _resolve_seed(seed: Optional[int]) -> int:
+    """
+    If seed is provided, use it; otherwise generate a random seed.
+    """
+    if seed is None:
+        return random.randint(1, 10**15)
+    # Defensive: ensure int
+    return int(seed)
+
+def derive_seed(base_seed: int, char_idx: int = 0) -> int:
+    """
+    Optional helper: make per-character seeds from a single base seed.
+    Example usage in app.py:
+        seed_i = backend.derive_seed(fixed_seed, char_i)
+    """
+    return int(base_seed) + int(char_idx)
 
 # -----------------------------
 # High-level functions for app.py
@@ -132,6 +151,8 @@ def generate_faces(
     width: int,
     height: int,
     batch_size: int,
+    *,
+    seed: Optional[int] = None,
 ) -> List[str]:
     """
     Step1 (Switch=1): Portrait generation.
@@ -140,13 +161,13 @@ def generate_faces(
     - Node 13: latent size + batch
     - Node 11: sampler seed
     """
-    seed = random.randint(1, 10**15)
+    s = _resolve_seed(seed)
 
     overrides: Dict[str, Any] = {
         "56": {"inputs": {"select": 1}},
         "12": {"inputs": {"text": base_prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
-        "11": {"inputs": {"seed": seed}},
+        "11": {"inputs": {"seed": s}},
     }
     return run_workflow(api_key, deployment_id, overrides)
 
@@ -156,6 +177,8 @@ def generate_full_body(
     outfit_prompt: str,
     api_key: str,
     deployment_id: str,
+    *,
+    seed: Optional[int] = None,
 ) -> List[str]:
     """
     Step2 (Switch=2): Full body generation.
@@ -164,13 +187,13 @@ def generate_full_body(
     - Node 58: LoadImageFromUrl (PuLID reference image)
     - Node 25: sampler seed
     """
-    seed = random.randint(1, 10**15)
+    s = _resolve_seed(seed)
 
     overrides: Dict[str, Any] = {
         "56": {"inputs": {"select": 2}},
         "20": {"inputs": {"text": outfit_prompt}},
-        "58": {"inputs": {"image": face_url}},  # ✅ URL 주입
-        "25": {"inputs": {"seed": seed}},
+        "58": {"inputs": {"image": face_url}},
+        "25": {"inputs": {"seed": s}},
     }
     return run_workflow(api_key, deployment_id, overrides)
 
@@ -182,6 +205,8 @@ def generate_scene(
     story_prompt: str,
     api_key: str,
     deployment_id: str,
+    *,
+    seed: Optional[int] = None,
 ) -> List[str]:
     """
     Step3 (Switch=3): Final storyboard scene (Qwen edit).
@@ -192,7 +217,7 @@ def generate_scene(
     - Node 48: GoogleTranslateTextNode.text (scene description)
     - Node 40: sampler seed
     """
-    seed = random.randint(1, 10**15)
+    s = _resolve_seed(seed)
     if not char2_url:
         char2_url = char1_url
 
@@ -202,6 +227,6 @@ def generate_scene(
         "61": {"inputs": {"image": char2_url}},
         "60": {"inputs": {"image": bg_url}},
         "48": {"inputs": {"text": story_prompt}},
-        "40": {"inputs": {"seed": seed}},
+        "40": {"inputs": {"seed": s}},
     }
     return run_workflow(api_key, deployment_id, overrides)
