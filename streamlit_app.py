@@ -128,6 +128,18 @@ if "final_character_url" not in st.session_state:
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
+if "num_characters" not in st.session_state:
+    st.session_state.num_characters = 2
+    
+if "shots_per_character" not in st.session_state:
+    st.session_state.shots_per_character = 2
+
+if "current_char_idx" not in st.session_state:
+    st.session_state.current_char_idx = 0
+
+if "pm_options_list" not in st.session_state:
+    st.session_state.pm_options_list = []
+
 # ========================================================================
 #                             4. 상수 (기본값) 
 # ========================================================================
