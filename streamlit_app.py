@@ -186,11 +186,6 @@ with tab1:
             st.markdown("### Character Setting")
             st.caption("Editing Character")
 
-            char_idx = st.session_state.current_char_idx
-            pm_options = st.session_state.pm_options_list[char_idx]  # ✅ 캐릭터별 dict
-
-            # st.caption(f"Editing: Character {char_idx+1} / {st.session_state.num_characters}")
-
             # pm_options / char_idx 준비 (ADD)
             char_idx = 1
             if "pm_options" not in st.session_state:
