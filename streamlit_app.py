@@ -164,7 +164,7 @@ with tab1:
         with col_right:
             st.markdown("#### Advanced Setting")
 
-            # ---------체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
+            # --------- 체크박스가 켜졌을 때만 텍스트에어리어를 보여주고, 꺼졌을 때는 기본 프롬프트를 자동 사용하도록 만듦 ---------
             DEFAULT_BASE_PROMPT = "Grey background, white t-shirt, documentary photograph"
 
             use_custom_base_prompt = st.checkbox("Use custom base prompt", value=False)
@@ -183,7 +183,7 @@ with tab1:
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🚀 CASTING START \n(Generate Faces)", use_container_width=True):
                 try:
-                    with st.spinner("Casting in progress... (Switch Mode: 1)"):
+                    with st.spinner("Casting in progress... \n (Switch Mode: 1)"):
                         imgs = backend.generate_faces(
                             base_prompt=base_prompt,
                             api_key=api_key,
