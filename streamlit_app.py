@@ -140,18 +140,6 @@ if "outfit_prompts" not in st.session_state:
 # 최종 씬 결과 이미지 URL (Step3)
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
-
-# ============================
-# (필수) 캐릭터별 세션 상태 준비/동기화
-# ============================
-if "generated_faces_by_char" not in st.session_state:
-    st.session_state.generated_faces_by_char = []
-if "selected_face_urls" not in st.session_state:
-    st.session_state.selected_face_urls = []
-if "final_character_urls" not in st.session_state:
-    st.session_state.final_character_urls = []
-if "outfit_prompts" not in st.session_state:
-    st.session_state.outfit_prompts = []
 # ========================================================================
 #                             4. 상수 (기본값) 
 # ========================================================================
@@ -193,19 +181,20 @@ with tab1:
             st.markdown("#### Advanced Setting")
             st.caption("Advanced Setting")
 
-            with st.expander("Portrait Setting", expanded=True):
+            with st.expander("Advanced Setting", expanded=True):
 
                 num_characters = st.slider("Number of Characters", 1, 2, 2, key="num_characters")
                 shots_per_character = st.slider("Shots per Character", 1, 4, 2, key="shots_per_character")
 
+                # ✅ 여기에 추가
+                batch_size = shots_per_character
+    
                 seed_mode = st.radio("Seed mode", ["Random", "Fixed"], index=0, key="seed_mode")
                 if seed_mode == "Fixed":
                     fixed_seed = st.number_input("Fixed Seed", min_value=0, max_value=2**31-1, value=12345, step=1, key="fixed_seed")
 
                 st.markdown("<hr style='margin:6px 0; border:10; border-top:1px solid #333;'>", unsafe_allow_html=True)
 
-
-    
                 # 길이 맞추기
                 while len(st.session_state.generated_faces_by_char) < num_characters:
                     st.session_state.generated_faces_by_char.append([])
