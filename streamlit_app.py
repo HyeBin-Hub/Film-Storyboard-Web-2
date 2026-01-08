@@ -405,72 +405,119 @@ with tab1:
                     st.caption(f"Character {i+1}: Not selected")
 
 # ---------------------------------------------------------
-# [TAB 2] 전신 생성
+# [TAB 2] Step 2: 전신 생성 - 다중 캐릭
 # ---------------------------------------------------------
 with tab2:
     if st.session_state.step == 2:
         st.markdown("### 2. Wardrobe & Styling")
 
-        col_face, col_outfit, col_result = st.columns([1, 1, 1])
+        selected = st.session_state.get("selected_face_urls", [])
+        n = len(selected)
 
-        with col_face:
-            st.markdown("#### Reference Actor")
-            st.image(st.session_state.selected_face_url, use_container_width=True)
+        if n == 0 or any(u is None for u in selected):
+            st.warning("Step 1에서 모든 캐릭터를 먼저 선택해주세요.")
+            st.stop()
 
-        with col_outfit:
-            st.markdown("#### Outfit Description")
-            outfit_prompt = st.text_area(
-                "Describe the outfit",
-                "white background, white t-shirt, black pants, yellow sneakers",
-                height=160
-            )
+        # 길이 보정
+        while len(st.session_state.final_character_urls) < n:
+            st.session_state.final_character_urls.append(None)
+        while len(st.session_state.outfit_prompts) < n:
+            st.session_state.outfit_prompts.append("")
 
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("👗 APPLY OUTFIT", use_container_width=True):
-                try:
-                    with st.spinner("Fitting room... (Switch Mode: 2)"):
-                        res = backend.generate_full_body(
-                            face_url=st.session_state.selected_face_url,
-                            outfit_prompt=outfit_prompt,
-                            api_key=api_key,
-                            deployment_id=deployment_id,
-                        )
-                    if res:
-                        st.session_state.final_character_url = res[0]
-                        st.rerun()
-                    else:
-                        st.warning("전신 결과 이미지 URL을 받지 못했습니다.")
-                except Exception as e:
-                    st.error(str(e))
+        st.session_state.final_character_urls = st.session_state.final_character_urls[:n]
+        st.session_state.outfit_prompts = st.session_state.outfit_prompts[:n]
 
-        with col_result:
-            st.markdown("#### Fitted Result")
-            if st.session_state.final_character_url:
-                st.image(st.session_state.final_character_url, use_container_width=True)
-                if st.button("✨ CONFIRM & GO TO SET", use_container_width=True):
-                    st.session_state.step = 3
-                    st.rerun()
-            else:
-                st.info("의상 프롬프트를 입력하고 버튼을 누르세요.")
+        # 캐릭터별 UI
+        for char_i in range(n):
+            st.markdown(f"#### Character {char_i+1}")
+            col_face, col_outfit, col_result = st.columns([1, 1, 1])
+            
+            with col_face:
+                st.markdown("#### Reference Actor")
+                st.image(selected[char_i], use_container_width=True)
+    
+            with col_outfit:
+                st.markdown("#### Outfit Description")
+                default_outfit = st.session_state.outfit_prompts[char_i] or "white t-shirt, black pants, yellow sneakers"
+                outfit_prompt = st.text_area(
+                    f"Describe the outfit (Character {char_i+1})",
+                    default_outfit,
+                    height=160,
+                    key=f"outfit_prompt_{char_i}",
+                )
+                st.session_state.outfit_prompts[char_i] = outfit_prompt
+    
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("👗 APPLY OUTFIT", use_container_width=True):
+                    try:
+                        with st.spinner("Fitting room... \n (Switch Mode: 2)"):
+                            res = backend.generate_full_body(
+                                face_url=selected[char_i],
+                                outfit_prompt=outfit_prompt,
+                                api_key=api_key,
+                                deployment_id=deployment_id,
+                            )
+                        if res:
+                            st.session_state.final_character_urls[char_i] = res[0]
+                            st.rerun()
+                        else:
+                            st.warning("전신 결과 이미지 URL을 받지 못했습니다.")
+                    except Exception as e:
+                        st.error(str(e))
+    
+            with col_result:
+                st.markdown("#### Fitted Result")
+                out = st.session_state.final_character_urls[char_i]
+                if out:
+                    st.image(out, use_container_width=True)
+                else:
+                    st.info("의상 프롬프트를 입력하고 버튼을 누르세요.")
+                    
+         # 전원 완료 시 Step3 이동
+        if all(st.session_state.final_character_urls):
+            if st.button("✨ CONFIRM ALL & GO TO SET", use_container_width=True, key="confirm_all"):
+                st.session_state.step = 3
+                st.rerun()
+        else:
+            st.info("모든 캐릭터의 전신 생성이 완료되면 다음 단계로 진행할 수 있습니다.")
+
     elif st.session_state.step > 2:
         st.success("✅ Costume Fitted")
-        if st.session_state.final_character_url:
-            st.image(st.session_state.final_character_url, width=160, caption="Final Character")
+        n = st.session_state.get("num_characters", 2)
+        cols = st.columns(n)
+        for i in range(n):
+            with cols[i]:
+                url = st.session_state.final_character_urls[i] if i < len(st.session_state.final_character_urls) else None
+                if url:
+                    st.image(url, use_container_width=True, caption=f"Final Character {i+1}")
+                else:
+                    st.caption(f"Final Character {i+1}: Not ready")
     else:
-        st.warning("Step 1을 먼저 완료해주세요.")
+        st.warning("Step 1을 먼저 완료해주세요.")       
+
 
 # ---------------------------------------------------------
-# [TAB 3] 최종 씬 생성
+# [TAB 3] 최종 씬 생성 (다중 캐릭터 2명 기준)
 # ---------------------------------------------------------
 with tab3:
     if st.session_state.step == 3:
         st.markdown("### 3. Final Scene Composition")
 
+        finals = st.session_state.get("final_character_urls", [])
+        if len(finals) < 1 or finals[0] is None:
+            st.warning("Step 2에서 Character 1 전신을 먼저 생성해주세요.")
+            st.stop()
+
+        char1_url = finals[0]
+        char2_url = finals[1] if len(finals) > 1 else None
+
         col_assets, col_prompt, col_final = st.columns([1, 1, 2])
 
         with col_assets:
             st.markdown("#### Assets")
-            st.image(st.session_state.final_character_url, width=160, caption="Character 1 (URL ref)")
+            st.image(char1_url, width=160, caption="Character 1 (URL ref)")
+            if char2_url:
+                st.image(char2_url, width=160, caption="Character 2 (URL ref)")
 
             bg_url = st.text_input(
                 "Background Image URL",
@@ -491,12 +538,12 @@ with tab3:
             st.info("💡 Tip: Character 2가 없으면 Character 1이 복제되어 사용됩니다.")
 
             st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🎬 ACTION! (Generate Scene)", use_container_width=True):
+            if st.button("🎬 ACTION! (Generate Scene)", use_container_width=True, key="generate_scene"):
                 try:
                     with st.spinner("Shooting the scene... (Switch Mode: 3)"):
                         final_imgs = backend.generate_scene(
-                            char1_url=st.session_state.final_character_url,
-                            char2_url=None,
+                            char1_url=char1_url,
+                            char2_url=char2_url,
                             bg_url=bg_url,
                             story_prompt=story_prompt,
                             api_key=api_key,
@@ -519,6 +566,7 @@ with tab3:
                 st.info("배경과 지문을 입력하고 큐 사인을 주세요.")
     else:
         st.warning("이전 단계를 먼저 완료해주세요.")
+
 
 # ---------------------------------------------------------
 # [TAB 4] (미구현)
