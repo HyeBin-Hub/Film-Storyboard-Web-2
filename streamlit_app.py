@@ -613,7 +613,7 @@ with tab3:
                             seed=seed_value,  # ✅ 추가
                         )
                     if final_imgs:
-                        st.session_state.final_scene_url = final_imgs[0]
+                        st.session_state.final_scene_url = final_imgs[-1]
                         st.rerun()
                     else:
                         st.warning("최종 씬 이미지 URL을 받지 못했습니다.")
