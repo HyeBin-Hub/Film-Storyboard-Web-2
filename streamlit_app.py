@@ -365,8 +365,13 @@ with tab1:
                         seed=seed_value,
                         pm_options=st.session_state.pm_options_by_char[cur],  # ✅ 추가
                     )
+
+                    st.write("DEBUG urls:", imgs)
+                    st.write("DEBUG count:", 0 if not imgs else len(imgs))
+                    
                     st.session_state.generated_faces_by_char[cur] = imgs or []
-                st.rerun()
+                if imgs:
+                    st.rerun()
             except Exception as e:
                 st.error(str(e))
                 
