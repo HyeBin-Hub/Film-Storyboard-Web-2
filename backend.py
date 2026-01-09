@@ -172,19 +172,21 @@ def generate_faces(
     pm_options = pm_options or {}
 
     overrides: Dict[str, Any] = {
-        "3": {"inputs": { "age": str(pm_options.get("age", "-")), 
-                 "gender": pm_options.get("Gender", "Woman"), 
-                 "nationality_1": pm_options.get("Nationality", "Korean"), 
-                 "body_type": pm_options.get("Body Type", "-"), 
-                 "eyes_color": pm_options.get("Eyes Color", "Brown"), 
-                 "eyes_shape": pm_options.get("Eyes Shape", "Asian Eyes Shape"), 
-                 "lips_color": pm_options.get("Lips Color", "Red Lips"), 
-                 "lips_shape": pm_options.get("Lips Shape", "Round Lips"), 
-                 "face_shape": pm_options.get("Face Shape", "Oval"), 
-                 "hair_style": pm_options.get("Hair Style", "Buzz"), 
-                 "hair_color": pm_options.get("Hair Color", "Black"), 
-                 "hair_length": pm_options.get("Hair Length", "Long"), 
-                 "shot": "Half-length portrait" }},
+        "3": {"inputs": {
+            "shot": "Half-length portrait",
+            "age": str(pm_options.get("age", "-")),              # ✅ 문자열 유지
+            "gender": pm_options.get("Gender", "-"),            # ✅ 스키마 기본: "-"
+            "nationality_1": pm_options.get("Nationality", "Korean"),
+            "body_type": pm_options.get("Body Type", "-"),      # ✅ 스키마 기본: "-"
+            "eyes_color": pm_options.get("Eyes Color", "Brown"),
+            "eyes_shape": pm_options.get("Eyes Shape", "Monolid Eyes Shape"),   # ✅ 스키마 기본과 일치
+            "lips_color": pm_options.get("Lips Color", "Berry Lips"),           # ✅ 스키마 기본과 일치
+            "lips_shape": pm_options.get("Lips Shape", "Thin Lips"),            # ✅ 스키마 기본과 일치
+            "face_shape": pm_options.get("Face Shape", "Square with Soft Jaw"), # ✅ 스키마 기본과 일치(선택)
+            "hair_style": pm_options.get("Hair Style", "-"),     # ✅ 스키마 기본: "-"
+            "hair_color": pm_options.get("Hair Color", "Black"),
+            "hair_length": pm_options.get("Hair Length", "Short"),  # ✅ 스키마 기본: "Short"
+        }},
         "56": {"inputs": {"select": 1}},
         "12": {"inputs": {"text": base_prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
@@ -212,7 +214,6 @@ def generate_full_body(
         seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
-        "56": {"inputs": {"select": 1}},
         "56": {"inputs": {"select": 2}},
         "20": {"inputs": {"text": outfit_prompt}},
         "58": {"inputs": {"image": face_url}},
