@@ -342,63 +342,63 @@ with tab1:
                         key=f"hair_len_{cur}",
                     )
 
-            # ============================
-            # Generate Faces (현재 캐릭터만 생성)
-            # ============================
-            st.markdown("<br>", unsafe_allow_html=True)
+        # ============================
+        # Generate Faces (현재 캐릭터만 생성)
+        # ============================
+        st.markdown("<br>", unsafe_allow_html=True)
 
-            if st.button("🚀 GENERATE FACES\n(Current Character)", use_container_width=True, key="gen_faces_cur"):
-                try:
-                    with st.spinner(f"Casting in progress... (Character {cur+1})"):
-                        seed_value = None
-                        if st.session_state.get("seed_mode") == "Fixed":
-                            fixed_seed = st.session_state.get("fixed_seed", 12345)
-                            seed_value = backend.derive_seed(fixed_seed, cur)
+        if st.button("🚀 GENERATE FACES\n(Current Character)", use_container_width=True, key="gen_faces_cur"):
+            try:
+                with st.spinner(f"Casting in progress... (Character {cur+1})"):
+                    seed_value = None
+                    if st.session_state.get("seed_mode") == "Fixed":
+                        fixed_seed = st.session_state.get("fixed_seed", 12345)
+                        seed_value = backend.derive_seed(fixed_seed, cur)
 
-                        imgs = backend.generate_faces(
-                            base_prompt=base_prompt,
-                            api_key=api_key,
-                            deployment_id=deployment_id,
-                            width=DEFAULT_W,
-                            height=DEFAULT_H,
-                            batch_size=batch_size,
-                            seed=seed_value,
-                        )
-                        st.session_state.generated_faces_by_char[cur] = imgs or []
-                    st.rerun()
-                except Exception as e:
-                    st.error(str(e))
-                    
-            # ============================
-            # Navigator: Prev / Next
-            # ============================
-            # st.markdown("### Character Navigator")
-            nav1, nav2 = st.columns(2)
+                    imgs = backend.generate_faces(
+                        base_prompt=base_prompt,
+                        api_key=api_key,
+                        deployment_id=deployment_id,
+                        width=DEFAULT_W,
+                        height=DEFAULT_H,
+                        batch_size=batch_size,
+                        seed=seed_value,
+                    )
+                    st.session_state.generated_faces_by_char[cur] = imgs or []
+                st.rerun()
+            except Exception as e:
+                st.error(str(e))
+                
+        # ============================
+        # Navigator: Prev / Next
+        # ============================
+        # st.markdown("### Character Navigator")
+        nav1, nav2 = st.columns(2)
 
-            with nav1:
-                if st.button(
-                    "⬅️ PREV\nCHARACTER",
-                    use_container_width=True,
-                    disabled=(cur == 0),
-                    key="prev_char",
-                ):
-                    st.session_state.current_char_idx = max(0, cur - 1)
-                    st.rerun()
-            
-            # ✅ 선택 전에는 다음으로 못 가게
-            disabled_next = (cur == num_characters - 1) or (st.session_state.selected_face_urls[cur] is None)
-            
-            with nav2:
-                if st.button(
-                    "➡️ NEXT\nCHARACTER",
-                    use_container_width=True,
-                    disabled=disabled_next,   # ✅ 여기
-                    key="next_char",
-                ):
-                    st.session_state.current_char_idx = min(num_characters - 1, cur + 1)
-                    st.rerun()
-            
-            st.caption(f"Editing: Character {cur + 1} / {num_characters}")
+        with nav1:
+            if st.button(
+                "⬅️ PREV\nCHARACTER",
+                use_container_width=True,
+                disabled=(cur == 0),
+                key="prev_char",
+            ):
+                st.session_state.current_char_idx = max(0, cur - 1)
+                st.rerun()
+        
+        # ✅ 선택 전에는 다음으로 못 가게
+        disabled_next = (cur == num_characters - 1) or (st.session_state.selected_face_urls[cur] is None)
+        
+        with nav2:
+            if st.button(
+                "➡️ NEXT\nCHARACTER",
+                use_container_width=True,
+                disabled=disabled_next,   # ✅ 여기
+                key="next_char",
+            ):
+                st.session_state.current_char_idx = min(num_characters - 1, cur + 1)
+                st.rerun()
+        
+        st.caption(f"Editing: Character {cur + 1} / {num_characters}")
             
         # ============================
         # Left: 현재 캐릭터의 후보 + 선택
