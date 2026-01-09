@@ -134,15 +134,43 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
     return dedup
 
 
-def run_workflow(
-    api_key: str,
-    deployment_id: str,
-    overrides: Dict[str, Any],
-) -> List[str]:
+def summarize_outputs(result_json: Dict[str, Any]) -> str:
+    outputs = result_json.get("outputs", {}) or {}
+    keys = list(outputs.keys())
+    parts = [f"outputs keys: {keys}"]
+    for k in keys:
+        node_out = outputs.get(k) or {}
+        imgs = node_out.get("images") or []
+        parts.append(f"- node {k}: images={len(imgs)} keys={list(node_out.keys())}")
+        if imgs:
+            parts.append(f"  sample image keys: {list(imgs[0].keys())}")
+            parts.append(f"  sample url: {imgs[0].get('url')}")
+    return "\n".join(parts)
+
+def run_workflow(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> List[str]:
     request_id = submit_inference(api_key, deployment_id, overrides)
     poll_until_done(api_key, deployment_id, request_id)
     result = fetch_result(api_key, deployment_id, request_id)
-    return extract_image_urls(result)
+
+    # ✅ 디버그 로그 (Streamlit 로그/콘솔에서 확인)
+    print("=== RunComfy result summary ===")
+    print(summarize_outputs(result))
+
+    urls = extract_image_urls(result)
+    print(f"Extracted URLs: {len(urls)}")
+    return urls
+
+# def run_workflow(
+#     api_key: str,
+#     deployment_id: str,
+#     overrides: Dict[str, Any],
+# ) -> List[str]:
+#     request_id = submit_inference(api_key, deployment_id, overrides)
+#     poll_until_done(api_key, deployment_id, request_id)
+#     result = fetch_result(api_key, deployment_id, request_id)
+#     return extract_image_urls(result)
+
+
 
 
 # -----------------------------
