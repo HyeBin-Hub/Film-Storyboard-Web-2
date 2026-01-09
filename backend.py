@@ -156,6 +156,7 @@ def generate_faces(
     batch_size: int,
     *,
     seed: Optional[int] = None,
+    pm_options: Optional[Dict[str, Any]] = None
 ) -> List[str]:
     """
     Step1 (Switch=1): Portrait generation.
@@ -164,10 +165,26 @@ def generate_faces(
     - Node 13: latent size + batch
     - Node 11: sampler seed
     """
+    
     if seed is None:
         seed = random.randint(1, 10**15)
 
+    pm_options = pm_options or {}
+
     overrides: Dict[str, Any] = {
+        "3": {"inputs": { "age": str(pm_options.get("age", "-")), 
+                 "gender": pm_options.get("Gender", "Woman"), 
+                 "nationality_1": pm_options.get("Nationality", "Korean"), 
+                 "body_type": pm_options.get("Body Type", "-"), 
+                 "eyes_color": pm_options.get("Eyes Color", "Brown"), 
+                 "eyes_shape": pm_options.get("Eyes Shape", "Asian Eyes Shape"), 
+                 "lips_color": pm_options.get("Lips Color", "Red Lips"), 
+                 "lips_shape": pm_options.get("Lips Shape", "Round Lips"), 
+                 "face_shape": pm_options.get("Face Shape", "Oval"), 
+                 "hair_style": pm_options.get("Hair Style", "Buzz"), 
+                 "hair_color": pm_options.get("Hair Color", "Black"), 
+                 "hair_length": pm_options.get("Hair Length", "Long"), 
+                 "shot": "Half-length portrait" }},
         "56": {"inputs": {"select": 1}},
         "12": {"inputs": {"text": base_prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
@@ -195,6 +212,7 @@ def generate_full_body(
         seed = random.randint(1, 10**15)
 
     overrides: Dict[str, Any] = {
+        "56": {"inputs": {"select": 1}},
         "56": {"inputs": {"select": 2}},
         "20": {"inputs": {"text": outfit_prompt}},
         "58": {"inputs": {"image": face_url}},
