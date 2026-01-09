@@ -109,46 +109,19 @@ def fetch_result(
     return r.json()
 
 
-# def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
-#     """
-#     Extract all output image URLs from RunComfy result.
-#     """
-#     outputs = result_json.get("outputs", {}) or {}
-#     urls: List[str] = []
-
-#     for _, node_out in outputs.items():
-#         imgs = (node_out or {}).get("images") or []
-#         for img in imgs:
-#             u = img.get("url")
-#             if u:
-#                 urls.append(u)
-
-#     # 중복 제거(순서 유지)
-#     seen = set()
-#     dedup = []
-#     for u in urls:
-#         if u not in seen:
-#             seen.add(u)
-#             dedup.append(u)
-#     return dedup
-
 def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
+    """
+    Extract all output image URLs from RunComfy result.
+    """
     outputs = result_json.get("outputs", {}) or {}
     urls: List[str] = []
 
-    def walk(x: Any):
-        if isinstance(x, dict):
-            # url 키를 어디에서든 수집
-            u = x.get("url")
-            if isinstance(u, str) and u.startswith("http"):
+    for _, node_out in outputs.items():
+        imgs = (node_out or {}).get("images") or []
+        for img in imgs:
+            u = img.get("url")
+            if u:
                 urls.append(u)
-            for v in x.values():
-                walk(v)
-        elif isinstance(x, list):
-            for v in x:
-                walk(v)
-
-    walk(outputs)
 
     # 중복 제거(순서 유지)
     seen = set()
@@ -159,10 +132,6 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
             dedup.append(u)
     return dedup
 
-def run_workflow_debug(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> Dict[str, Any]:
-    request_id = submit_inference(api_key, deployment_id, overrides)
-    poll_until_done(api_key, deployment_id, request_id)
-    return fetch_result(api_key, deployment_id, request_id)
 
 
 def run_workflow(
