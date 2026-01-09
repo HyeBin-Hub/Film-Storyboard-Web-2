@@ -144,9 +144,9 @@ if "outfit_prompts" not in st.session_state:
 if "final_scene_url" not in st.session_state:
     st.session_state.final_scene_url = None
 
-# 캐릭터 옵션 저장소 (선택)
-if "pm_options" not in st.session_state:
-    st.session_state.pm_options = {}
+# # 캐릭터 옵션 저장소 (선택)
+# if "pm_options" not in st.session_state:
+#     st.session_state.pm_options = {}
 
 # Step1: 현재 편집/생성 중인 캐릭터 인덱스 (0-based)
 if "current_char_idx" not in st.session_state:
