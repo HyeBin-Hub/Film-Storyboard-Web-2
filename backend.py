@@ -109,7 +109,6 @@ def fetch_result(
     return r.json()
 
 
-
 def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
     """
     Extract all output image URLs from RunComfy result.
@@ -134,43 +133,15 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
     return dedup
 
 
-def summarize_outputs(result_json: Dict[str, Any]) -> str:
-    outputs = result_json.get("outputs", {}) or {}
-    keys = list(outputs.keys())
-    parts = [f"outputs keys: {keys}"]
-    for k in keys:
-        node_out = outputs.get(k) or {}
-        imgs = node_out.get("images") or []
-        parts.append(f"- node {k}: images={len(imgs)} keys={list(node_out.keys())}")
-        if imgs:
-            parts.append(f"  sample image keys: {list(imgs[0].keys())}")
-            parts.append(f"  sample url: {imgs[0].get('url')}")
-    return "\n".join(parts)
-
-def run_workflow(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> List[str]:
+def run_workflow(
+    api_key: str,
+    deployment_id: str,
+    overrides: Dict[str, Any],
+) -> List[str]:
     request_id = submit_inference(api_key, deployment_id, overrides)
     poll_until_done(api_key, deployment_id, request_id)
     result = fetch_result(api_key, deployment_id, request_id)
-
-    # ✅ 디버그 로그 (Streamlit 로그/콘솔에서 확인)
-    print("=== RunComfy result summary ===")
-    print(summarize_outputs(result))
-
-    urls = extract_image_urls(result)
-    print(f"Extracted URLs: {len(urls)}")
-    return urls
-
-# def run_workflow(
-#     api_key: str,
-#     deployment_id: str,
-#     overrides: Dict[str, Any],
-# ) -> List[str]:
-#     request_id = submit_inference(api_key, deployment_id, overrides)
-#     poll_until_done(api_key, deployment_id, request_id)
-#     result = fetch_result(api_key, deployment_id, request_id)
-#     return extract_image_urls(result)
-
-
+    return extract_image_urls(result)
 
 
 # -----------------------------
@@ -185,7 +156,6 @@ def generate_faces(
     batch_size: int,
     *,
     seed: Optional[int] = None,
-    pm_options: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """
     Step1 (Switch=1): Portrait generation.
@@ -197,22 +167,7 @@ def generate_faces(
     if seed is None:
         seed = random.randint(1, 10**15)
 
-    pm_options = pm_options or {}
-
     overrides: Dict[str, Any] = {
-                "3": {"inputs": { "age": pm_options.get("age", 25), 
-                         "gender": pm_options.get("Gender", "Woman"), 
-                         "nationality_1": pm_options.get("Nationality", "Korean"), 
-                         "body_type": pm_options.get("Body Type", "Fit"), 
-                         "eyes_color": pm_options.get("Eyes Color", "Brown"), 
-                         "eyes_shape": pm_options.get("Eyes Shape", "Asian Eyes Shape"), 
-                         "lips_color": pm_options.get("Lips Color", "Red Lips"), 
-                         "lips_shape": pm_options.get("Lips Shape", "Round Lips"), 
-                         "face_shape": pm_options.get("Face Shape", "Oval"), 
-                         "hair_style": pm_options.get("Hair Style", "Buzz"), 
-                         "hair_color": pm_options.get("Hair Color", "Black"), 
-                         "hair_length": pm_options.get("Hair Length", "Long"), 
-                         "shot": "Half-length portrait" }},
         "56": {"inputs": {"select": 1}},
         "12": {"inputs": {"text": base_prompt}},
         "13": {"inputs": {"width": width, "height": height, "batch_size": batch_size}},
