@@ -133,30 +133,36 @@ def fetch_result(
 #     return dedup
 
 def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
+    outputs = result_json.get("outputs", {}) or {}
     urls: List[str] = []
 
     def walk(x: Any):
         if isinstance(x, dict):
-            # url 키 직접 발견
-            if "url" in x and isinstance(x["url"], str):
-                urls.append(x["url"])
+            # url 키를 어디에서든 수집
+            u = x.get("url")
+            if isinstance(u, str) and u.startswith("http"):
+                urls.append(u)
             for v in x.values():
                 walk(v)
         elif isinstance(x, list):
             for v in x:
                 walk(v)
 
-    walk(result_json.get("outputs", {}) or {})
+    walk(outputs)
 
-    # dedup
+    # 중복 제거(순서 유지)
     seen = set()
-    out = []
+    dedup = []
     for u in urls:
         if u not in seen:
             seen.add(u)
-            out.append(u)
-    return out
+            dedup.append(u)
+    return dedup
 
+def run_workflow_debug(api_key: str, deployment_id: str, overrides: Dict[str, Any]) -> Dict[str, Any]:
+    request_id = submit_inference(api_key, deployment_id, overrides)
+    poll_until_done(api_key, deployment_id, request_id)
+    return fetch_result(api_key, deployment_id, request_id)
 
 
 def run_workflow(
