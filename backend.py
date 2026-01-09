@@ -133,7 +133,6 @@ def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
     return dedup
 
 
-
 def run_workflow(
     api_key: str,
     deployment_id: str,
@@ -157,7 +156,7 @@ def generate_faces(
     batch_size: int,
     *,
     seed: Optional[int] = None,
-    pm_options: Optional[Dict[str, Any]] = None,   # ✅ 추가
+    pm_options: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """
     Step1 (Switch=1): Portrait generation.
@@ -172,7 +171,7 @@ def generate_faces(
     pm_options = pm_options or {}
 
     overrides: Dict[str, Any] = {
-        "3": {"inputs": { "age": pm_options.get("age", 25), 
+                "3": {"inputs": { "age": pm_options.get("age", 25), 
                          "gender": pm_options.get("Gender", "Woman"), 
                          "nationality_1": pm_options.get("Nationality", "Korean"), 
                          "body_type": pm_options.get("Body Type", "Fit"), 
