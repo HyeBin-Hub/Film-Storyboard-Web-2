@@ -109,28 +109,54 @@ def fetch_result(
     return r.json()
 
 
+# def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
+#     """
+#     Extract all output image URLs from RunComfy result.
+#     """
+#     outputs = result_json.get("outputs", {}) or {}
+#     urls: List[str] = []
+
+#     for _, node_out in outputs.items():
+#         imgs = (node_out or {}).get("images") or []
+#         for img in imgs:
+#             u = img.get("url")
+#             if u:
+#                 urls.append(u)
+
+#     # 중복 제거(순서 유지)
+#     seen = set()
+#     dedup = []
+#     for u in urls:
+#         if u not in seen:
+#             seen.add(u)
+#             dedup.append(u)
+#     return dedup
+
 def extract_image_urls(result_json: Dict[str, Any]) -> List[str]:
-    """
-    Extract all output image URLs from RunComfy result.
-    """
-    outputs = result_json.get("outputs", {}) or {}
     urls: List[str] = []
 
-    for _, node_out in outputs.items():
-        imgs = (node_out or {}).get("images") or []
-        for img in imgs:
-            u = img.get("url")
-            if u:
-                urls.append(u)
+    def walk(x):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k == "url" and isinstance(v, str) and v.startswith("http"):
+                    urls.append(v)
+                else:
+                    walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
 
-    # 중복 제거(순서 유지)
+    walk(result_json)
+
+    # dedup
     seen = set()
-    dedup = []
+    out = []
     for u in urls:
         if u not in seen:
             seen.add(u)
-            dedup.append(u)
-    return dedup
+            out.append(u)
+    return out
+
 
 
 def run_workflow(
