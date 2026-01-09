@@ -400,6 +400,7 @@ with tab1:
                         height=DEFAULT_H,
                         batch_size=batch_size,
                         seed=seed_value,
+                        pm_options=pm_options,  # ✅ 추가 (현재 캐릭터 옵션 전달)
                     )
                     st.session_state.generated_faces_by_char[cur] = imgs or []
                 st.rerun()
