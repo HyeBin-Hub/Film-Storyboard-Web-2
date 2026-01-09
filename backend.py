@@ -141,6 +141,7 @@ def run_workflow(
     request_id = submit_inference(api_key, deployment_id, overrides)
     poll_until_done(api_key, deployment_id, request_id)
     result = fetch_result(api_key, deployment_id, request_id)
+    print(result)
     return extract_image_urls(result)
 
 
