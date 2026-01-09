@@ -173,17 +173,24 @@ def generate_faces(
 
     overrides: Dict[str, Any] = {
         "3": {"inputs": {
+            
+            "seed": ["4", 0],
+            "text_in": ["12", 0],
+            
+            # ✅ 기존 기본값/필수값도 가능하면 유지
+            "active": True,
             "shot": "Half-length portrait",
+
             "age": str(pm_options.get("age", "-")),              # ✅ 문자열 유지
             "gender": pm_options.get("Gender", "-"),            # ✅ 스키마 기본: "-"
             "nationality_1": pm_options.get("Nationality", "Korean"),
-            "body_type": pm_options.get("Body Type", "-"),      # ✅ 스키마 기본: "-"
+            "body_type": pm_options.get("Body Type", "Chubby"),      # ✅ 스키마 기본: "-"
             "eyes_color": pm_options.get("Eyes Color", "Brown"),
-            "eyes_shape": pm_options.get("Eyes Shape", "Monolid Eyes Shape"),   # ✅ 스키마 기본과 일치
+            "eyes_shape": pm_options.get("Eyes Shape", "Almond Eyes Shape"),   # ✅ 스키마 기본과 일치
             "lips_color": pm_options.get("Lips Color", "Berry Lips"),           # ✅ 스키마 기본과 일치
             "lips_shape": pm_options.get("Lips Shape", "Thin Lips"),            # ✅ 스키마 기본과 일치
-            "face_shape": pm_options.get("Face Shape", "Square with Soft Jaw"), # ✅ 스키마 기본과 일치(선택)
-            "hair_style": pm_options.get("Hair Style", "-"),     # ✅ 스키마 기본: "-"
+            "face_shape": pm_options.get("Face Shape", "Oval"), # ✅ 스키마 기본과 일치(선택)
+            "hair_style": pm_options.get("Hair Style", "Buzz"),     # ✅ 스키마 기본: "-"
             "hair_color": pm_options.get("Hair Color", "Black"),
             "hair_length": pm_options.get("Hair Length", "Short"),  # ✅ 스키마 기본: "Short"
         }},
