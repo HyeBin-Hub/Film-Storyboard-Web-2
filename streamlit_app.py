@@ -268,6 +268,114 @@ def render_empty_preview_box(message, height=520):
     )
 
 
+def get_scene_shot_filter_config():
+    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+    custom_shots = st.session_state.get("custom_shots", [])
+
+    if shot_filter_mode == "ALL":
+        return "ALL", ""
+    return "CUSTOM", ", ".join(custom_shots)
+
+
+def get_body_reference_candidates(character_code):
+    """
+    character_code: 'c1' or 'c2'
+    Step3에서 여러 body 후보를 저장해둔 경우:
+    st.session_state["body_candidates_c1"] = [
+        {"label": "Boy Body 1", "image": ..., "filename": "..."},
+        {"label": "Boy Body 2", "image": ..., "filename": "..."},
+    ]
+    같은 형태를 읽는다.
+
+    후보 리스트가 없으면 body_result_image_c1 / c2 를 단일 후보로 fallback 한다.
+    """
+    candidates_key = f"body_candidates_{character_code}"
+    candidates = st.session_state.get(candidates_key, [])
+
+    normalized = []
+
+    for i, item in enumerate(candidates, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        normalized.append(
+            {
+                "label": item.get(
+                    "label",
+                    f"{'Boy' if character_code == 'c1' else 'Girl'} Body {i}",
+                ),
+                "image": item.get("image"),
+                "filename": item.get("filename", ""),
+            }
+        )
+
+    # fallback: Step3에서 단일 결과만 저장되어 있는 경우
+    fallback_image = st.session_state.get(f"body_result_image_{character_code}")
+    fallback_filename = st.session_state.get(f"body_result_filename_{character_code}", "")
+
+    if not normalized and fallback_image is not None:
+        normalized.append(
+            {
+                "label": f"{'Boy' if character_code == 'c1' else 'Girl'} Body 1",
+                "image": fallback_image,
+                "filename": fallback_filename,
+            }
+        )
+
+    return normalized
+
+
+def sync_scene_reference_selection(session_key, candidates):
+    labels = [item["label"] for item in candidates]
+
+    if not labels:
+        st.session_state[session_key] = ""
+        return
+
+    if st.session_state.get(session_key) not in labels:
+        st.session_state[session_key] = labels[0]
+
+
+def get_selected_candidate(candidates, selected_label):
+    for item in candidates:
+        if item["label"] == selected_label:
+            return item
+    return None
+
+
+def build_scene_ui_config():
+    shot_filter, custom_shot_ids = get_scene_shot_filter_config()
+
+    boy_candidates = get_body_reference_candidates("c1")
+    girl_candidates = get_body_reference_candidates("c2")
+
+    selected_boy = get_selected_candidate(
+        boy_candidates,
+        st.session_state.get("scene_boy_reference_label", ""),
+    )
+    selected_girl = get_selected_candidate(
+        girl_candidates,
+        st.session_state.get("scene_girl_reference_label", ""),
+    )
+
+    return {
+        "scene_generation": {
+            "shot_filter": shot_filter,
+            "custom_shot_ids": custom_shot_ids,
+            "reference_images": {
+                "image_1_boy_body": {
+                    "label": selected_boy["label"] if selected_boy else "",
+                    "filename": selected_boy.get("filename", "") if selected_boy else "",
+                },
+                "image_2_girl_body": {
+                    "label": selected_girl["label"] if selected_girl else "",
+                    "filename": selected_girl.get("filename", "") if selected_girl else "",
+                },
+            },
+        }
+    }
+
+
 # =========================
 # Page Config
 # =========================
@@ -751,24 +859,26 @@ with tab3:
 with tab4:
     st.header("Step 4. Scene Generation")
 
-    initialize_scene_prompt()
+    boy_candidates = get_body_reference_candidates("c1")
+    girl_candidates = get_body_reference_candidates("c2")
+
+    sync_scene_reference_selection("scene_boy_reference_label", boy_candidates)
+    sync_scene_reference_selection("scene_girl_reference_label", girl_candidates)
 
     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
     with preview_col:
         st.subheader("Generated Scene Preview")
 
-        selected_shot_mode = st.session_state.get("shot_filter_mode", "ALL")
-        selected_custom_shots = st.session_state.get("custom_shots", [])
+        shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+        custom_shots = st.session_state.get("custom_shots", [])
 
-        if selected_shot_mode == "ALL":
-            shot_caption = "Selected Shots: ALL"
-        elif selected_custom_shots:
-            shot_caption = f"Selected Shots: {', '.join(selected_custom_shots)}"
+        if shot_filter_mode == "ALL":
+            st.caption("Selected Shots: ALL")
+        elif custom_shots:
+            st.caption(f"Selected Shots: {', '.join(custom_shots)}")
         else:
-            shot_caption = "Selected Shots: CUSTOM / No shot selected"
-
-        st.caption(shot_caption)
+            st.caption("Selected Shots: CUSTOM / No shot selected")
 
         if "scene_result_image" in st.session_state:
             st.image(
@@ -785,75 +895,84 @@ with tab4:
     with settings_col:
         st.subheader("Scene Generation Settings")
 
-        selected_shot_mode = st.session_state.get("shot_filter_mode", "ALL")
-        selected_custom_shots = st.session_state.get("custom_shots", [])
-
         with st.container(border=True):
             st.markdown("###### Selected Shot Filter")
 
-            if selected_shot_mode == "ALL":
+            shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+            custom_shots = st.session_state.get("custom_shots", [])
+
+            if shot_filter_mode == "ALL":
                 st.write("ALL")
-            elif selected_custom_shots:
-                st.write(", ".join(selected_custom_shots))
+            elif custom_shots:
+                st.write(", ".join(custom_shots))
             else:
                 st.warning("Step 1에서 CUSTOM shot을 선택해야 합니다.")
 
         st.divider()
 
-        st.markdown("### Scene Prompt Editor")
+        st.markdown("### Reference Images")
 
-        st.text_area(
-            "Scene Prompt",
-            key="scene_prompt",
-            height=300,
-            placeholder=SCENE_PROMPT_PLACEHOLDER,
-            help="Scene generation에 사용할 최종 프롬프트입니다. Step 1에서 선택한 shot 정보와 함께 workflow에 전달됩니다.",
-        )
+        # Boy reference selection
+        st.markdown("##### Image 1 - Boy Body Reference")
 
-        with st.expander("Reference Images", expanded=False):
-            ref_col1, ref_col2 = st.columns(2, gap="medium")
-
-            with ref_col1:
-                st.markdown("###### Image 1 - Boy Body")
-
-                if "body_result_image_c1" in st.session_state:
-                    st.image(
-                        st.session_state["body_result_image_c1"],
-                        caption="Image 1 - Boy Body Reference",
-                        use_container_width=True,
-                    )
-                else:
-                    render_empty_preview_box(
-                        "Image 1 - Boy body reference not generated yet.",
-                        220,
-                    )
-
-            with ref_col2:
-                st.markdown("###### Image 2 - Girl Body")
-
-                if "body_result_image_c2" in st.session_state:
-                    st.image(
-                        st.session_state["body_result_image_c2"],
-                        caption="Image 2 - Girl Body Reference",
-                        use_container_width=True,
-                    )
-                else:
-                    render_empty_preview_box(
-                        "Image 2 - Girl body reference not generated yet.",
-                        220,
-                    )
-
-        with st.expander("Scene Prompt Guide", expanded=False):
-            st.markdown(
-                """
-                - Step 1에서 선택한 shot 정보가 Scene Generation에 사용됩니다.
-                - `Image 1`은 Boy, `Image 2`는 Girl로 유지하세요.
-                - 캐릭터 위치는 CSV의 Position 정보를 우선해서 작성하세요.
-                - 카메라 정보는 Shot Size, Camera Height, Framing, Composition을 반영하세요.
-                - 얼굴과 의상을 길게 다시 설명하기보다 body reference와 일치하도록 지시하는 것이 좋습니다.
-                - 배경, 분위기, 인물 배치, 카메라 구도를 명확하게 작성하세요.
-                """
+        if boy_candidates:
+            st.selectbox(
+                "Select Image 1 - Boy Body Reference",
+                options=[item["label"] for item in boy_candidates],
+                key="scene_boy_reference_label",
+                label_visibility="collapsed",
             )
+
+            selected_boy = get_selected_candidate(
+                boy_candidates,
+                st.session_state.get("scene_boy_reference_label", ""),
+            )
+
+            if selected_boy and selected_boy.get("image") is not None:
+                st.image(
+                    selected_boy["image"],
+                    caption=selected_boy["label"],
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "Selected boy body reference preview is not available.",
+                    220,
+                )
+        else:
+            st.warning("Step 3에서 Image 1 - Boy body reference를 먼저 생성해야 합니다.")
+
+        st.divider()
+
+        # Girl reference selection
+        st.markdown("##### Image 2 - Girl Body Reference")
+
+        if girl_candidates:
+            st.selectbox(
+                "Select Image 2 - Girl Body Reference",
+                options=[item["label"] for item in girl_candidates],
+                key="scene_girl_reference_label",
+                label_visibility="collapsed",
+            )
+
+            selected_girl = get_selected_candidate(
+                girl_candidates,
+                st.session_state.get("scene_girl_reference_label", ""),
+            )
+
+            if selected_girl and selected_girl.get("image") is not None:
+                st.image(
+                    selected_girl["image"],
+                    caption=selected_girl["label"],
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "Selected girl body reference preview is not available.",
+                    220,
+                )
+        else:
+            st.warning("Step 3에서 Image 2 - Girl body reference를 먼저 생성해야 합니다.")
 
         st.divider()
 
@@ -874,6 +993,12 @@ with tab4:
                 and len(st.session_state.get("custom_shots", [])) == 0
             ):
                 st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+
+            elif not boy_candidates:
+                st.error("Image 1 - Boy body reference 후보가 없습니다. 먼저 Step 3을 진행하세요.")
+
+            elif not girl_candidates:
+                st.error("Image 2 - Girl body reference 후보가 없습니다. 먼저 Step 3을 진행하세요.")
 
             else:
                 scene_config = build_scene_ui_config()
