@@ -210,6 +210,41 @@ def build_body_ui_config():
         }
     }
 
+SCENE_PROMPT_PLACEHOLDER = (
+    "Example: Image 1 - Boy and Image 2 - Girl are walking through an empty red sorghum field. "
+    "Image 1 is on the left and Image 2 is on the right. "
+    "Use a long shot, eye-level camera, full-body framing, cinematic vintage tone, cloudy and windy atmosphere."
+)
+
+
+def initialize_scene_prompt():
+    if "scene_prompt" not in st.session_state:
+        st.session_state["scene_prompt"] = ""
+
+
+def build_scene_ui_config():
+    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+    custom_shots = st.session_state.get("custom_shots", [])
+
+    if shot_filter_mode == "ALL":
+        shot_filter = "ALL"
+        custom_shot_ids = ""
+    else:
+        shot_filter = "CUSTOM"
+        custom_shot_ids = ", ".join(custom_shots)
+
+    return {
+        "scene_generation": {
+            "shot_filter": shot_filter,
+            "custom_shot_ids": custom_shot_ids,
+            "scene_prompt": st.session_state.get("scene_prompt", ""),
+            "reference_images": {
+                "image_1": "Image 1 - Boy Body Reference",
+                "image_2": "Image 2 - Girl Body Reference",
+            },
+        }
+    }
+
 
 def render_empty_preview_box(message, height=520):
     st.markdown(
@@ -249,14 +284,14 @@ st.caption("Face / Body Generation Branch UI Test")
 # =========================
 # Tabs
 # =========================
-tab1, tab2, tab3 = st.tabs(
+tab1, tab2, tab3, tab4 = st.tabs(
     [
         "Step 1. CSV",
         "Step 2. Face Settings",
         "Step 3. Body Settings",
+        "Step 4. Scene Settings",
     ]
 )
-
 
 # =========================
 # Step 1. CSV Upload
@@ -709,3 +744,140 @@ with tab3:
                 st.success("Body branch UI 입력값이 정상적으로 수집되었습니다.")
                 st.subheader("Collected Body Branch Config")
                 st.json(body_config)
+                
+# =========================
+# Step 4. Scene Settings
+# =========================
+with tab4:
+    st.header("Step 4. Scene Generation")
+
+    initialize_scene_prompt()
+
+    preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
+
+    with preview_col:
+        st.subheader("Generated Scene Preview")
+
+        selected_shot_mode = st.session_state.get("shot_filter_mode", "ALL")
+        selected_custom_shots = st.session_state.get("custom_shots", [])
+
+        if selected_shot_mode == "ALL":
+            shot_caption = "Selected Shots: ALL"
+        elif selected_custom_shots:
+            shot_caption = f"Selected Shots: {', '.join(selected_custom_shots)}"
+        else:
+            shot_caption = "Selected Shots: CUSTOM / No shot selected"
+
+        st.caption(shot_caption)
+
+        if "scene_result_image" in st.session_state:
+            st.image(
+                st.session_state["scene_result_image"],
+                caption="Generated Storyboard Scene",
+                use_container_width=True,
+            )
+        else:
+            render_empty_preview_box(
+                "Generated storyboard scene will appear here.",
+                560,
+            )
+
+    with settings_col:
+        st.subheader("Scene Generation Settings")
+
+        selected_shot_mode = st.session_state.get("shot_filter_mode", "ALL")
+        selected_custom_shots = st.session_state.get("custom_shots", [])
+
+        with st.container(border=True):
+            st.markdown("###### Selected Shot Filter")
+
+            if selected_shot_mode == "ALL":
+                st.write("ALL")
+            elif selected_custom_shots:
+                st.write(", ".join(selected_custom_shots))
+            else:
+                st.warning("Step 1에서 CUSTOM shot을 선택해야 합니다.")
+
+        st.divider()
+
+        st.markdown("### Scene Prompt Editor")
+
+        st.text_area(
+            "Scene Prompt",
+            key="scene_prompt",
+            height=300,
+            placeholder=SCENE_PROMPT_PLACEHOLDER,
+            help="Scene generation에 사용할 최종 프롬프트입니다. Step 1에서 선택한 shot 정보와 함께 workflow에 전달됩니다.",
+        )
+
+        with st.expander("Reference Images", expanded=False):
+            ref_col1, ref_col2 = st.columns(2, gap="medium")
+
+            with ref_col1:
+                st.markdown("###### Image 1 - Boy Body")
+
+                if "body_result_image_c1" in st.session_state:
+                    st.image(
+                        st.session_state["body_result_image_c1"],
+                        caption="Image 1 - Boy Body Reference",
+                        use_container_width=True,
+                    )
+                else:
+                    render_empty_preview_box(
+                        "Image 1 - Boy body reference not generated yet.",
+                        220,
+                    )
+
+            with ref_col2:
+                st.markdown("###### Image 2 - Girl Body")
+
+                if "body_result_image_c2" in st.session_state:
+                    st.image(
+                        st.session_state["body_result_image_c2"],
+                        caption="Image 2 - Girl Body Reference",
+                        use_container_width=True,
+                    )
+                else:
+                    render_empty_preview_box(
+                        "Image 2 - Girl body reference not generated yet.",
+                        220,
+                    )
+
+        with st.expander("Scene Prompt Guide", expanded=False):
+            st.markdown(
+                """
+                - Step 1에서 선택한 shot 정보가 Scene Generation에 사용됩니다.
+                - `Image 1`은 Boy, `Image 2`는 Girl로 유지하세요.
+                - 캐릭터 위치는 CSV의 Position 정보를 우선해서 작성하세요.
+                - 카메라 정보는 Shot Size, Camera Height, Framing, Composition을 반영하세요.
+                - 얼굴과 의상을 길게 다시 설명하기보다 body reference와 일치하도록 지시하는 것이 좋습니다.
+                - 배경, 분위기, 인물 배치, 카메라 구도를 명확하게 작성하세요.
+                """
+            )
+
+        st.divider()
+
+        generate_scene_clicked = st.button(
+            "Generate Scene",
+            type="primary",
+            use_container_width=True,
+        )
+
+        if generate_scene_clicked:
+            csv_text = st.session_state.get("csv_text", "")
+
+            if not csv_text.strip():
+                st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+
+            elif (
+                st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
+                and len(st.session_state.get("custom_shots", [])) == 0
+            ):
+                st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+
+            else:
+                scene_config = build_scene_ui_config()
+
+                st.success("Scene branch UI 입력값이 정상적으로 수집되었습니다.")
+                st.subheader("Collected Scene Branch Config")
+                st.json(scene_config)
