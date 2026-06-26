@@ -260,7 +260,7 @@ with tab1:
 with tab2:
     st.header("Step 2. Face Generation Branch")
 
-    preview_col, settings_col = st.columns([1, 1.7], gap="large")
+    preview_col, settings_col = st.columns([1.25, 1.45], gap="large")
 
     with preview_col:
         st.subheader("Generated Face Preview")
@@ -277,7 +277,7 @@ with tab2:
                 <div style="
                     border: 1px dashed #999;
                     border-radius: 12px;
-                    height: 420px;
+                    height: 520px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -304,211 +304,178 @@ with tab2:
             help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
         )
 
-        st.subheader("Main Character Appearance")
+        with st.expander("Main Character Appearance", expanded=True):
+            with st.container(border=True):
+                st.markdown("#### Basic Identity")
 
-        with st.container(border=True):
-            st.markdown("#### Basic Identity")
+                basic_col1, basic_col2 = st.columns(2)
 
-            basic_col1, basic_col2 = st.columns(2)
+                with basic_col1:
+                    st.slider(
+                        "Age",
+                        min_value=1,
+                        max_value=100,
+                        value=9,
+                        step=1,
+                        key="age",
+                    )
 
-            with basic_col1:
-                st.slider(
-                    "Age",
-                    min_value=1,
-                    max_value=100,
-                    value=9,
-                    step=1,
-                    key="age",
-                )
+                with basic_col2:
+                    st.selectbox(
+                        "Nationality",
+                        options=[
+                            "South Korean",
+                            "Korean",
+                            "East Asian",
+                            "Japanese",
+                            "Chinese",
+                        ],
+                        index=0,
+                        key="nationality",
+                    )
 
-            with basic_col2:
-                st.selectbox(
-                    "Nationality",
-                    options=[
-                        "South Korean",
-                        "Korean",
-                        "East Asian",
-                        "Japanese",
-                        "Chinese",
-                    ],
-                    index=0,
-                    key="nationality",
-                )
+            with st.container(border=True):
+                st.markdown("#### Face")
 
-        with st.container(border=True):
-            st.markdown("#### Face")
+                face_col1, face_col2, face_col3 = st.columns(3)
 
-            face_col1, face_col2, face_col3 = st.columns(3)
+                with face_col1:
+                    st.selectbox(
+                        "Body Type",
+                        options=["Slim", "Average", "Athletic", "Curvy", "Heavy"],
+                        index=0,
+                        key="body_type",
+                    )
 
-            with face_col1:
-                st.selectbox(
-                    "Body Type",
-                    options=["Slim", "Average", "Athletic", "Curvy", "Heavy"],
-                    index=0,
-                    key="body_type",
-                )
+                with face_col2:
+                    st.selectbox(
+                        "Face Shape",
+                        options=[
+                            "Oval",
+                            "Round",
+                            "Square",
+                            "Square with Soft Jaw",
+                            "Heart",
+                            "Long",
+                            "Diamond",
+                        ],
+                        index=3,
+                        key="face_shape",
+                    )
 
-            with face_col2:
-                st.selectbox(
-                    "Face Shape",
-                    options=[
-                        "Oval",
-                        "Round",
-                        "Square",
-                        "Square with Soft Jaw",
-                        "Heart",
-                        "Long",
-                        "Diamond",
-                    ],
-                    index=3,
-                    key="face_shape",
-                )
+                with face_col3:
+                    st.selectbox(
+                        "Expression",
+                        options=[
+                            "Neutral",
+                            "Curious",
+                            "Gentle Smile",
+                            "Serious",
+                            "Sad",
+                            "Surprised",
+                            "Calm",
+                        ],
+                        index=1,
+                        key="facial_expression",
+                    )
 
-            with face_col3:
-                st.selectbox(
-                    "Expression",
-                    options=[
-                        "Neutral",
-                        "Curious",
-                        "Gentle Smile",
-                        "Serious",
-                        "Sad",
-                        "Surprised",
-                        "Calm",
-                    ],
-                    index=1,
-                    key="facial_expression",
-                )
+            with st.container(border=True):
+                st.markdown("#### Eyes / Lips")
 
-        with st.container(border=True):
-            st.markdown("#### Eyes / Lips")
+                eye_col1, eye_col2 = st.columns(2)
 
-            eye_col1, eye_col2 = st.columns(2)
+                with eye_col1:
+                    st.selectbox(
+                        "Eyes Color",
+                        options=[
+                            "Brown",
+                            "Dark Brown",
+                            "Black",
+                            "Hazel",
+                            "Blue",
+                            "Green",
+                        ],
+                        index=0,
+                        key="eyes_color",
+                    )
 
-            with eye_col1:
-                st.selectbox(
-                    "Eyes Color",
-                    options=["Brown", "Dark Brown", "Black", "Hazel", "Blue", "Green"],
-                    index=0,
-                    key="eyes_color",
-                )
+                    st.selectbox(
+                        "Eyes Shape",
+                        options=[
+                            "Double Eyelid Eyes Shape",
+                            "Monolid Eyes Shape",
+                            "Almond Eyes",
+                            "Round Eyes",
+                            "Sharp Eyes",
+                        ],
+                        index=0,
+                        key="eyes_shape",
+                    )
 
-                st.selectbox(
-                    "Eyes Shape",
-                    options=[
-                        "Double Eyelid Eyes Shape",
-                        "Monolid Eyes Shape",
-                        "Almond Eyes",
-                        "Round Eyes",
-                        "Sharp Eyes",
-                    ],
-                    index=0,
-                    key="eyes_shape",
-                )
+                with eye_col2:
+                    st.selectbox(
+                        "Lips Color",
+                        options=[
+                            "Peach Lips",
+                            "Pink Lips",
+                            "Natural Lips",
+                            "Pale Lips",
+                            "Rose Lips",
+                        ],
+                        index=0,
+                        key="lips_color",
+                    )
 
-            with eye_col2:
-                st.selectbox(
-                    "Lips Color",
-                    options=[
-                        "Peach Lips",
-                        "Pink Lips",
-                        "Natural Lips",
-                        "Pale Lips",
-                        "Rose Lips",
-                    ],
-                    index=0,
-                    key="lips_color",
-                )
+                    st.selectbox(
+                        "Lips Shape",
+                        options=["Thin Lips", "Full Lips", "Small Lips", "Soft Lips"],
+                        index=0,
+                        key="lips_shape",
+                    )
 
-                st.selectbox(
-                    "Lips Shape",
-                    options=["Thin Lips", "Full Lips", "Small Lips", "Soft Lips"],
-                    index=0,
-                    key="lips_shape",
-                )
+            with st.container(border=True):
+                st.markdown("#### Hair")
 
-        with st.container(border=True):
-            st.markdown("#### Hair")
+                hair_col1, hair_col2, hair_col3 = st.columns(3)
 
-            hair_col1, hair_col2, hair_col3 = st.columns(3)
+                with hair_col1:
+                    st.selectbox(
+                        "Hair Style",
+                        options=[
+                            "Bob",
+                            "Straight",
+                            "Wavy",
+                            "Braided Pigtails",
+                            "Ponytail",
+                            "Short Hair",
+                            "Long Hair",
+                        ],
+                        index=0,
+                        key="hair_style",
+                    )
 
-            with hair_col1:
-                st.selectbox(
-                    "Hair Style",
-                    options=[
-                        "Bob",
-                        "Straight",
-                        "Wavy",
-                        "Braided Pigtails",
-                        "Ponytail",
-                        "Short Hair",
-                        "Long Hair",
-                    ],
-                    index=0,
-                    key="hair_style",
-                )
+                with hair_col2:
+                    st.selectbox(
+                        "Hair Color",
+                        options=[
+                            "Chestnut",
+                            "Black",
+                            "Dark Brown",
+                            "Brown",
+                            "Blonde",
+                            "Auburn",
+                        ],
+                        index=0,
+                        key="hair_color",
+                    )
 
-            with hair_col2:
-                st.selectbox(
-                    "Hair Color",
-                    options=[
-                        "Chestnut",
-                        "Black",
-                        "Dark Brown",
-                        "Brown",
-                        "Blonde",
-                        "Auburn",
-                    ],
-                    index=0,
-                    key="hair_color",
-                )
-
-            with hair_col3:
-                st.selectbox(
-                    "Hair Length",
-                    options=["-", "Short", "Medium", "Long", "Shoulder Length"],
-                    index=0,
-                    key="hair_length",
-                )
-
-        with st.expander("Advanced Base Character Settings", expanded=False):
-            adv1, adv2 = st.columns(2)
-
-            with adv1:
-                st.markdown("**Identity / Face Character**")
-
-                st.checkbox(
-                    "ordinary_face",
-                    value=True,
-                    key="ordinary_face_check",
-                )
-
-                st.checkbox(
-                    "androgynous",
-                    value=False,
-                    key="androgynous_check",
-                )
-
-                st.checkbox(
-                    "ugly",
-                    value=False,
-                    key="ugly_check",
-                )
-
-            with adv2:
-                st.markdown("**Face / Hair Condition**")
-
-                st.checkbox(
-                    "facial_asymmetry",
-                    value=False,
-                    key="facial_asymmetry_check",
-                )
-
-                st.checkbox(
-                    "disheveled",
-                    value=False,
-                    key="disheveled_check",
-                )
+                with hair_col3:
+                    st.selectbox(
+                        "Hair Length",
+                        options=["-", "Short", "Medium", "Long", "Shoulder Length"],
+                        index=0,
+                        key="hair_length",
+                    )
 
         with st.expander("Advanced Skin Details", expanded=False):
             skin_keys = list(SKIN_DEFAULTS.keys())
