@@ -305,7 +305,7 @@ with tab2:
 
         with st.expander("Main Character Appearance", expanded=True):
             with st.container(border=True):
-                st.markdown("##### Basic Identity")
+                st.markdown("####### Basic Identity")
 
                 basic_col1, basic_col2 = st.columns(2)
 
@@ -334,7 +334,7 @@ with tab2:
                     )
 
             with st.container(border=True):
-                st.markdown("##### Face")
+                st.markdown("####### Face")
 
                 face_col1, face_col2, face_col3 = st.columns(3)
 
@@ -379,7 +379,7 @@ with tab2:
                     )
 
             with st.container(border=True):
-                st.markdown("##### Eyes / Lips")
+                st.markdown("####### Eyes / Lips")
 
                 eye_col1, eye_col2 = st.columns(2)
 
@@ -433,7 +433,7 @@ with tab2:
                     )
 
             with st.container(border=True):
-                st.markdown("##### Hair")
+                st.markdown("####### Hair")
 
                 hair_col1, hair_col2, hair_col3 = st.columns(3)
 
