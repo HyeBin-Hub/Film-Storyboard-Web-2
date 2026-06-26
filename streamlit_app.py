@@ -1,6 +1,8 @@
 # app.py
 import streamlit as st
 import backend
+import io
+import pandas as pd
 
 # ========================================================================
 # 0. 페이지 설정 (반드시 첫 Streamlit 호출이어야 함)
@@ -219,12 +221,28 @@ with tab1:
                     csv_text = ""
 
             if csv_text:
-                st.text_area(
-                    "CSV Preview",
-                    csv_text[:3000],
-                    height=220,
-                    key="storyboard_csv_preview"
-                )
+                try:
+                    csv_df = pd.read_csv(io.StringIO(csv_text))
+            
+                    st.markdown("#### CSV Preview")
+                    st.dataframe(
+                        csv_df,
+                        use_container_width=True,
+                        height=300
+                    )
+            
+                    st.caption(f"Rows: {len(csv_df)} / Columns: {len(csv_df.columns)}")
+            
+                except Exception as e:
+                    st.error(f"CSV를 표 형태로 읽지 못했습니다: {e}")
+            
+                    with st.expander("Raw CSV Text"):
+                        st.text_area(
+                            "Raw CSV Preview",
+                            csv_text[:3000],
+                            height=220,
+                            key="storyboard_csv_raw_preview"
+                        )
             else:
                 st.error("CSV 파일을 utf-8-sig 또는 cp949로 읽지 못했습니다.")
 
