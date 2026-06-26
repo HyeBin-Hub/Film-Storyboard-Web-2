@@ -97,7 +97,7 @@ def body_character_label_to_value(label):
         "Image 2 - Girl": "C2",
         
     }
-    return mapping.get(label, "Image 2 - Girl")
+    return mapping.get(label, "C1")
 
 
 def get_checkbox_value(key, on_value):
@@ -189,27 +189,24 @@ def build_face_ui_config():
 
 
 def build_body_ui_config():
-    character_filter_label = st.session_state.get("body_character_filter_label", "ALL")
+    character_filter_label = st.session_state.get(
+        "body_character_filter_label",
+        "Image 1 - Boy",
+    )
     character_filter = body_character_label_to_value(character_filter_label)
 
-    body_prompts = {}
-
-    if character_filter in {"C1", "ALL"}:
-        body_prompts["C1"] = {
-            "label": "Image 1 - Boy",
-            "prompt": st.session_state.get("body_prompt_c1", ""),
-        }
-
-    if character_filter in {"C2", "ALL"}:
-        body_prompts["C2"] = {
-            "label": "Image 2 - Girl",
-            "prompt": st.session_state.get("body_prompt_c2", ""),
-        }
+    if character_filter == "C1":
+        body_prompt = st.session_state.get("body_prompt_c1", "")
+        label = "Image 1 - Boy"
+    else:
+        body_prompt = st.session_state.get("body_prompt_c2", "")
+        label = "Image 2 - Girl"
 
     return {
         "body_generation": {
             "character_filter": character_filter,
-            "body_prompts": body_prompts,
+            "label": label,
+            "body_prompt": body_prompt,
         }
     }
 
