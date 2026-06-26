@@ -260,7 +260,7 @@ with tab1:
 with tab2:
     st.header("Step 2. Face Generation Branch")
 
-    preview_col, settings_col = st.columns([1.25, 1.45], gap="large")
+    preview_col, settings_col = st.columns([2.0, 1.0], gap="large")
 
     with preview_col:
         st.subheader("Generated Face Preview")
