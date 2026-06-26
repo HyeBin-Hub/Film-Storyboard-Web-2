@@ -186,7 +186,7 @@ st.caption("Face Generation Branch UI Test")
 # =========================
 # Tabs
 # =========================
-tab1, tab2, tab3 = st.tabs(
+tab1, tab2= st.tabs(
     [
         "Step 1. CSV",
         "Step 2. Face Settings",
