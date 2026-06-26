@@ -179,29 +179,18 @@ def body_character_label_to_value(label):
 
 
 def build_default_body_prompt(character_label):
-    if character_label == "Image 1 - Boy":
-        character_role = "boy"
-        default_outfit = "a white shirt, beige shorts, white socks, and black shoes"
-    else:
-        character_role = "girl"
-        default_outfit = "a yellow cardigan, white blouse, navy skirt, white socks, and brown shoes"
-
-    return (
-        f"Using the provided face reference image, generate a full-body portrait of the same {character_role} character.\n"
-        "Preserve the same age, gender, ethnicity, facial features, hairstyle, hair color, expression, and overall identity from the face reference image.\n"
-        "Show the entire body from head to toe in a natural standing pose, facing the camera.\n"
-        f"The character is wearing {default_outfit}.\n"
-        "Use realistic human proportions, clean gray background, soft studio lighting, and natural photographic style.\n"
-        "The image should be suitable as a clean character reference for later storyboard scene generation."
+    BODY_PROMPT_PLACEHOLDER = (
+        "Example: white shirt, beige shorts, white socks, black shoes, "
+        "full-body, standing pose, front view, clean gray background"
     )
 
 
 def initialize_body_prompts():
     if "body_prompt_c1" not in st.session_state:
-        st.session_state["body_prompt_c1"] = build_default_body_prompt("Image 1 - Boy")
+        st.session_state["body_prompt_c1"] = ""
 
     if "body_prompt_c2" not in st.session_state:
-        st.session_state["body_prompt_c2"] = build_default_body_prompt("Image 2 - Girl")
+        st.session_state["body_prompt_c2"] = ""
 
 
 def build_body_ui_config():
