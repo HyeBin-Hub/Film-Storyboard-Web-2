@@ -379,7 +379,7 @@ with tab2:
                     )
 
             with st.container(border=True):
-                st.markdown("####### Eyes / Lips")
+                st.markdown("###### Eyes / Lips")
 
                 eye_col1, eye_col2 = st.columns(2)
 
@@ -433,7 +433,7 @@ with tab2:
                     )
 
             with st.container(border=True):
-                st.markdown("####### Hair")
+                st.markdown("###### Hair")
 
                 hair_col1, hair_col2, hair_col3 = st.columns(3)
 
