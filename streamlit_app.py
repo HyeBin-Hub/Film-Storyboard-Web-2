@@ -614,11 +614,11 @@ with tab3:
 
         st.radio(
             "body_character_filter",
-            options=["Image 1 - Boy", "Image 2 - Girl", "ALL"],
-            index=2,
+            options=["Image 1 - Boy", "Image 2 - Girl"],
+            index=0,
             horizontal=True,
             key="body_character_filter_label",
-            help="UI에서는 Image 1 / Image 2 / ALL로 표시하고, workflow에는 C1 / C2 / ALL로 전달합니다.",
+            help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
         )
 
         st.divider()
@@ -627,7 +627,7 @@ with tab3:
 
         selected_body_target = st.session_state.get(
             "body_character_filter_label",
-            "ALL",
+            "Image 1 - Boy",
         )
 
         if selected_body_target == "Image 1 - Boy":
@@ -639,7 +639,7 @@ with tab3:
                 help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
 
-        elif selected_body_target == "Image 2 - Girl":
+        else selected_body_target == "Image 2 - Girl":
             st.text_area(
                 "Image 2 - Girl Body Prompt",
                 key="body_prompt_c2",
@@ -648,22 +648,6 @@ with tab3:
                 help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
 
-        else:
-            st.text_area(
-                "Image 1 - Boy Body Prompt",
-                key="body_prompt_c1",
-                height=220,
-                placeholder=BODY_PROMPT_PLACEHOLDER,
-                help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다.",
-            )
-
-            st.text_area(
-                "Image 2 - Girl Body Prompt",
-                key="body_prompt_c2",
-                height=220,
-                placeholder=BODY_PROMPT_PLACEHOLDER,
-                help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다.",
-            )
 
         with st.expander("Body Prompt Guide", expanded=False):
             st.markdown(
