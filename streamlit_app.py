@@ -305,7 +305,7 @@ with tab2:
 
         with st.expander("Main Character Appearance", expanded=True):
             with st.container(border=True):
-                st.markdown("####### Basic Identity")
+                st.markdown("###### Basic Identity")
 
                 basic_col1, basic_col2 = st.columns(2)
 
