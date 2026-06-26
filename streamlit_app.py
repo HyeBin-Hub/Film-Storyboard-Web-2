@@ -3,6 +3,9 @@ import streamlit as st
 import backend
 import io
 import pandas as pd
+import hashlib
+import os
+import re
 
 # ========================================================================
 # 0. 페이지 설정 (반드시 첫 Streamlit 호출이어야 함)
@@ -161,6 +164,15 @@ if "pm_options_by_char" not in st.session_state:
 
 
 
+if "uploaded_csv_hash" not in st.session_state:
+    st.session_state.uploaded_csv_hash = None
+
+if "runcomfy_csv_file" not in st.session_state:
+    st.session_state.runcomfy_csv_file = None
+
+if "runcomfy_csv_upload_result" not in st.session_state:
+    st.session_state.runcomfy_csv_upload_result = None
+
 # ========================================================================
 #                             4. 상수 (기본값) 
 # ========================================================================
@@ -203,39 +215,41 @@ with tab1:
             type=["csv"],
             key="storyboard_csv_uploader"
         )
-
+        
         if uploaded_csv is not None:
+            csv_bytes = uploaded_csv.getvalue()
+            csv_hash = hashlib.sha256(csv_bytes).hexdigest()
+        
             st.session_state.uploaded_csv_name = uploaded_csv.name
-            st.session_state.uploaded_csv_bytes = uploaded_csv.getvalue()
-
+            st.session_state.uploaded_csv_bytes = csv_bytes
+        
             st.success(f"CSV uploaded: {uploaded_csv.name}")
-            st.caption(f"File size: {len(st.session_state.uploaded_csv_bytes)} bytes")
-
-            # CSV 내용 미리보기
+            st.caption(f"File size: {len(csv_bytes)} bytes")
+        
+            # CSV Preview
             try:
-                csv_text = st.session_state.uploaded_csv_bytes.decode("utf-8-sig")
+                csv_text = csv_bytes.decode("utf-8-sig")
             except UnicodeDecodeError:
                 try:
-                    csv_text = st.session_state.uploaded_csv_bytes.decode("cp949")
+                    csv_text = csv_bytes.decode("cp949")
                 except UnicodeDecodeError:
                     csv_text = ""
-
+        
             if csv_text:
                 try:
                     csv_df = pd.read_csv(io.StringIO(csv_text))
-            
+        
                     st.markdown("#### CSV Preview")
                     st.dataframe(
                         csv_df,
                         use_container_width=True,
                         height=300
                     )
-            
                     st.caption(f"Rows: {len(csv_df)} / Columns: {len(csv_df.columns)}")
-            
+        
                 except Exception as e:
                     st.error(f"CSV를 표 형태로 읽지 못했습니다: {e}")
-            
+        
                     with st.expander("Raw CSV Text"):
                         st.text_area(
                             "Raw CSV Preview",
@@ -245,6 +259,37 @@ with tab1:
                         )
             else:
                 st.error("CSV 파일을 utf-8-sig 또는 cp949로 읽지 못했습니다.")
+        
+            # =====================================================
+            # 자동 RunComfy input 업로드
+            # 같은 파일은 rerun 때 중복 업로드하지 않도록 hash로 방지
+            # =====================================================
+            if st.session_state.uploaded_csv_hash != csv_hash:
+                with st.spinner("Uploading CSV to RunComfy input folder..."):
+                    try:
+                        result = backend.upload_csv_to_runcomfy_input(
+                            api_key=api_key,
+                            original_file_name=uploaded_csv.name,
+                            file_bytes=csv_bytes,
+                            target_subdir="storyboard_uploads",
+                        )
+        
+                        st.session_state.uploaded_csv_hash = csv_hash
+                        st.session_state.runcomfy_csv_upload_result = result
+                        st.session_state.runcomfy_csv_file = result.get("relative_path")
+        
+                        st.success("CSV uploaded to RunComfy input folder.")
+                        st.code(st.session_state.runcomfy_csv_file)
+        
+                    except Exception as e:
+                        st.session_state.runcomfy_csv_upload_result = None
+                        st.session_state.runcomfy_csv_file = None
+                        st.error(f"RunComfy input upload failed: {e}")
+        
+            else:
+                if st.session_state.runcomfy_csv_file:
+                    st.info("Already uploaded to RunComfy input folder.")
+                    st.code(st.session_state.runcomfy_csv_file)
 
             st.markdown("---")
             # =====================================================
