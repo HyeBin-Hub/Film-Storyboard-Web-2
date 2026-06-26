@@ -2,6 +2,7 @@ import csv
 import io
 import json
 import streamlit as st
+import pandas as pd
 
 # =========================
 # Fixed Values
@@ -168,8 +169,19 @@ else:
     csv_text = st.session_state.get("csv_text", "")
 
 if csv_text:
-    with st.expander("Preview uploaded CSV text", expanded=False):
-        st.text_area("CSV Preview", value=csv_text, height=200, disabled=True)
+    with st.expander("Preview uploaded CSV", expanded=True):
+        try:
+            preview_df = pd.read_csv(io.StringIO(csv_text))
+
+            st.dataframe(
+                preview_df,
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        except Exception:
+            st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
+            st.code(csv_text)
 
 shot_ids = extract_shot_ids_from_csv(csv_text)
 
