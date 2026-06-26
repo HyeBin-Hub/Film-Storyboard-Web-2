@@ -37,12 +37,6 @@ BASE_CHARACTER_CHECK_DEFAULTS = {
     "disheveled": 1.0,
 }
 
-def character_label_to_value(label):
-    mapping = {
-        "Image 1 - Boy": "C1",
-        "Image 2 - Girl": "C2",
-    }
-    return mapping.get(label, "C2")
 
 # =========================
 # Helper Functions
@@ -84,13 +78,12 @@ def extract_shot_ids_from_csv(csv_text):
     return shot_ids
 
 
-def get_single_choice(key, empty_value="-"):
-    values = st.session_state.get(key, [])
-
-    if isinstance(values, list) and len(values) > 0:
-        return values[0]
-
-    return empty_value
+def character_label_to_value(label):
+    mapping = {
+        "Image 1 - Boy": "C1",
+        "Image 2 - Girl": "C2",
+    }
+    return mapping.get(label, "C2")
 
 
 def get_checkbox_value(key, on_value):
@@ -118,7 +111,8 @@ def build_face_ui_config():
         },
         "character_registry_parser": {
             "character_filter": character_label_to_value(
-                st.session_state.get("character_filter_label", "Image 2 - Girl")),
+                st.session_state.get("character_filter_label", "Image 2 - Girl")
+            ),
             "custom_character_id": "",
             "age": st.session_state.get("age", 9),
             "include_character_id": "false",
@@ -131,26 +125,30 @@ def build_face_ui_config():
             "shot_weight": 2,
             "gender": "Woman",
             "age": "-",
-            "nationality_1": get_single_choice("nationality_choice"),
+            "nationality_1": st.session_state.get("nationality", "South Korean"),
             "nationality_2": "-",
             "nationality_mix": 0,
-            "body_type": get_single_choice("body_type_choice"),
+            "body_type": st.session_state.get("body_type", "Slim"),
             "body_type_weight": 0,
             "breast_size": "-",
             "breast_size_weight": 0,
             "butt_size": "-",
             "butt_size_weight": 0,
-            "eyes_color": get_single_choice("eyes_color_choice"),
-            "eyes_shape": get_single_choice("eyes_shape_choice"),
-            "lips_color": get_single_choice("lips_color_choice"),
-            "lips_shape": get_single_choice("lips_shape_choice"),
-            "facial_expression": get_single_choice("facial_expression_choice"),
+            "eyes_color": st.session_state.get("eyes_color", "Brown"),
+            "eyes_shape": st.session_state.get(
+                "eyes_shape", "Double Eyelid Eyes Shape"
+            ),
+            "lips_color": st.session_state.get("lips_color", "Peach Lips"),
+            "lips_shape": st.session_state.get("lips_shape", "Thin Lips"),
+            "facial_expression": st.session_state.get(
+                "facial_expression", "Curious"
+            ),
             "facial_expression_weight": 0,
-            "face_shape": get_single_choice("face_shape_choice"),
+            "face_shape": st.session_state.get("face_shape", "Square with Soft Jaw"),
             "face_shape_weight": 0,
-            "hair_style": get_single_choice("hair_style_choice"),
-            "hair_color": get_single_choice("hair_color_choice"),
-            "hair_length": get_single_choice("hair_length_choice"),
+            "hair_style": st.session_state.get("hair_style", "Bob"),
+            "hair_color": st.session_state.get("hair_color", "Chestnut"),
+            "hair_length": st.session_state.get("hair_length", "-"),
             "androgynous": get_checkbox_value(
                 "androgynous_check",
                 BASE_CHARACTER_CHECK_DEFAULTS["androgynous"],
@@ -267,16 +265,15 @@ with tab1:
                 st.warning("CSV에서 추출된 shot id가 없습니다.")
 
 
-
 # =========================
 # Step 2. Face Settings
 # =========================
 with tab2:
     st.header("Step 2. Face Generation Branch")
 
-    result_col, settings_col = st.columns([1, 1.6])
+    preview_col, settings_col = st.columns([1, 1.7], gap="large")
 
-    with result_col:
+    with preview_col:
         st.subheader("Generated Face Preview")
 
         if "face_result_image" in st.session_state:
@@ -286,7 +283,25 @@ with tab2:
                 use_container_width=True,
             )
         else:
-            st.info("Face image will appear here after generation.")
+            st.markdown(
+                """
+                <div style="
+                    border: 1px dashed #999;
+                    border-radius: 12px;
+                    height: 420px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #777;
+                    font-size: 15px;
+                    text-align: center;
+                    padding: 20px;
+                ">
+                    Generated face image will appear here.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
     with settings_col:
         st.subheader("Character Target")
@@ -297,166 +312,29 @@ with tab2:
             index=1,
             horizontal=True,
             key="character_filter_label",
-            help="Face branch에서 생성할 캐릭터를 선택합니다. 내부적으로 Image 1 - Boy는 C1, Image 2 - Girl은 C2로 전달됩니다.",
+            help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
         )
 
         st.subheader("Main Character Appearance")
 
-        col1, col2 = st.columns(2)
+        with st.container(border=True):
+            st.markdown("#### Basic Identity")
 
-        with col1:
-            st.markdown("**Appearance**")
+            basic_col1, basic_col2 = st.columns(2)
 
-            st.slider(
-                "age",
-                min_value=1,
-                max_value=100,
-                value=9,
-                step=1,
-                key="age",
-            )
+            with basic_col1:
+                st.slider(
+                    "Age",
+                    min_value=1,
+                    max_value=100,
+                    value=9,
+                    step=1,
+                    key="age",
+                )
 
-            st.multiselect(
-                "body_type",
-                options=["Slim", "Average", "Athletic", "Curvy", "Heavy"],
-                default=["Slim"],
-                max_selections=1,
-                key="body_type_choice",
-            )
-
-            st.multiselect(
-                "face_shape",
-                options=[
-                    "Oval",
-                    "Round",
-                    "Square",
-                    "Square with Soft Jaw",
-                    "Heart",
-                    "Long",
-                    "Diamond",
-                ],
-                default=["Square with Soft Jaw"],
-                max_selections=1,
-                key="face_shape_choice",
-            )
-
-            st.multiselect(
-                "facial_expression",
-                options=[
-                    "Neutral",
-                    "Curious",
-                    "Gentle Smile",
-                    "Serious",
-                    "Sad",
-                    "Surprised",
-                    "Calm",
-                ],
-                default=["Curious"],
-                max_selections=1,
-                key="facial_expression_choice",
-            )
-
-        with col2:
-            st.markdown("**Eyes / Lips**")
-
-            st.multiselect(
-                "eyes_color",
-                options=["Brown", "Dark Brown", "Black", "Hazel", "Blue", "Green"],
-                default=["Brown"],
-                max_selections=1,
-                key="eyes_color_choice",
-            )
-
-            st.multiselect(
-                "eyes_shape",
-                options=[
-                    "Double Eyelid Eyes Shape",
-                    "Monolid Eyes Shape",
-                    "Almond Eyes",
-                    "Round Eyes",
-                    "Sharp Eyes",
-                ],
-                default=["Double Eyelid Eyes Shape"],
-                max_selections=1,
-                key="eyes_shape_choice",
-            )
-
-            st.multiselect(
-                "lips_color",
-                options=[
-                    "Peach Lips",
-                    "Pink Lips",
-                    "Natural Lips",
-                    "Pale Lips",
-                    "Rose Lips",
-                ],
-                default=["Peach Lips"],
-                max_selections=1,
-                key="lips_color_choice",
-            )
-
-            st.multiselect(
-                "lips_shape",
-                options=["Thin Lips", "Full Lips", "Small Lips", "Soft Lips"],
-                default=["Thin Lips"],
-                max_selections=1,
-                key="lips_shape_choice",
-            )
-
-        st.markdown("**Hair**")
-
-        hair_col1, hair_col2, hair_col3 = st.columns(3)
-
-        with hair_col1:
-            st.multiselect(
-                "hair_style",
-                options=[
-                    "Bob",
-                    "Straight",
-                    "Wavy",
-                    "Braided Pigtails",
-                    "Ponytail",
-                    "Short Hair",
-                    "Long Hair",
-                ],
-                default=["Bob"],
-                max_selections=1,
-                key="hair_style_choice",
-            )
-
-        with hair_col2:
-            st.multiselect(
-                "hair_color",
-                options=[
-                    "Chestnut",
-                    "Black",
-                    "Dark Brown",
-                    "Brown",
-                    "Blonde",
-                    "Auburn",
-                ],
-                default=["Chestnut"],
-                max_selections=1,
-                key="hair_color_choice",
-            )
-
-        with hair_col3:
-            st.multiselect(
-                "hair_length",
-                options=["Short", "Medium", "Long", "Shoulder Length"],
-                default=[],
-                max_selections=1,
-                key="hair_length_choice",
-            )
-
-        with st.expander("Advanced Base Character Settings", expanded=False):
-            adv1, adv2 = st.columns(2)
-
-            with adv1:
-                st.markdown("**Identity / Face Character**")
-
-                st.multiselect(
-                    "nationality",
+            with basic_col2:
+                st.selectbox(
+                    "Nationality",
                     options=[
                         "South Korean",
                         "Korean",
@@ -464,10 +342,151 @@ with tab2:
                         "Japanese",
                         "Chinese",
                     ],
-                    default=["South Korean"],
-                    max_selections=1,
-                    key="nationality_choice",
+                    index=0,
+                    key="nationality",
                 )
+
+        with st.container(border=True):
+            st.markdown("#### Face")
+
+            face_col1, face_col2, face_col3 = st.columns(3)
+
+            with face_col1:
+                st.selectbox(
+                    "Body Type",
+                    options=["Slim", "Average", "Athletic", "Curvy", "Heavy"],
+                    index=0,
+                    key="body_type",
+                )
+
+            with face_col2:
+                st.selectbox(
+                    "Face Shape",
+                    options=[
+                        "Oval",
+                        "Round",
+                        "Square",
+                        "Square with Soft Jaw",
+                        "Heart",
+                        "Long",
+                        "Diamond",
+                    ],
+                    index=3,
+                    key="face_shape",
+                )
+
+            with face_col3:
+                st.selectbox(
+                    "Expression",
+                    options=[
+                        "Neutral",
+                        "Curious",
+                        "Gentle Smile",
+                        "Serious",
+                        "Sad",
+                        "Surprised",
+                        "Calm",
+                    ],
+                    index=1,
+                    key="facial_expression",
+                )
+
+        with st.container(border=True):
+            st.markdown("#### Eyes / Lips")
+
+            eye_col1, eye_col2 = st.columns(2)
+
+            with eye_col1:
+                st.selectbox(
+                    "Eyes Color",
+                    options=["Brown", "Dark Brown", "Black", "Hazel", "Blue", "Green"],
+                    index=0,
+                    key="eyes_color",
+                )
+
+                st.selectbox(
+                    "Eyes Shape",
+                    options=[
+                        "Double Eyelid Eyes Shape",
+                        "Monolid Eyes Shape",
+                        "Almond Eyes",
+                        "Round Eyes",
+                        "Sharp Eyes",
+                    ],
+                    index=0,
+                    key="eyes_shape",
+                )
+
+            with eye_col2:
+                st.selectbox(
+                    "Lips Color",
+                    options=[
+                        "Peach Lips",
+                        "Pink Lips",
+                        "Natural Lips",
+                        "Pale Lips",
+                        "Rose Lips",
+                    ],
+                    index=0,
+                    key="lips_color",
+                )
+
+                st.selectbox(
+                    "Lips Shape",
+                    options=["Thin Lips", "Full Lips", "Small Lips", "Soft Lips"],
+                    index=0,
+                    key="lips_shape",
+                )
+
+        with st.container(border=True):
+            st.markdown("#### Hair")
+
+            hair_col1, hair_col2, hair_col3 = st.columns(3)
+
+            with hair_col1:
+                st.selectbox(
+                    "Hair Style",
+                    options=[
+                        "Bob",
+                        "Straight",
+                        "Wavy",
+                        "Braided Pigtails",
+                        "Ponytail",
+                        "Short Hair",
+                        "Long Hair",
+                    ],
+                    index=0,
+                    key="hair_style",
+                )
+
+            with hair_col2:
+                st.selectbox(
+                    "Hair Color",
+                    options=[
+                        "Chestnut",
+                        "Black",
+                        "Dark Brown",
+                        "Brown",
+                        "Blonde",
+                        "Auburn",
+                    ],
+                    index=0,
+                    key="hair_color",
+                )
+
+            with hair_col3:
+                st.selectbox(
+                    "Hair Length",
+                    options=["-", "Short", "Medium", "Long", "Shoulder Length"],
+                    index=0,
+                    key="hair_length",
+                )
+
+        with st.expander("Advanced Base Character Settings", expanded=False):
+            adv1, adv2 = st.columns(2)
+
+            with adv1:
+                st.markdown("**Identity / Face Character**")
 
                 st.checkbox(
                     "ordinary_face",
@@ -515,6 +534,7 @@ with tab2:
                         value=default_checked,
                         key=f"skin_{key}",
                     )
+
 
 # =========================
 # Step 3. Generate
