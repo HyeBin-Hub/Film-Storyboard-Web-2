@@ -95,9 +95,9 @@ def body_character_label_to_value(label):
     mapping = {
         "Image 1 - Boy": "C1",
         "Image 2 - Girl": "C2",
-        "ALL": "ALL",
+        
     }
-    return mapping.get(label, "ALL")
+    return mapping.get(label, "Image 2 - Girl")
 
 
 def get_checkbox_value(key, on_value):
