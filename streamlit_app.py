@@ -9,6 +9,11 @@ import streamlit as st
 # =========================
 FIXED_BASE_BACKGROUND_CLOTHING_PROMPT = "gray background, white t-shirt"
 
+BODY_PROMPT_PLACEHOLDER = (
+    "Example: white shirt, beige shorts, white socks, black shoes, "
+    "full-body, standing pose, front view, clean gray background"
+)
+
 SKIN_DEFAULTS = {
     "natural_skin": 0.74,
     "bare_face": 0.75,
@@ -86,8 +91,25 @@ def character_label_to_value(label):
     return mapping.get(label, "C2")
 
 
+def body_character_label_to_value(label):
+    mapping = {
+        "Image 1 - Boy": "C1",
+        "Image 2 - Girl": "C2",
+        "ALL": "ALL",
+    }
+    return mapping.get(label, "ALL")
+
+
 def get_checkbox_value(key, on_value):
     return on_value if st.session_state.get(key, False) else 0.0
+
+
+def initialize_body_prompts():
+    if "body_prompt_c1" not in st.session_state:
+        st.session_state["body_prompt_c1"] = ""
+
+    if "body_prompt_c2" not in st.session_state:
+        st.session_state["body_prompt_c2"] = ""
 
 
 def build_face_ui_config():
@@ -149,10 +171,6 @@ def build_face_ui_config():
             "hair_style": st.session_state.get("hair_style", "Bob"),
             "hair_color": st.session_state.get("hair_color", "Chestnut"),
             "hair_length": st.session_state.get("hair_length", "-"),
-            "androgynous": get_checkbox_value(
-                "androgynous_check",
-                BASE_CHARACTER_CHECK_DEFAULTS["androgynous"],
-            ),
             "androgynous": 0,
             "ugly": 0,
             "ordinary_face": 0.25,
@@ -168,29 +186,6 @@ def build_face_ui_config():
             for key, default_value in SKIN_DEFAULTS.items()
         },
     }
-
-def body_character_label_to_value(label):
-    mapping = {
-        "Image 1 - Boy": "C1",
-        "Image 2 - Girl": "C2",
-        "ALL": "ALL",
-    }
-    return mapping.get(label, "ALL")
-
-
-def build_default_body_prompt(character_label):
-    BODY_PROMPT_PLACEHOLDER = (
-        "Example: white shirt, beige shorts, white socks, black shoes, "
-        "full-body, standing pose, front view, clean gray background"
-    )
-
-
-def initialize_body_prompts():
-    if "body_prompt_c1" not in st.session_state:
-        st.session_state["body_prompt_c1"] = ""
-
-    if "body_prompt_c2" not in st.session_state:
-        st.session_state["body_prompt_c2"] = ""
 
 
 def build_body_ui_config():
@@ -218,17 +213,40 @@ def build_body_ui_config():
         }
     }
 
+
+def render_empty_preview_box(message, height=520):
+    st.markdown(
+        f"""
+        <div style="
+            border: 1px dashed #999;
+            border-radius: 12px;
+            height: {height}px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+            font-size: 15px;
+            text-align: center;
+            padding: 20px;
+        ">
+            {message}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # =========================
 # Page Config
 # =========================
 st.set_page_config(
-    page_title="Storyboard Face Generator",
+    page_title="Storyboard Generator",
     page_icon="🎬",
     layout="wide",
 )
 
-st.title("🎬 Storyboard Face Generator")
-st.caption("Face Generation Branch UI Test")
+st.title("🎬 Storyboard Generator")
+st.caption("Face / Body Generation Branch UI Test")
 
 
 # =========================
@@ -320,25 +338,7 @@ with tab2:
                 use_container_width=True,
             )
         else:
-            st.markdown(
-                """
-                <div style="
-                    border: 1px dashed #999;
-                    border-radius: 12px;
-                    height: 520px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: #777;
-                    font-size: 15px;
-                    text-align: center;
-                    padding: 20px;
-                ">
-                    Generated face image will appear here.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            render_empty_preview_box("Generated face image will appear here.", 520)
 
     with settings_col:
         st.subheader("Character Target")
@@ -539,33 +539,33 @@ with tab2:
                         key=f"skin_{key}",
                     )
 
-
         st.divider()
-        
+
         generate_clicked = st.button(
             "Generate Face",
             type="primary",
             use_container_width=True,
         )
-        
+
         if generate_clicked:
             csv_text = st.session_state.get("csv_text", "")
-        
+
             if not csv_text.strip():
                 st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
-        
+
             elif (
                 st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
                 and len(st.session_state.get("custom_shots", [])) == 0
             ):
                 st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
-        
+
             else:
                 config = build_face_ui_config()
-        
+
                 st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
                 st.subheader("Collected Face Branch Config")
                 st.json(config)
+
 
 # =========================
 # Step 3. Body Settings
@@ -592,24 +592,9 @@ with tab3:
                     use_container_width=True,
                 )
             else:
-                st.markdown(
-                    """
-                    <div style="
-                        border: 1px dashed #999;
-                        border-radius: 12px;
-                        height: 520px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #777;
-                        font-size: 15px;
-                        text-align: center;
-                        padding: 20px;
-                    ">
-                        Image 1 - Boy body reference will appear here.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+                render_empty_preview_box(
+                    "Image 1 - Boy body reference will appear here.",
+                    520,
                 )
 
         with body_preview_col2:
@@ -622,31 +607,16 @@ with tab3:
                     use_container_width=True,
                 )
             else:
-                st.markdown(
-                    """
-                    <div style="
-                        border: 1px dashed #999;
-                        border-radius: 12px;
-                        height: 520px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #777;
-                        font-size: 15px;
-                        text-align: center;
-                        padding: 20px;
-                    ">
-                        Image 2 - Girl body reference will appear here.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+                render_empty_preview_box(
+                    "Image 2 - Girl body reference will appear here.",
+                    520,
                 )
 
     with settings_col:
         st.subheader("Body Generation Settings")
 
         st.radio(
-            "character_filter",
+            "body_character_filter",
             options=["Image 1 - Boy", "Image 2 - Girl", "ALL"],
             index=2,
             horizontal=True,
@@ -658,13 +628,17 @@ with tab3:
 
         st.markdown("### Body Prompt Editor")
 
-        selected_body_target = st.session_state.get("body_character_filter_label", "ALL")
+        selected_body_target = st.session_state.get(
+            "body_character_filter_label",
+            "ALL",
+        )
 
         if selected_body_target == "Image 1 - Boy":
             st.text_area(
                 "Image 1 - Boy Body Prompt",
                 key="body_prompt_c1",
                 height=260,
+                placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
 
@@ -673,6 +647,7 @@ with tab3:
                 "Image 2 - Girl Body Prompt",
                 key="body_prompt_c2",
                 height=260,
+                placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
 
@@ -681,6 +656,7 @@ with tab3:
                 "Image 1 - Boy Body Prompt",
                 key="body_prompt_c1",
                 height=220,
+                placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다.",
             )
 
@@ -688,16 +664,17 @@ with tab3:
                 "Image 2 - Girl Body Prompt",
                 key="body_prompt_c2",
                 height=220,
+                placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다.",
             )
 
         with st.expander("Body Prompt Guide", expanded=False):
             st.markdown(
                 """
-                - 얼굴 reference와 같은 인물로 보이도록 identity 유지 문장을 남겨두는 것이 좋습니다.
-                - 전신이 모두 보이도록 `full-body`, `head to toe`, `entire body visible` 표현을 유지하세요.
+                - 얼굴 reference와 같은 인물로 보이도록 identity 유지 문장을 포함하는 것이 좋습니다.
+                - 전신이 모두 보이도록 `full-body`, `head to toe`, `entire body visible` 표현을 포함하세요.
                 - 의상은 상의, 하의, 양말, 신발까지 구체적으로 작성하는 것이 좋습니다.
-                - 이후 Scene Generation에서 reference로 쓰기 좋게 clean background를 유지하는 것이 좋습니다.
+                - 이후 Scene Generation에서 reference로 쓰기 좋게 `clean background`를 유지하는 것이 좋습니다.
                 - 복잡한 포즈나 강한 카메라 앵글은 전신 reference 생성 단계에서는 피하는 것이 좋습니다.
                 """
             )
@@ -728,39 +705,3 @@ with tab3:
                 st.success("Body branch UI 입력값이 정상적으로 수집되었습니다.")
                 st.subheader("Collected Body Branch Config")
                 st.json(body_config)
-
-# # =========================
-# # Step 3. Generate
-# # =========================
-# with tab3:
-#     st.header("Step 3. Generate")
-
-#     st.info(
-#         "현재는 UI 테스트 단계입니다. Generate Face를 누르면 RunComfy 요청 대신 "
-#         "수집된 Face Branch 설정값을 JSON으로 확인합니다."
-#     )
-
-#     generate_clicked = st.button(
-#         "Generate Face",
-#         type="primary",
-#         use_container_width=True,
-#     )
-
-#     if generate_clicked:
-#         csv_text = st.session_state.get("csv_text", "")
-
-#         if not csv_text.strip():
-#             st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
-
-#         elif (
-#             st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
-#             and len(st.session_state.get("custom_shots", [])) == 0
-#         ):
-#             st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
-
-#         else:
-#             config = build_face_ui_config()
-
-#             st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
-#             st.subheader("Collected Face Branch Config")
-#             st.json(config)
