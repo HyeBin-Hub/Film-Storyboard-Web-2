@@ -640,14 +640,13 @@ with tab3:
             )
 
         else:
-            selected_body_target == "Image 2 - Girl"
-                st.text_area(
-                    "Image 2 - Girl Body Prompt",
-                    key="body_prompt_c2",
-                    height=150,
-                    placeholder=BODY_PROMPT_PLACEHOLDER,
-                    help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
-                )
+            st.text_area(
+                "Image 2 - Girl Body Prompt",
+                key="body_prompt_c2",
+                height=150,
+                placeholder=BODY_PROMPT_PLACEHOLDER,
+                help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
+            )
 
 
         with st.expander("Body Prompt Guide", expanded=False):
