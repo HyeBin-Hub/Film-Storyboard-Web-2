@@ -3,30 +3,54 @@ import io
 import json
 import streamlit as st
 
-
 # =========================
-# Fixed Face Branch Values
+# Fixed Values
 # =========================
 FIXED_BASE_BACKGROUND_CLOTHING_PROMPT = "gray background, white t-shirt"
 
-# These values are intentionally fixed and hidden from the UI:
-# Model: flux1-krea-dev.safetensors
-# LoRA: UltraRealPhoto.safetensors
-# VAE: FLUX1/ae.safetensors
-# Shot: Head and shoulders portrait
-# CSV input_mode: text
-# ThinkingLLM: fixed
-# Resolution megapixel: 1
+SKIN_DEFAULTS = {
+    "natural_skin": 0.74,
+    "bare_face": 0.75,
+    "washed_face": 0.0,
+    "dried_face": 0.0,
+    "skin_details": 0.3,
+    "skin_pores": 0.1,
+    "dimples": 0.0,
+    "wrinkles": 0.0,
+    "freckles": 0.0,
+    "moles": 0.0,
+    "skin_imperfections": 0.0,
+    "skin_acne": 0.0,
+    "tanned_skin": 0.0,
+    "eyes_details": 1.01,
+    "iris_details": 0.0,
+    "circular_iris": 0.0,
+    "circular_pupil": 0.0,
+}
+
+BASE_CHARACTER_CHECK_DEFAULTS = {
+    "androgynous": 1.0,
+    "ugly": 1.0,
+    "ordinary_face": 0.25,
+    "facial_asymmetry": 1.0,
+    "disheveled": 1.0,
+}
 
 
 # =========================
-# Helper Functions
+# Helpers
 # =========================
-def extract_shot_ids_from_csv(csv_text: str) -> list[str]:
-    """
-    Extract shot IDs from the first column of CSV text.
-    Falls back safely if the CSV is incomplete or pasted without a header.
-    """
+def decode_uploaded_file(uploaded_file):
+    raw = uploaded_file.getvalue()
+    for encoding in ["utf-8-sig", "utf-8", "cp949"]:
+        try:
+            return raw.decode(encoding)
+        except Exception:
+            continue
+    return raw.decode("utf-8", errors="ignore")
+
+
+def extract_shot_ids_from_csv(csv_text: str):
     if not csv_text.strip():
         return []
 
@@ -38,11 +62,9 @@ def extract_shot_ids_from_csv(csv_text: str) -> list[str]:
             continue
 
         first_value = row[0].strip()
-
         if not first_value:
             continue
 
-        # Skip likely header names
         if first_value.lower() in {"shot", "shot_id", "shot id", "id"}:
             continue
 
@@ -52,16 +74,27 @@ def extract_shot_ids_from_csv(csv_text: str) -> list[str]:
     return shot_ids
 
 
-def build_face_ui_config() -> dict:
-    """
-    Collect all UI values into one dictionary.
-    This dictionary will later be used to override the Face workflow_api_json.
-    """
+def get_single_choice(key, empty_value="-"):
+    values = st.session_state.get(key, [])
+    if isinstance(values, list) and len(values) > 0:
+        return values[0]
+    return empty_value
+
+
+def get_checkbox_value(key, on_value):
+    return on_value if st.session_state.get(key, False) else 0.0
+
+
+def build_face_ui_config():
+    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+    custom_shots = st.session_state.get("custom_shots", [])
+
     return {
         "csv": {
             "input_mode": "text",
             "csv_text": st.session_state.get("csv_text", ""),
-            "shot_filter": st.session_state.get("shot_filter", "ALL"),
+            "shot_filter": "ALL" if shot_filter_mode == "ALL" else "CUSTOM",
+            "custom_shot_ids": ", ".join(custom_shots) if shot_filter_mode == "CUSTOM" else "",
         },
         "character_registry": {
             "character_filter": st.session_state.get("character_filter", "C2"),
@@ -73,61 +106,38 @@ def build_face_ui_config() -> dict:
         },
         "portrait_master_base_character": {
             "shot": "Head and shoulders portrait",
-            "body_type": st.session_state.get("body_type", "Slim"),
-            "eyes_color": st.session_state.get("eyes_color", "Brown"),
-            "eyes_shape": st.session_state.get("eyes_shape", "Double Eyelid Eyes Shape"),
-            "lips_color": st.session_state.get("lips_color", "Peach Lips"),
-            "lips_shape": st.session_state.get("lips_shape", "Thin Lips"),
-            "facial_expression": st.session_state.get("facial_expression", "Curious"),
-            "face_shape": st.session_state.get("face_shape", "Square with Soft Jaw"),
-            "hair_style": st.session_state.get("hair_style", "Bob"),
-            "hair_color": st.session_state.get("hair_color", "Chestnut"),
-            "hair_length": st.session_state.get("hair_length", "-"),
+            "body_type": get_single_choice("body_type_choice"),
+            "eyes_color": get_single_choice("eyes_color_choice"),
+            "eyes_shape": get_single_choice("eyes_shape_choice"),
+            "lips_color": get_single_choice("lips_color_choice"),
+            "lips_shape": get_single_choice("lips_shape_choice"),
+            "facial_expression": get_single_choice("facial_expression_choice"),
+            "face_shape": get_single_choice("face_shape_choice"),
+            "hair_style": get_single_choice("hair_style_choice"),
+            "hair_color": get_single_choice("hair_color_choice"),
+            "hair_length": get_single_choice("hair_length_choice"),
 
-            # Advanced values
-            "gender": st.session_state.get("gender", "Woman"),
-            "nationality_1": st.session_state.get("nationality_1", "South Korean"),
-            "nationality_2": st.session_state.get("nationality_2", "-"),
-            "nationality_mix": st.session_state.get("nationality_mix", 0.0),
-            "androgynous": st.session_state.get("androgynous", 0.0),
-            "ugly": st.session_state.get("ugly", 0.0),
-            "ordinary_face": st.session_state.get("ordinary_face", 0.25),
-            "body_type_weight": st.session_state.get("body_type_weight", 0.0),
-            "breast_size": st.session_state.get("breast_size", "-"),
-            "breast_size_weight": st.session_state.get("breast_size_weight", 0.0),
-            "butt_size": st.session_state.get("butt_size", "-"),
-            "butt_size_weight": st.session_state.get("butt_size_weight", 0.0),
-            "facial_expression_weight": st.session_state.get("facial_expression_weight", 0.0),
-            "face_shape_weight": st.session_state.get("face_shape_weight", 0.0),
-            "facial_asymmetry": st.session_state.get("facial_asymmetry", 0.0),
-            "disheveled": st.session_state.get("disheveled", 0.0),
-            "beard": st.session_state.get("beard", "-"),
-            "beard_color": st.session_state.get("beard_color", "-"),
+            # Advanced
+            "nationality_1": get_single_choice("nationality_choice"),
+            "androgynous": get_checkbox_value("androgynous_check", BASE_CHARACTER_CHECK_DEFAULTS["androgynous"]),
+            "ugly": get_checkbox_value("ugly_check", BASE_CHARACTER_CHECK_DEFAULTS["ugly"]),
+            "ordinary_face": get_checkbox_value("ordinary_face_check", BASE_CHARACTER_CHECK_DEFAULTS["ordinary_face"]),
+            "facial_asymmetry": get_checkbox_value("facial_asymmetry_check", BASE_CHARACTER_CHECK_DEFAULTS["facial_asymmetry"]),
+            "disheveled": get_checkbox_value("disheveled_check", BASE_CHARACTER_CHECK_DEFAULTS["disheveled"]),
+            "breast_size": get_single_choice("breast_size_choice"),
+            "butt_size": get_single_choice("butt_size_choice"),
+            "beard": get_single_choice("beard_choice"),
+            "beard_color": get_single_choice("beard_color_choice"),
         },
         "portrait_master_skin_details": {
-            "natural_skin": st.session_state.get("natural_skin", 0.74),
-            "bare_face": st.session_state.get("bare_face", 0.75),
-            "washed_face": st.session_state.get("washed_face", 0.0),
-            "dried_face": st.session_state.get("dried_face", 0.0),
-            "skin_details": st.session_state.get("skin_details", 0.3),
-            "skin_pores": st.session_state.get("skin_pores", 0.1),
-            "dimples": st.session_state.get("dimples", 0.0),
-            "wrinkles": st.session_state.get("wrinkles", 0.0),
-            "freckles": st.session_state.get("freckles", 0.0),
-            "moles": st.session_state.get("moles", 0.0),
-            "skin_imperfections": st.session_state.get("skin_imperfections", 0.0),
-            "skin_acne": st.session_state.get("skin_acne", 0.0),
-            "tanned_skin": st.session_state.get("tanned_skin", 0.0),
-            "eyes_details": st.session_state.get("eyes_details", 1.01),
-            "iris_details": st.session_state.get("iris_details", 0.0),
-            "circular_iris": st.session_state.get("circular_iris", 0.0),
-            "circular_pupil": st.session_state.get("circular_pupil", 0.0),
+            key: (default_value if st.session_state.get(f"skin_{key}", False) else 0.0)
+            for key, default_value in SKIN_DEFAULTS.items()
         },
     }
 
 
 # =========================
-# Streamlit Page Config
+# Page
 # =========================
 st.set_page_config(
     page_title="Storyboard Face Generator",
@@ -140,48 +150,47 @@ st.caption("Face Generation Branch UI Test")
 
 
 # =========================
-# Secret Check
-# =========================
-missing_secrets = []
-if "RUNCOMFY_API_KEY" not in st.secrets:
-    missing_secrets.append("RUNCOMFY_API_KEY")
-if "RUNCOMFY_DEPLOYMENT_ID" not in st.secrets:
-    missing_secrets.append("RUNCOMFY_DEPLOYMENT_ID")
-
-if missing_secrets:
-    st.warning(
-        "Streamlit secrets에 다음 값이 없으면 실제 RunComfy 실행 단계에서 오류가 날 수 있습니다: "
-        + ", ".join(missing_secrets)
-    )
-
-
-# =========================
-# Step 1. CSV File Upload
+# Step 1. CSV file upload
 # =========================
 st.header("Step 1. CSV file upload")
 
-csv_text = st.text_area(
-    "CSV text",
-    value=st.session_state.get(
-        "csv_text",
-        "7-1,From the empty field head, a girl and a boy are walking in a line toward the right of the screen.\n"
-        "7-2,The boy and the girl are standing facing each other in the field."
-    ),
-    height=160,
-    key="csv_text",
-    help="CSV 내용을 그대로 붙여넣으세요. 첫 번째 열에서 shot id를 자동 추출합니다.",
+uploaded_csv = st.file_uploader(
+    "Upload CSV file",
+    type=["csv"],
+    help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
 )
+
+if uploaded_csv is not None:
+    csv_text = decode_uploaded_file(uploaded_csv)
+    st.session_state["csv_text"] = csv_text
+    st.success(f"업로드 완료: {uploaded_csv.name}")
+else:
+    csv_text = st.session_state.get("csv_text", "")
+
+if csv_text:
+    with st.expander("Preview uploaded CSV text", expanded=False):
+        st.text_area("CSV Preview", value=csv_text, height=200, disabled=True)
 
 shot_ids = extract_shot_ids_from_csv(csv_text)
-shot_options = ["ALL"] + shot_ids if shot_ids else ["ALL"]
 
-st.selectbox(
+st.radio(
     "shot_filter",
-    options=shot_options,
-    index=0,
-    key="shot_filter",
-    help="CSV에서 추출된 shot id를 선택하거나 ALL을 선택합니다.",
+    options=["ALL", "CUSTOM"],
+    horizontal=True,
+    key="shot_filter_mode",
 )
+
+if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
+    if shot_ids:
+        st.multiselect(
+            "Select shots",
+            options=shot_ids,
+            default=[],
+            key="custom_shots",
+            help="CUSTOM일 때만 shot을 선택합니다.",
+        )
+    else:
+        st.warning("CSV에서 추출된 shot id가 없습니다. 먼저 CSV 파일을 업로드하세요.")
 
 
 # =========================
@@ -193,119 +202,169 @@ st.subheader("Character Target")
 st.radio(
     "character_filter",
     options=["C1", "C2"],
-    index=1,
     horizontal=True,
     key="character_filter",
-    help="CSV/Character parser에서 어떤 캐릭터를 얼굴 생성 대상으로 사용할지 선택합니다.",
 )
 
 st.subheader("Main Character Appearance")
 
-appearance_col, eyes_col, lips_col, hair_col = st.columns(4)
+col1, col2, col3, col4 = st.columns(4)
 
-with appearance_col:
+with col1:
     st.markdown("**Appearance**")
     st.slider("age", min_value=1, max_value=100, value=9, step=1, key="age")
-    st.selectbox("body_type", ["-", "Slim", "Average", "Athletic", "Curvy", "Heavy"], index=1, key="body_type")
-    st.selectbox(
+    st.multiselect(
+        "body_type",
+        options=["Slim", "Average", "Athletic", "Curvy", "Heavy"],
+        default=["Slim"],
+        max_selections=1,
+        key="body_type_choice",
+    )
+    st.multiselect(
         "face_shape",
-        ["-", "Oval", "Round", "Square", "Square with Soft Jaw", "Heart", "Long", "Diamond"],
-        index=4,
-        key="face_shape",
+        options=["Oval", "Round", "Square", "Square with Soft Jaw", "Heart", "Long", "Diamond"],
+        default=["Square with Soft Jaw"],
+        max_selections=1,
+        key="face_shape_choice",
     )
-    st.selectbox(
+    st.multiselect(
         "facial_expression",
-        ["-", "Neutral", "Curious", "Gentle Smile", "Serious", "Sad", "Surprised", "Calm"],
-        index=2,
-        key="facial_expression",
+        options=["Neutral", "Curious", "Gentle Smile", "Serious", "Sad", "Surprised", "Calm"],
+        default=["Curious"],
+        max_selections=1,
+        key="facial_expression_choice",
     )
 
-with eyes_col:
+with col2:
     st.markdown("**Eyes**")
-    st.selectbox("eyes_color", ["-", "Brown", "Dark Brown", "Black", "Hazel", "Blue", "Green"], index=1, key="eyes_color")
-    st.selectbox(
+    st.multiselect(
+        "eyes_color",
+        options=["Brown", "Dark Brown", "Black", "Hazel", "Blue", "Green"],
+        default=["Brown"],
+        max_selections=1,
+        key="eyes_color_choice",
+    )
+    st.multiselect(
         "eyes_shape",
-        ["-", "Double Eyelid Eyes Shape", "Monolid Eyes Shape", "Almond Eyes", "Round Eyes", "Sharp Eyes"],
-        index=1,
-        key="eyes_shape",
+        options=["Double Eyelid Eyes Shape", "Monolid Eyes Shape", "Almond Eyes", "Round Eyes", "Sharp Eyes"],
+        default=["Double Eyelid Eyes Shape"],
+        max_selections=1,
+        key="eyes_shape_choice",
     )
 
-with lips_col:
+with col3:
     st.markdown("**Lips**")
-    st.selectbox("lips_color", ["-", "Peach Lips", "Pink Lips", "Natural Lips", "Pale Lips", "Rose Lips"], index=1, key="lips_color")
-    st.selectbox("lips_shape", ["-", "Thin Lips", "Full Lips", "Small Lips", "Soft Lips"], index=1, key="lips_shape")
-
-with hair_col:
-    st.markdown("**Hair**")
-    st.selectbox(
-        "hair_style",
-        ["-", "Bob", "Straight", "Wavy", "Braided Pigtails", "Ponytail", "Short Hair", "Long Hair"],
-        index=1,
-        key="hair_style",
+    st.multiselect(
+        "lips_color",
+        options=["Peach Lips", "Pink Lips", "Natural Lips", "Pale Lips", "Rose Lips"],
+        default=["Peach Lips"],
+        max_selections=1,
+        key="lips_color_choice",
     )
-    st.selectbox("hair_color", ["-", "Chestnut", "Black", "Dark Brown", "Brown", "Blonde", "Auburn"], index=1, key="hair_color")
-    st.selectbox("hair_length", ["-", "Short", "Medium", "Long", "Shoulder Length"], index=0, key="hair_length")
+    st.multiselect(
+        "lips_shape",
+        options=["Thin Lips", "Full Lips", "Small Lips", "Soft Lips"],
+        default=["Thin Lips"],
+        max_selections=1,
+        key="lips_shape_choice",
+    )
+
+with col4:
+    st.markdown("**Hair**")
+    st.multiselect(
+        "hair_style",
+        options=["Bob", "Straight", "Wavy", "Braided Pigtails", "Ponytail", "Short Hair", "Long Hair"],
+        default=["Bob"],
+        max_selections=1,
+        key="hair_style_choice",
+    )
+    st.multiselect(
+        "hair_color",
+        options=["Chestnut", "Black", "Dark Brown", "Brown", "Blonde", "Auburn"],
+        default=["Chestnut"],
+        max_selections=1,
+        key="hair_color_choice",
+    )
+    st.multiselect(
+        "hair_length",
+        options=["Short", "Medium", "Long", "Shoulder Length"],
+        default=[],
+        max_selections=1,
+        key="hair_length_choice",
+    )
 
 
 # =========================
 # Advanced Base Character Settings
 # =========================
 with st.expander("Advanced Base Character Settings", expanded=False):
-    adv_col1, adv_col2, adv_col3 = st.columns(3)
+    adv1, adv2, adv3 = st.columns(3)
 
-    with adv_col1:
-        st.selectbox("gender", ["Woman", "Man", "Girl", "Boy", "-"], index=0, key="gender")
-        st.selectbox("nationality_1", ["South Korean", "Korean", "East Asian", "Japanese", "Chinese", "-"], index=0, key="nationality_1")
-        st.selectbox("nationality_2", ["-", "South Korean", "Korean", "East Asian", "Japanese", "Chinese"], index=0, key="nationality_2")
-        st.slider("nationality_mix", 0.0, 2.0, 0.0, 0.05, key="nationality_mix")
-        st.slider("androgynous", 0.0, 2.0, 0.0, 0.05, key="androgynous")
-        st.slider("ugly", 0.0, 2.0, 0.0, 0.05, key="ugly")
-        st.slider("ordinary_face", 0.0, 2.0, 0.25, 0.05, key="ordinary_face")
+    with adv1:
+        st.markdown("**Identity / Style**")
+        st.multiselect(
+            "nationality",
+            options=["South Korean", "Korean", "East Asian", "Japanese", "Chinese"],
+            default=["South Korean"],
+            max_selections=1,
+            key="nationality_choice",
+        )
+        st.checkbox("androgynous", value=False, key="androgynous_check")
+        st.checkbox("ugly", value=False, key="ugly_check")
+        st.checkbox("ordinary_face", value=True, key="ordinary_face_check")
 
-    with adv_col2:
-        st.slider("body_type_weight", 0.0, 2.0, 0.0, 0.05, key="body_type_weight")
-        st.selectbox("breast_size", ["-", "Small", "Medium", "Large"], index=0, key="breast_size")
-        st.slider("breast_size_weight", 0.0, 2.0, 0.0, 0.05, key="breast_size_weight")
-        st.selectbox("butt_size", ["-", "Small", "Medium", "Large"], index=0, key="butt_size")
-        st.slider("butt_size_weight", 0.0, 2.0, 0.0, 0.05, key="butt_size_weight")
+    with adv2:
+        st.markdown("**Face / Hair Condition**")
+        st.checkbox("facial_asymmetry", value=False, key="facial_asymmetry_check")
+        st.checkbox("disheveled", value=False, key="disheveled_check")
 
-    with adv_col3:
-        st.slider("facial_expression_weight", 0.0, 2.0, 0.0, 0.05, key="facial_expression_weight")
-        st.slider("face_shape_weight", 0.0, 2.0, 0.0, 0.05, key="face_shape_weight")
-        st.slider("facial_asymmetry", 0.0, 2.0, 0.0, 0.05, key="facial_asymmetry")
-        st.slider("disheveled", 0.0, 2.0, 0.0, 0.05, key="disheveled")
-        st.selectbox("beard", ["-", "None", "Light Beard", "Mustache"], index=0, key="beard")
-        st.selectbox("beard_color", ["-", "Black", "Brown", "Dark Brown", "Gray"], index=0, key="beard_color")
+    with adv3:
+        st.markdown("**Optional Attributes**")
+        st.multiselect(
+            "breast_size",
+            options=["Small", "Medium", "Large"],
+            default=[],
+            max_selections=1,
+            key="breast_size_choice",
+        )
+        st.multiselect(
+            "butt_size",
+            options=["Small", "Medium", "Large"],
+            default=[],
+            max_selections=1,
+            key="butt_size_choice",
+        )
+        st.multiselect(
+            "beard",
+            options=["None", "Light Beard", "Mustache"],
+            default=[],
+            max_selections=1,
+            key="beard_choice",
+        )
+        st.multiselect(
+            "beard_color",
+            options=["Black", "Brown", "Dark Brown", "Gray"],
+            default=[],
+            max_selections=1,
+            key="beard_color_choice",
+        )
 
 
 # =========================
 # Advanced Skin Details
 # =========================
 with st.expander("Advanced Skin Details", expanded=False):
-    skin_col1, skin_col2, skin_col3 = st.columns(3)
+    skin_keys = list(SKIN_DEFAULTS.keys())
+    skin_cols = st.columns(3)
 
-    with skin_col1:
-        st.slider("natural_skin", 0.0, 2.0, 0.74, 0.01, key="natural_skin")
-        st.slider("bare_face", 0.0, 2.0, 0.75, 0.01, key="bare_face")
-        st.slider("washed_face", 0.0, 2.0, 0.0, 0.01, key="washed_face")
-        st.slider("dried_face", 0.0, 2.0, 0.0, 0.01, key="dried_face")
-        st.slider("skin_details", 0.0, 2.0, 0.3, 0.01, key="skin_details")
-        st.slider("skin_pores", 0.0, 2.0, 0.1, 0.01, key="skin_pores")
-
-    with skin_col2:
-        st.slider("dimples", 0.0, 2.0, 0.0, 0.01, key="dimples")
-        st.slider("wrinkles", 0.0, 2.0, 0.0, 0.01, key="wrinkles")
-        st.slider("freckles", 0.0, 2.0, 0.0, 0.01, key="freckles")
-        st.slider("moles", 0.0, 2.0, 0.0, 0.01, key="moles")
-        st.slider("skin_imperfections", 0.0, 2.0, 0.0, 0.01, key="skin_imperfections")
-        st.slider("skin_acne", 0.0, 2.0, 0.0, 0.01, key="skin_acne")
-
-    with skin_col3:
-        st.slider("tanned_skin", 0.0, 2.0, 0.0, 0.01, key="tanned_skin")
-        st.slider("eyes_details", 0.0, 2.0, 1.01, 0.01, key="eyes_details")
-        st.slider("iris_details", 0.0, 2.0, 0.0, 0.01, key="iris_details")
-        st.slider("circular_iris", 0.0, 2.0, 0.0, 0.01, key="circular_iris")
-        st.slider("circular_pupil", 0.0, 2.0, 0.0, 0.01, key="circular_pupil")
+    for i, key in enumerate(skin_keys):
+        with skin_cols[i % 3]:
+            default_checked = SKIN_DEFAULTS[key] > 0
+            st.checkbox(
+                key,
+                value=default_checked,
+                key=f"skin_{key}",
+            )
 
 
 # =========================
@@ -313,20 +372,15 @@ with st.expander("Advanced Skin Details", expanded=False):
 # =========================
 st.divider()
 
-left, right = st.columns([1, 2])
-
-with left:
-    generate_clicked = st.button("Generate Face", type="primary", use_container_width=True)
-
-with right:
-    st.caption("현재 단계에서는 UI 입력값 확인용입니다. 다음 단계에서 Face workflow_api_json override와 RunComfy 요청을 연결합니다.")
+generate_clicked = st.button("Generate Face", type="primary", use_container_width=True)
 
 if generate_clicked:
-    config = build_face_ui_config()
-
-    if not config["csv"]["csv_text"].strip():
-        st.error("CSV text를 입력해야 합니다.")
+    if not st.session_state.get("csv_text", "").strip():
+        st.error("먼저 CSV 파일을 업로드해야 합니다.")
+    elif st.session_state.get("shot_filter_mode") == "CUSTOM" and len(st.session_state.get("custom_shots", [])) == 0:
+        st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
     else:
+        config = build_face_ui_config()
         st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
         st.subheader("Collected Face Branch Config")
         st.json(config)
