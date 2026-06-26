@@ -334,7 +334,7 @@ with tab2:
                     )
 
             with st.container(border=True):
-                st.markdown("####### Face")
+                st.markdown("###### Face")
 
                 face_col1, face_col2, face_col3 = st.columns(3)
 
