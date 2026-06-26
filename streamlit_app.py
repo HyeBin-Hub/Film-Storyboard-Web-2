@@ -277,27 +277,30 @@ with tab1:
             # 같은 파일은 rerun 때 중복 업로드하지 않도록 hash로 방지
             # =====================================================
             if st.session_state.uploaded_csv_hash != csv_hash:
-                with st.spinner("Uploading CSV to RunComfy input folder..."):
-                    try:
-                        result = backend.upload_csv_to_runcomfy_input(
-                            api_key=api_key,
-                            original_file_name=uploaded_csv.name,
-                            file_bytes=csv_bytes,
-                            target_subdir="storyboard_uploads",
-                        )
-        
-                        st.session_state.uploaded_csv_hash = csv_hash
-                        st.session_state.runcomfy_csv_upload_result = result
-                        st.session_state.runcomfy_csv_file = result.get("relative_path")
-        
-                        st.success("CSV uploaded to RunComfy input folder.")
-                        st.code(st.session_state.runcomfy_csv_file)
-        
-                    except Exception as e:
-                        st.session_state.runcomfy_csv_upload_result = None
-                        st.session_state.runcomfy_csv_file = None
-                        st.error(f"RunComfy input upload failed: {e}")
-        
+                if not comfyui_base_url:
+                    st.warning("ComfyUI Base URL을 입력해야 RunComfy input 업로드를 테스트할 수 있습니다.")
+                else:
+                    with st.spinner("Uploading CSV to RunComfy input folder..."):
+                        try:
+                            result = backend.upload_csv_to_runcomfy_input(
+                                api_key=api_key,
+                                comfyui_base_url=comfyui_base_url,
+                                original_file_name=uploaded_csv.name,
+                                file_bytes=csv_bytes,
+                                target_subdir="storyboard_uploads",
+                            )
+            
+                            st.session_state.uploaded_csv_hash = csv_hash
+                            st.session_state.runcomfy_csv_upload_result = result
+                            st.session_state.runcomfy_csv_file = result.get("relative_path")
+            
+                            st.success("CSV uploaded to RunComfy input folder.")
+                            st.code(st.session_state.runcomfy_csv_file)
+            
+                        except Exception as e:
+                            st.session_state.runcomfy_csv_upload_result = None
+                            st.session_state.runcomfy_csv_file = None
+                            st.error(f"RunComfy input upload failed: {e}")
             else:
                 if st.session_state.runcomfy_csv_file:
                     st.info("Already uploaded to RunComfy input folder.")
