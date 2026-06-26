@@ -188,6 +188,9 @@ with tab1:
     if st.session_state.step != 1:
         st.success("✅ Step 1 Completed")
 
+    if st.session_state.step == 1:
+        st.markdown("### 1. Define Your Actor Profile")
+
         # =====================================================
         # Storyboard CSV Upload Test
         # =====================================================
@@ -228,8 +231,6 @@ with tab1:
             st.markdown("---")
             # =====================================================
 
-    if st.session_state.step == 1:
-        st.markdown("### 1. Define Your Actor Profile")
 
         col_left, col_right = st.columns([3, 1])
 
