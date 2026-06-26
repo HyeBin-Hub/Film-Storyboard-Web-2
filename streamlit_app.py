@@ -188,6 +188,46 @@ with tab1:
     if st.session_state.step != 1:
         st.success("✅ Step 1 Completed")
 
+        # =====================================================
+        # Storyboard CSV Upload Test
+        # =====================================================
+        st.markdown("### 📄 Storyboard CSV Upload Test")
+
+        uploaded_csv = st.file_uploader(
+            "Upload storyboard CSV",
+            type=["csv"],
+            key="storyboard_csv_uploader"
+        )
+
+        if uploaded_csv is not None:
+            st.session_state.uploaded_csv_name = uploaded_csv.name
+            st.session_state.uploaded_csv_bytes = uploaded_csv.getvalue()
+
+            st.success(f"CSV uploaded: {uploaded_csv.name}")
+            st.caption(f"File size: {len(st.session_state.uploaded_csv_bytes)} bytes")
+
+            # CSV 내용 미리보기
+            try:
+                csv_text = st.session_state.uploaded_csv_bytes.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                try:
+                    csv_text = st.session_state.uploaded_csv_bytes.decode("cp949")
+                except UnicodeDecodeError:
+                    csv_text = ""
+
+            if csv_text:
+                st.text_area(
+                    "CSV Preview",
+                    csv_text[:3000],
+                    height=220,
+                    key="storyboard_csv_preview"
+                )
+            else:
+                st.error("CSV 파일을 utf-8-sig 또는 cp949로 읽지 못했습니다.")
+
+            st.markdown("---")
+            # =====================================================
+
     if st.session_state.step == 1:
         st.markdown("### 1. Define Your Actor Profile")
 
