@@ -190,7 +190,6 @@ tab1, tab2, tab3 = st.tabs(
     [
         "Step 1. CSV",
         "Step 2. Face Settings",
-        "Step 3. Generate",
     ]
 )
 
@@ -492,38 +491,65 @@ with tab2:
                     )
 
 
-# =========================
-# Step 3. Generate
-# =========================
-with tab3:
-    st.header("Step 3. Generate")
+        st.divider()
+        
+        generate_clicked = st.button(
+            "Generate Face",
+            type="primary",
+            use_container_width=True,
+        )
+        
+        if generate_clicked:
+            csv_text = st.session_state.get("csv_text", "")
+        
+            if not csv_text.strip():
+                st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+        
+            elif (
+                st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
+                and len(st.session_state.get("custom_shots", [])) == 0
+            ):
+                st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+        
+            else:
+                config = build_face_ui_config()
+        
+                st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
+                st.subheader("Collected Face Branch Config")
+                st.json(config)
 
-    st.info(
-        "현재는 UI 테스트 단계입니다. Generate Face를 누르면 RunComfy 요청 대신 "
-        "수집된 Face Branch 설정값을 JSON으로 확인합니다."
-    )
+# # =========================
+# # Step 3. Generate
+# # =========================
+# with tab3:
+#     st.header("Step 3. Generate")
 
-    generate_clicked = st.button(
-        "Generate Face",
-        type="primary",
-        use_container_width=True,
-    )
+#     st.info(
+#         "현재는 UI 테스트 단계입니다. Generate Face를 누르면 RunComfy 요청 대신 "
+#         "수집된 Face Branch 설정값을 JSON으로 확인합니다."
+#     )
 
-    if generate_clicked:
-        csv_text = st.session_state.get("csv_text", "")
+#     generate_clicked = st.button(
+#         "Generate Face",
+#         type="primary",
+#         use_container_width=True,
+#     )
 
-        if not csv_text.strip():
-            st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+#     if generate_clicked:
+#         csv_text = st.session_state.get("csv_text", "")
 
-        elif (
-            st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
-            and len(st.session_state.get("custom_shots", [])) == 0
-        ):
-            st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+#         if not csv_text.strip():
+#             st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
 
-        else:
-            config = build_face_ui_config()
+#         elif (
+#             st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
+#             and len(st.session_state.get("custom_shots", [])) == 0
+#         ):
+#             st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
 
-            st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
-            st.subheader("Collected Face Branch Config")
-            st.json(config)
+#         else:
+#             config = build_face_ui_config()
+
+#             st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
+#             st.subheader("Collected Face Branch Config")
+#             st.json(config)
