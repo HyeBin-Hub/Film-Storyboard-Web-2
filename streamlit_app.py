@@ -153,22 +153,11 @@ def build_face_ui_config():
                 "androgynous_check",
                 BASE_CHARACTER_CHECK_DEFAULTS["androgynous"],
             ),
-            "ugly": get_checkbox_value(
-                "ugly_check",
-                BASE_CHARACTER_CHECK_DEFAULTS["ugly"],
-            ),
-            "ordinary_face": get_checkbox_value(
-                "ordinary_face_check",
-                BASE_CHARACTER_CHECK_DEFAULTS["ordinary_face"],
-            ),
-            "facial_asymmetry": get_checkbox_value(
-                "facial_asymmetry_check",
-                BASE_CHARACTER_CHECK_DEFAULTS["facial_asymmetry"],
-            ),
-            "disheveled": get_checkbox_value(
-                "disheveled_check",
-                BASE_CHARACTER_CHECK_DEFAULTS["disheveled"],
-            ),
+            "androgynous": 0,
+            "ugly": 0,
+            "ordinary_face": 0.25,
+            "facial_asymmetry": 0,
+            "disheveled": 0,
             "beard": "-",
             "beard_color": "-",
         },
