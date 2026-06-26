@@ -327,15 +327,38 @@ with tab2:
 
     with preview_col:
         st.subheader("Generated Face Preview")
-
-        if "face_result_image" in st.session_state:
-            st.image(
-                st.session_state["face_result_image"],
-                caption="Generated Face Image",
-                use_container_width=True,
-            )
-        else:
-            render_empty_preview_box("Generated face image will appear here.", 520)
+    
+        face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
+    
+        with face_preview_col1:
+            st.markdown("#### Image 1 - Boy")
+    
+            if "face_result_image_c1" in st.session_state:
+                st.image(
+                    st.session_state["face_result_image_c1"],
+                    caption="Image 1 - Boy Face Reference",
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "Image 1 - Boy face reference will appear here.",
+                    520,
+                )
+    
+        with face_preview_col2:
+            st.markdown("#### Image 2 - Girl")
+    
+            if "face_result_image_c2" in st.session_state:
+                st.image(
+                    st.session_state["face_result_image_c2"],
+                    caption="Image 2 - Girl Face Reference",
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "Image 2 - Girl face reference will appear here.",
+                    520,
+                )
 
     with settings_col:
         st.subheader("Character Target")
