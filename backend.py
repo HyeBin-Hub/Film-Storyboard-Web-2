@@ -1,6 +1,4 @@
-from pathlib import Path
-
-app_code = r'''import csv
+import csv
 import io
 import json
 import streamlit as st
@@ -332,8 +330,3 @@ if generate_clicked:
         st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
         st.subheader("Collected Face Branch Config")
         st.json(config)
-'''
-
-output_path = Path("/mnt/data/app.py")
-output_path.write_text(app_code, encoding="utf-8")
-print(f"Created: {output_path}")
