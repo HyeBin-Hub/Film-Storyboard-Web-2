@@ -640,7 +640,7 @@ with tab3:
             )
 
         else:
-            selected_body_target == "Image 2 - Girl":
+            selected_body_target == "Image 2 - Girl"
                 st.text_area(
                     "Image 2 - Girl Body Prompt",
                     key="body_prompt_c2",
