@@ -258,8 +258,7 @@ with tab1:
                 )
             else:
                 st.warning("CSV에서 추출된 shot id가 없습니다.")
-    else:
-        st.info("CSV 파일을 업로드하면 Shot Filter가 표시됩니다.")
+
 
 
 # =========================
