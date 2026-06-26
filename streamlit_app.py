@@ -31,17 +31,6 @@ else:
         st.sidebar.warning("API Key와 Deployment ID를 입력해주세요.")
         st.stop()
 
-# CSV 업로드 테스트용: RunComfy에서 실행 중인 ComfyUI backend URL
-comfyui_base_url = st.sidebar.text_input(
-    "ComfyUI Base URL",
-    value="",
-    placeholder="https://your-running-comfyui-url",
-    help="RunComfy에서 실행 중인 ComfyUI backend URL을 입력하세요."
-)
-
-if not comfyui_base_url:
-    st.sidebar.info("CSV 자동 업로드 테스트를 하려면 ComfyUI Base URL을 입력하세요.")
-
 # ========================================================================
 # 2. 디자인
 # ========================================================================        
