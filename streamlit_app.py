@@ -83,6 +83,61 @@ def extract_shot_ids_from_csv(csv_text):
     return shot_ids
 
 
+def read_csv_as_dataframe(csv_text):
+    if not csv_text.strip():
+        return pd.DataFrame()
+
+    try:
+        return pd.read_csv(io.StringIO(csv_text))
+    except Exception:
+        return pd.DataFrame()
+
+
+def get_shot_id_column(df):
+    if df.empty:
+        return None
+
+    candidates = [
+        "shot",
+        "shot_id",
+        "shot id",
+        "id",
+        "Shot",
+        "Shot ID",
+        "Shot_ID",
+    ]
+
+    for col in df.columns:
+        if str(col).strip() in candidates:
+            return col
+
+    return df.columns[0]
+
+
+def get_selected_shot_dataframe():
+    csv_text = st.session_state.get("csv_text", "")
+    df = read_csv_as_dataframe(csv_text)
+
+    if df.empty:
+        return pd.DataFrame()
+
+    shot_col = get_shot_id_column(df)
+
+    if shot_col is None:
+        return df
+
+    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+    custom_shots = st.session_state.get("custom_shots", [])
+
+    if shot_filter_mode == "ALL":
+        return df
+
+    if not custom_shots:
+        return pd.DataFrame()
+
+    return df[df[shot_col].astype(str).isin([str(x) for x in custom_shots])]
+
+
 def character_label_to_value(label):
     mapping = {
         "Image 1 - Boy": "C1",
@@ -95,7 +150,6 @@ def body_character_label_to_value(label):
     mapping = {
         "Image 1 - Boy": "C1",
         "Image 2 - Girl": "C2",
-        
     }
     return mapping.get(label, "C1")
 
@@ -110,6 +164,86 @@ def initialize_body_prompts():
 
     if "body_prompt_c2" not in st.session_state:
         st.session_state["body_prompt_c2"] = ""
+
+
+def get_scene_shot_filter_config():
+    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+    custom_shots = st.session_state.get("custom_shots", [])
+
+    if shot_filter_mode == "ALL":
+        return "ALL", ""
+
+    return "CUSTOM", ", ".join(custom_shots)
+
+
+def get_body_reference_candidates(character_code):
+    """
+    character_code: 'c1' or 'c2'
+
+    Step3에서 여러 body 후보를 저장해둔 경우:
+    st.session_state["body_candidates_c1"] = [
+        {"label": "Boy Body 1", "image": ..., "filename": "..."},
+        {"label": "Boy Body 2", "image": ..., "filename": "..."},
+    ]
+
+    후보 리스트가 없으면 body_result_image_c1 / body_result_image_c2를 단일 후보로 fallback.
+    """
+
+    candidates_key = f"body_candidates_{character_code}"
+    candidates = st.session_state.get(candidates_key, [])
+
+    normalized = []
+
+    for i, item in enumerate(candidates, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        normalized.append(
+            {
+                "label": item.get(
+                    "label",
+                    f"{'Boy' if character_code == 'c1' else 'Girl'} Body {i}",
+                ),
+                "image": item.get("image"),
+                "filename": item.get("filename", ""),
+            }
+        )
+
+    fallback_image = st.session_state.get(f"body_result_image_{character_code}")
+    fallback_filename = st.session_state.get(
+        f"body_result_filename_{character_code}",
+        "",
+    )
+
+    if not normalized and fallback_image is not None:
+        normalized.append(
+            {
+                "label": f"{'Boy' if character_code == 'c1' else 'Girl'} Body 1",
+                "image": fallback_image,
+                "filename": fallback_filename,
+            }
+        )
+
+    return normalized
+
+
+def sync_scene_reference_selection(session_key, candidates):
+    labels = [item["label"] for item in candidates]
+
+    if not labels:
+        st.session_state[session_key] = ""
+        return
+
+    if st.session_state.get(session_key) not in labels:
+        st.session_state[session_key] = labels[0]
+
+
+def get_selected_candidate(candidates, selected_label):
+    for item in candidates:
+        if item["label"] == selected_label:
+            return item
+
+    return None
 
 
 def build_face_ui_config():
@@ -158,12 +292,14 @@ def build_face_ui_config():
             "butt_size_weight": 0,
             "eyes_color": st.session_state.get("eyes_color", "Brown"),
             "eyes_shape": st.session_state.get(
-                "eyes_shape", "Double Eyelid Eyes Shape"
+                "eyes_shape",
+                "Double Eyelid Eyes Shape",
             ),
             "lips_color": st.session_state.get("lips_color", "Peach Lips"),
             "lips_shape": st.session_state.get("lips_shape", "Thin Lips"),
             "facial_expression": st.session_state.get(
-                "facial_expression", "Curious"
+                "facial_expression",
+                "Curious",
             ),
             "facial_expression_weight": 0,
             "face_shape": st.session_state.get("face_shape", "Square with Soft Jaw"),
@@ -210,37 +346,39 @@ def build_body_ui_config():
         }
     }
 
-SCENE_PROMPT_PLACEHOLDER = (
-    "Example: Image 1 - Boy and Image 2 - Girl are walking through an empty red sorghum field. "
-    "Image 1 is on the left and Image 2 is on the right. "
-    "Use a long shot, eye-level camera, full-body framing, cinematic vintage tone, cloudy and windy atmosphere."
-)
-
-
-def initialize_scene_prompt():
-    if "scene_prompt" not in st.session_state:
-        st.session_state["scene_prompt"] = ""
-
 
 def build_scene_ui_config():
-    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
-    custom_shots = st.session_state.get("custom_shots", [])
+    shot_filter, custom_shot_ids = get_scene_shot_filter_config()
 
-    if shot_filter_mode == "ALL":
-        shot_filter = "ALL"
-        custom_shot_ids = ""
-    else:
-        shot_filter = "CUSTOM"
-        custom_shot_ids = ", ".join(custom_shots)
+    boy_candidates = get_body_reference_candidates("c1")
+    girl_candidates = get_body_reference_candidates("c2")
+
+    selected_boy = get_selected_candidate(
+        boy_candidates,
+        st.session_state.get("scene_boy_reference_label", ""),
+    )
+    selected_girl = get_selected_candidate(
+        girl_candidates,
+        st.session_state.get("scene_girl_reference_label", ""),
+    )
+
+    selected_shot_df = get_selected_shot_dataframe()
 
     return {
         "scene_generation": {
             "shot_filter": shot_filter,
             "custom_shot_ids": custom_shot_ids,
-            "scene_prompt": st.session_state.get("scene_prompt", ""),
+            "selected_shot_count": len(selected_shot_df),
+            "selected_shot_data": selected_shot_df.to_dict(orient="records"),
             "reference_images": {
-                "image_1": "Image 1 - Boy Body Reference",
-                "image_2": "Image 2 - Girl Body Reference",
+                "image_1_boy_body": {
+                    "label": selected_boy["label"] if selected_boy else "",
+                    "filename": selected_boy.get("filename", "") if selected_boy else "",
+                },
+                "image_2_girl_body": {
+                    "label": selected_girl["label"] if selected_girl else "",
+                    "filename": selected_girl.get("filename", "") if selected_girl else "",
+                },
             },
         }
     }
@@ -268,114 +406,6 @@ def render_empty_preview_box(message, height=520):
     )
 
 
-def get_scene_shot_filter_config():
-    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
-    custom_shots = st.session_state.get("custom_shots", [])
-
-    if shot_filter_mode == "ALL":
-        return "ALL", ""
-    return "CUSTOM", ", ".join(custom_shots)
-
-
-def get_body_reference_candidates(character_code):
-    """
-    character_code: 'c1' or 'c2'
-    Step3에서 여러 body 후보를 저장해둔 경우:
-    st.session_state["body_candidates_c1"] = [
-        {"label": "Boy Body 1", "image": ..., "filename": "..."},
-        {"label": "Boy Body 2", "image": ..., "filename": "..."},
-    ]
-    같은 형태를 읽는다.
-
-    후보 리스트가 없으면 body_result_image_c1 / c2 를 단일 후보로 fallback 한다.
-    """
-    candidates_key = f"body_candidates_{character_code}"
-    candidates = st.session_state.get(candidates_key, [])
-
-    normalized = []
-
-    for i, item in enumerate(candidates, start=1):
-        if not isinstance(item, dict):
-            continue
-
-        normalized.append(
-            {
-                "label": item.get(
-                    "label",
-                    f"{'Boy' if character_code == 'c1' else 'Girl'} Body {i}",
-                ),
-                "image": item.get("image"),
-                "filename": item.get("filename", ""),
-            }
-        )
-
-    # fallback: Step3에서 단일 결과만 저장되어 있는 경우
-    fallback_image = st.session_state.get(f"body_result_image_{character_code}")
-    fallback_filename = st.session_state.get(f"body_result_filename_{character_code}", "")
-
-    if not normalized and fallback_image is not None:
-        normalized.append(
-            {
-                "label": f"{'Boy' if character_code == 'c1' else 'Girl'} Body 1",
-                "image": fallback_image,
-                "filename": fallback_filename,
-            }
-        )
-
-    return normalized
-
-
-def sync_scene_reference_selection(session_key, candidates):
-    labels = [item["label"] for item in candidates]
-
-    if not labels:
-        st.session_state[session_key] = ""
-        return
-
-    if st.session_state.get(session_key) not in labels:
-        st.session_state[session_key] = labels[0]
-
-
-def get_selected_candidate(candidates, selected_label):
-    for item in candidates:
-        if item["label"] == selected_label:
-            return item
-    return None
-
-
-def build_scene_ui_config():
-    shot_filter, custom_shot_ids = get_scene_shot_filter_config()
-
-    boy_candidates = get_body_reference_candidates("c1")
-    girl_candidates = get_body_reference_candidates("c2")
-
-    selected_boy = get_selected_candidate(
-        boy_candidates,
-        st.session_state.get("scene_boy_reference_label", ""),
-    )
-    selected_girl = get_selected_candidate(
-        girl_candidates,
-        st.session_state.get("scene_girl_reference_label", ""),
-    )
-
-    return {
-        "scene_generation": {
-            "shot_filter": shot_filter,
-            "custom_shot_ids": custom_shot_ids,
-            "reference_images": {
-                "image_1_boy_body": {
-                    "label": selected_boy["label"] if selected_boy else "",
-                    "filename": selected_boy.get("filename", "") if selected_boy else "",
-                },
-                "image_2_girl_body": {
-                    "label": selected_girl["label"] if selected_girl else "",
-                    "filename": selected_girl.get("filename", "") if selected_girl else "",
-                },
-            },
-        }
-    }
-
-
 # =========================
 # Page Config
 # =========================
@@ -386,7 +416,7 @@ st.set_page_config(
 )
 
 st.title("🎬 Storyboard Generator")
-st.caption("Face / Body Generation Branch UI Test")
+st.caption("Face / Body / Scene Generation Branch UI Test")
 
 
 # =========================
@@ -400,6 +430,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
         "Step 4. Scene Settings",
     ]
 )
+
 
 # =========================
 # Step 1. CSV Upload
@@ -470,12 +501,12 @@ with tab2:
 
     with preview_col:
         st.subheader("Generated Face Preview")
-    
+
         face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
-    
+
         with face_preview_col1:
             st.markdown("#### Image 1 - Boy")
-    
+
             if "face_result_image_c1" in st.session_state:
                 st.image(
                     st.session_state["face_result_image_c1"],
@@ -487,10 +518,10 @@ with tab2:
                     "Image 1 - Boy face reference will appear here.",
                     520,
                 )
-    
+
         with face_preview_col2:
             st.markdown("#### Image 2 - Girl")
-    
+
             if "face_result_image_c2" in st.session_state:
                 st.image(
                     st.session_state["face_result_image_c2"],
@@ -800,7 +831,7 @@ with tab3:
             st.text_area(
                 "Image 1 - Boy Body Prompt",
                 key="body_prompt_c1",
-                height=150,
+                height=260,
                 placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
@@ -809,11 +840,10 @@ with tab3:
             st.text_area(
                 "Image 2 - Girl Body Prompt",
                 key="body_prompt_c2",
-                height=150,
+                height=260,
                 placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
-
 
         with st.expander("Body Prompt Guide", expanded=False):
             st.markdown(
@@ -852,7 +882,8 @@ with tab3:
                 st.success("Body branch UI 입력값이 정상적으로 수집되었습니다.")
                 st.subheader("Collected Body Branch Config")
                 st.json(body_config)
-                
+
+
 # =========================
 # Step 4. Scene Settings
 # =========================
@@ -870,15 +901,12 @@ with tab4:
     with preview_col:
         st.subheader("Generated Scene Preview")
 
-        shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
-        custom_shots = st.session_state.get("custom_shots", [])
+        selected_shot_df = get_selected_shot_dataframe()
 
-        if shot_filter_mode == "ALL":
-            st.caption("Selected Shots: ALL")
-        elif custom_shots:
-            st.caption(f"Selected Shots: {', '.join(custom_shots)}")
+        if selected_shot_df.empty:
+            st.caption("Selected Scene: None")
         else:
-            st.caption("Selected Shots: CUSTOM / No shot selected")
+            st.caption(f"Selected Scene Count: {len(selected_shot_df)}")
 
         if "scene_result_image" in st.session_state:
             st.image(
@@ -896,23 +924,32 @@ with tab4:
         st.subheader("Scene Generation Settings")
 
         with st.container(border=True):
-            st.markdown("###### Selected Shot Filter")
+            st.markdown("###### Current Scene Information")
 
+            selected_shot_df = get_selected_shot_dataframe()
             shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
             custom_shots = st.session_state.get("custom_shots", [])
 
-            if shot_filter_mode == "ALL":
-                st.write("ALL")
-            elif custom_shots:
-                st.write(", ".join(custom_shots))
+            if selected_shot_df.empty:
+                st.warning("표시할 scene 정보가 없습니다. Step 1에서 CSV와 shot 선택을 확인하세요.")
             else:
-                st.warning("Step 1에서 CUSTOM shot을 선택해야 합니다.")
+                if shot_filter_mode == "ALL":
+                    st.caption(f"Shot Filter: ALL / {len(selected_shot_df)} scene(s)")
+                elif custom_shots:
+                    st.caption(f"Shot Filter: CUSTOM / {', '.join(custom_shots)}")
+                else:
+                    st.caption("Shot Filter: CUSTOM / No shot selected")
+
+                st.dataframe(
+                    selected_shot_df,
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
         st.divider()
 
         st.markdown("### Reference Images")
 
-        # Boy reference selection
         st.markdown("##### Image 1 - Boy Body Reference")
 
         if boy_candidates:
@@ -939,12 +976,12 @@ with tab4:
                     "Selected boy body reference preview is not available.",
                     220,
                 )
+
         else:
             st.warning("Step 3에서 Image 1 - Boy body reference를 먼저 생성해야 합니다.")
 
         st.divider()
 
-        # Girl reference selection
         st.markdown("##### Image 2 - Girl Body Reference")
 
         if girl_candidates:
@@ -971,6 +1008,7 @@ with tab4:
                     "Selected girl body reference preview is not available.",
                     220,
                 )
+
         else:
             st.warning("Step 3에서 Image 2 - Girl body reference를 먼저 생성해야 합니다.")
 
