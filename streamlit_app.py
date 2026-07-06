@@ -796,7 +796,7 @@ with tab2:
                 else:
                     render_empty_preview_box(
                         "Image 1 - Boy face reference will appear here.",
-                        500,
+                        400,
                     )
         
             with face_preview_col2:
@@ -811,7 +811,7 @@ with tab2:
                 else:
                     render_empty_preview_box(
                         "Image 2 - Girl face reference will appear here.",
-                        300,
+                        400,
                     )
 
 
