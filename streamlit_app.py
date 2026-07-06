@@ -227,6 +227,83 @@ def get_body_reference_candidates(character_code):
     return normalized
 
 
+
+def get_face_reference_candidates(character_code):
+    """
+    character_code: 'c1' or 'c2'
+
+    Step 2A에서 여러 face 후보를 저장해둔 경우:
+    st.session_state["face_candidates_c1"] = [
+        {"label": "Boy Face 1", "image": ..., "filename": "..."},
+        {"label": "Boy Face 2", "image": ..., "filename": "..."},
+    ]
+
+    후보 리스트가 없으면 face_result_image_c1 / face_result_image_c2를 단일 후보로 fallback.
+    """
+    candidates_key = f"face_candidates_{character_code}"
+    candidates = st.session_state.get(candidates_key, [])
+
+    normalized = []
+
+    for i, item in enumerate(candidates, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        normalized.append(
+            {
+                "label": item.get(
+                    "label",
+                    f"{'Boy' if character_code == 'c1' else 'Girl'} Face {i}",
+                ),
+                "image": item.get("image"),
+                "filename": item.get("filename", ""),
+            }
+        )
+
+    fallback_image = st.session_state.get(f"face_result_image_{character_code}")
+    fallback_filename = st.session_state.get(
+        f"face_result_filename_{character_code}",
+        "",
+    )
+
+    if not normalized and fallback_image is not None:
+        normalized.append(
+            {
+                "label": f"{'Boy' if character_code == 'c1' else 'Girl'} Face 1",
+                "image": fallback_image,
+                "filename": fallback_filename,
+            }
+        )
+
+    return normalized
+
+
+def sync_face_reference_selection():
+    for character_code in ["c1", "c2"]:
+        candidates = get_face_reference_candidates(character_code)
+        session_key = f"face_selected_label_{character_code}"
+        labels = [item["label"] for item in candidates]
+
+        if not labels:
+            st.session_state[session_key] = ""
+            continue
+
+        if st.session_state.get(session_key) not in labels:
+            st.session_state[session_key] = labels[0]
+
+
+def apply_selected_face_result(character_code):
+    selected_label = st.session_state.get(f"face_selected_label_{character_code}", "")
+    candidates = get_face_reference_candidates(character_code)
+    selected_candidate = get_selected_candidate(candidates, selected_label)
+
+    if selected_candidate and selected_candidate.get("image") is not None:
+        st.session_state[f"face_result_image_{character_code}"] = selected_candidate["image"]
+        st.session_state[f"face_result_filename_{character_code}"] = selected_candidate.get("filename", "")
+
+    return selected_candidate
+
+
 def sync_scene_reference_selection(session_key, candidates):
     labels = [item["label"] for item in candidates]
 
@@ -581,7 +658,7 @@ with tab1:
 # =========================
 with tab2:
     st.header("Step 2. Character Reference Generation")
-    # st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
+    st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
 
     with st.container(border=True):
         st.markdown("#### Character Reference Pipeline")
@@ -591,44 +668,86 @@ with tab2:
         )
 
     with st.container(border=True):
-        st.markdown("## 2A. Character Identity Generation")
+        sync_face_reference_selection()
 
-        preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
+        title_icon_col, title_text_col = st.columns([0.08, 0.92])
+
+        with title_icon_col:
+            st.image(
+                "/mnt/data/ghostwriter_images/context/a902fc09-35c1-5256-b174-60459d568ecc.png",
+                width=38,
+            )
+
+        with title_text_col:
+            st.markdown("## 2A. Character Identity Generation")
+
+        preview_col, settings_col = st.columns([1.25, 1.15], gap="large")
 
         with preview_col:
             st.subheader("Character Identity Preview")
 
-            face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
+            active_character_label = st.session_state.get(
+                "character_filter_label",
+                "Image 2 - Girl",
+            )
+            active_character_code = (
+                "c1" if active_character_label == "Image 1 - Boy" else "c2"
+            )
+            active_candidates = get_face_reference_candidates(active_character_code)
+            selected_face = apply_selected_face_result(active_character_code)
 
-            with face_preview_col1:
-                st.markdown("#### Image 1 - Boy")
+            st.caption(
+                f"Current Target: {active_character_label} | Generated candidates appear at the top, and the selected final reference appears below."
+            )
 
-                if "face_result_image_c1" in st.session_state:
-                    st.image(
-                        st.session_state["face_result_image_c1"],
-                        caption="Image 1 - Boy Face Reference",
-                        use_container_width=True,
-                    )
-                else:
-                    render_empty_preview_box(
-                        "Image 1 - Boy face reference will appear here.",
-                        520,
-                    )
+            if active_candidates:
+                st.markdown(f"#### {active_character_label} Candidate Images")
 
-            with face_preview_col2:
-                st.markdown("#### Image 2 - Girl")
+                candidate_cols = st.columns(len(active_candidates), gap="small")
 
-                if "face_result_image_c2" in st.session_state:
-                    st.image(
-                        st.session_state["face_result_image_c2"],
-                        caption="Image 2 - Girl Face Reference",
-                        use_container_width=True,
-                    )
-                else:
-                    render_empty_preview_box(
-                        "Image 2 - Girl face reference will appear here.",
-                        520,
-                    )
+                for idx, candidate in enumerate(active_candidates):
+                    with candidate_cols[idx]:
+                        if candidate.get("image") is not None:
+                            st.image(
+                                candidate["image"],
+                                caption=candidate["label"],
+                                use_container_width=True,
+                            )
+                        else:
+                            render_empty_preview_box(
+                                f"{candidate['label']} preview is not available.",
+                                180,
+                            )
+
+                st.radio(
+                    "Select Face Candidate",
+                    options=[item["label"] for item in active_candidates],
+                    horizontal=True,
+                    key=f"face_selected_label_{active_character_code}",
+                    help="생성된 후보 중 최종 reference로 사용할 얼굴 이미지를 선택합니다.",
+                )
+
+                selected_face = apply_selected_face_result(active_character_code)
+
+            else:
+                render_empty_preview_box(
+                    f"{active_character_label} candidate images will appear here after generation.",
+                    180,
+                )
+
+            st.markdown("#### Selected Face Reference")
+
+            if selected_face and selected_face.get("image") is not None:
+                st.image(
+                    selected_face["image"],
+                    caption=f"Selected {active_character_label} Face Reference",
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    f"Selected {active_character_label} face reference will appear here.",
+                    300,
+                )
 
         with settings_col:
             st.subheader("Target Character Control")
@@ -855,7 +974,6 @@ with tab2:
                     st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
                     st.subheader("Collected Character Identity Config")
                     st.json(config)
-
     st.divider()
 
     with st.container(border=True):
@@ -1917,392 +2035,401 @@ with tab4:
 # # =========================
 # with tab2:
 #     st.header("Step 2. Character Reference Generation")
-#     st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
+#     # st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
 
-#     st.markdown("## 2A. Character Identity Generation")
-
-#     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
-
-#     with preview_col:
-#         st.subheader("Character Identity Preview")
-
-#         face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
-
-#         with face_preview_col1:
-#             st.markdown("#### Image 1 - Boy")
-
-#             if "face_result_image_c1" in st.session_state:
-#                 st.image(
-#                     st.session_state["face_result_image_c1"],
-#                     caption="Image 1 - Boy Face Reference",
-#                     use_container_width=True,
-#                 )
-#             else:
-#                 render_empty_preview_box(
-#                     "Image 1 - Boy face reference will appear here.",
-#                     520,
-#                 )
-
-#         with face_preview_col2:
-#             st.markdown("#### Image 2 - Girl")
-
-#             if "face_result_image_c2" in st.session_state:
-#                 st.image(
-#                     st.session_state["face_result_image_c2"],
-#                     caption="Image 2 - Girl Face Reference",
-#                     use_container_width=True,
-#                 )
-#             else:
-#                 render_empty_preview_box(
-#                     "Image 2 - Girl face reference will appear here.",
-#                     520,
-#                 )
-
-#     with settings_col:
-#         st.subheader("Target Character Control")
-
-#         st.radio(
-#             "character_filter",
-#             options=["Image 1 - Boy", "Image 2 - Girl"],
-#             index=1,
-#             horizontal=True,
-#             key="character_filter_label",
-#             help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
+#     with st.container(border=True):
+#         st.markdown("#### Character Reference Pipeline")
+#         st.markdown("**Face Identity** → **Full-Body Reference** → **Scene Input**")
+#         st.caption(
+#             "2A defines each character's visual identity, and 2B converts that identity into full-body references used by Scene Generation."
 #         )
 
-#         with st.expander("Identity Attribute Controls", expanded=True):
-#             with st.container(border=True):
-#                 st.markdown("###### Core Identity")
+#     with st.container(border=True):
+#         st.markdown("## 2A. Character Identity Generation")
 
-#                 basic_col1, basic_col2 = st.columns(2)
+#         preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
-#                 with basic_col1:
-#                     st.slider(
-#                         "Age",
-#                         min_value=1,
-#                         max_value=100,
-#                         value=9,
-#                         step=1,
-#                         key="age",
+#         with preview_col:
+#             st.subheader("Character Identity Preview")
+
+#             face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
+
+#             with face_preview_col1:
+#                 st.markdown("#### Image 1 - Boy")
+
+#                 if "face_result_image_c1" in st.session_state:
+#                     st.image(
+#                         st.session_state["face_result_image_c1"],
+#                         caption="Image 1 - Boy Face Reference",
+#                         use_container_width=True,
+#                     )
+#                 else:
+#                     render_empty_preview_box(
+#                         "Image 1 - Boy face reference will appear here.",
+#                         520,
 #                     )
 
-#                 with basic_col2:
-#                     st.selectbox(
-#                         "Nationality",
-#                         options=[
-#                             "South Korean",
-#                             "Korean",
-#                             "East Asian",
-#                             "Japanese",
-#                             "Chinese",
-#                         ],
-#                         index=0,
-#                         key="nationality",
+#             with face_preview_col2:
+#                 st.markdown("#### Image 2 - Girl")
+
+#                 if "face_result_image_c2" in st.session_state:
+#                     st.image(
+#                         st.session_state["face_result_image_c2"],
+#                         caption="Image 2 - Girl Face Reference",
+#                         use_container_width=True,
+#                     )
+#                 else:
+#                     render_empty_preview_box(
+#                         "Image 2 - Girl face reference will appear here.",
+#                         520,
 #                     )
 
-#             with st.container(border=True):
-#                 st.markdown("###### Face")
+#         with settings_col:
+#             st.subheader("Target Character Control")
 
-#                 face_col1, face_col2, face_col3 = st.columns(3)
+#             st.radio(
+#                 "character_filter",
+#                 options=["Image 1 - Boy", "Image 2 - Girl"],
+#                 index=1,
+#                 horizontal=True,
+#                 key="character_filter_label",
+#                 help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
+#             )
 
-#                 with face_col1:
-#                     st.selectbox(
-#                         "Body Type",
-#                         options=["Slim", "Average", "Athletic", "Curvy", "Heavy"],
-#                         index=0,
-#                         key="body_type",
-#                     )
+#             with st.expander("Identity Attribute Controls", expanded=True):
+#                 with st.container(border=True):
+#                     st.markdown("###### Core Identity")
 
-#                 with face_col2:
-#                     st.selectbox(
-#                         "Face Shape",
-#                         options=[
-#                             "Oval",
-#                             "Round",
-#                             "Square",
-#                             "Square with Soft Jaw",
-#                             "Heart",
-#                             "Long",
-#                             "Diamond",
-#                         ],
-#                         index=3,
-#                         key="face_shape",
-#                     )
+#                     basic_col1, basic_col2 = st.columns(2)
 
-#                 with face_col3:
-#                     st.selectbox(
-#                         "Expression",
-#                         options=[
-#                             "Neutral",
-#                             "Curious",
-#                             "Gentle Smile",
-#                             "Serious",
-#                             "Sad",
-#                             "Surprised",
-#                             "Calm",
-#                         ],
-#                         index=1,
-#                         key="facial_expression",
-#                     )
+#                     with basic_col1:
+#                         st.slider(
+#                             "Age",
+#                             min_value=1,
+#                             max_value=100,
+#                             value=9,
+#                             step=1,
+#                             key="age",
+#                         )
 
-#             with st.container(border=True):
-#                 st.markdown("###### Eyes / Lips")
+#                     with basic_col2:
+#                         st.selectbox(
+#                             "Nationality",
+#                             options=[
+#                                 "South Korean",
+#                                 "Korean",
+#                                 "East Asian",
+#                                 "Japanese",
+#                                 "Chinese",
+#                             ],
+#                             index=0,
+#                             key="nationality",
+#                         )
 
-#                 eye_col1, eye_col2 = st.columns(2)
+#                 with st.container(border=True):
+#                     st.markdown("###### Face")
 
-#                 with eye_col1:
-#                     st.selectbox(
-#                         "Eyes Color",
-#                         options=[
-#                             "Brown",
-#                             "Dark Brown",
-#                             "Black",
-#                             "Hazel",
-#                             "Blue",
-#                             "Green",
-#                         ],
-#                         index=0,
-#                         key="eyes_color",
-#                     )
+#                     face_col1, face_col2, face_col3 = st.columns(3)
 
-#                     st.selectbox(
-#                         "Eyes Shape",
-#                         options=[
-#                             "Double Eyelid Eyes Shape",
-#                             "Monolid Eyes Shape",
-#                             "Almond Eyes",
-#                             "Round Eyes",
-#                             "Sharp Eyes",
-#                         ],
-#                         index=0,
-#                         key="eyes_shape",
-#                     )
+#                     with face_col1:
+#                         st.selectbox(
+#                             "Body Type",
+#                             options=["Slim", "Average", "Athletic", "Curvy", "Heavy"],
+#                             index=0,
+#                             key="body_type",
+#                         )
 
-#                 with eye_col2:
-#                     st.selectbox(
-#                         "Lips Color",
-#                         options=[
-#                             "Peach Lips",
-#                             "Pink Lips",
-#                             "Natural Lips",
-#                             "Pale Lips",
-#                             "Rose Lips",
-#                         ],
-#                         index=0,
-#                         key="lips_color",
-#                     )
+#                     with face_col2:
+#                         st.selectbox(
+#                             "Face Shape",
+#                             options=[
+#                                 "Oval",
+#                                 "Round",
+#                                 "Square",
+#                                 "Square with Soft Jaw",
+#                                 "Heart",
+#                                 "Long",
+#                                 "Diamond",
+#                             ],
+#                             index=3,
+#                             key="face_shape",
+#                         )
 
-#                     st.selectbox(
-#                         "Lips Shape",
-#                         options=["Thin Lips", "Full Lips", "Small Lips", "Soft Lips"],
-#                         index=0,
-#                         key="lips_shape",
-#                     )
+#                     with face_col3:
+#                         st.selectbox(
+#                             "Expression",
+#                             options=[
+#                                 "Neutral",
+#                                 "Curious",
+#                                 "Gentle Smile",
+#                                 "Serious",
+#                                 "Sad",
+#                                 "Surprised",
+#                                 "Calm",
+#                             ],
+#                             index=1,
+#                             key="facial_expression",
+#                         )
 
-#             with st.container(border=True):
-#                 st.markdown("###### Hair")
+#                 with st.container(border=True):
+#                     st.markdown("###### Eyes / Lips")
 
-#                 hair_col1, hair_col2, hair_col3 = st.columns(3)
+#                     eye_col1, eye_col2 = st.columns(2)
 
-#                 with hair_col1:
-#                     st.selectbox(
-#                         "Hair Style",
-#                         options=[
-#                             "Bob",
-#                             "Straight",
-#                             "Wavy",
-#                             "Braided Pigtails",
-#                             "Ponytail",
-#                             "Short Hair",
-#                             "Long Hair",
-#                         ],
-#                         index=0,
-#                         key="hair_style",
-#                     )
+#                     with eye_col1:
+#                         st.selectbox(
+#                             "Eyes Color",
+#                             options=[
+#                                 "Brown",
+#                                 "Dark Brown",
+#                                 "Black",
+#                                 "Hazel",
+#                                 "Blue",
+#                                 "Green",
+#                             ],
+#                             index=0,
+#                             key="eyes_color",
+#                         )
 
-#                 with hair_col2:
-#                     st.selectbox(
-#                         "Hair Color",
-#                         options=[
-#                             "Chestnut",
-#                             "Black",
-#                             "Dark Brown",
-#                             "Brown",
-#                             "Blonde",
-#                             "Auburn",
-#                         ],
-#                         index=0,
-#                         key="hair_color",
-#                     )
+#                         st.selectbox(
+#                             "Eyes Shape",
+#                             options=[
+#                                 "Double Eyelid Eyes Shape",
+#                                 "Monolid Eyes Shape",
+#                                 "Almond Eyes",
+#                                 "Round Eyes",
+#                                 "Sharp Eyes",
+#                             ],
+#                             index=0,
+#                             key="eyes_shape",
+#                         )
 
-#                 with hair_col3:
-#                     st.selectbox(
-#                         "Hair Length",
-#                         options=["-", "Short", "Medium", "Long", "Shoulder Length"],
-#                         index=0,
-#                         key="hair_length",
-#                     )
+#                     with eye_col2:
+#                         st.selectbox(
+#                             "Lips Color",
+#                             options=[
+#                                 "Peach Lips",
+#                                 "Pink Lips",
+#                                 "Natural Lips",
+#                                 "Pale Lips",
+#                                 "Rose Lips",
+#                             ],
+#                             index=0,
+#                             key="lips_color",
+#                         )
 
-#         with st.expander("Fine-Grained Appearance Attributes", expanded=False):
-#             skin_keys = list(SKIN_DEFAULTS.keys())
-#             skin_cols = st.columns(3)
+#                         st.selectbox(
+#                             "Lips Shape",
+#                             options=["Thin Lips", "Full Lips", "Small Lips", "Soft Lips"],
+#                             index=0,
+#                             key="lips_shape",
+#                         )
 
-#             for i, key in enumerate(skin_keys):
-#                 with skin_cols[i % 3]:
-#                     default_checked = SKIN_DEFAULTS[key] > 0
+#                 with st.container(border=True):
+#                     st.markdown("###### Hair")
 
-#                     st.checkbox(
-#                         key,
-#                         value=default_checked,
-#                         key=f"skin_{key}",
-#                     )
+#                     hair_col1, hair_col2, hair_col3 = st.columns(3)
 
-#         st.divider()
+#                     with hair_col1:
+#                         st.selectbox(
+#                             "Hair Style",
+#                             options=[
+#                                 "Bob",
+#                                 "Straight",
+#                                 "Wavy",
+#                                 "Braided Pigtails",
+#                                 "Ponytail",
+#                                 "Short Hair",
+#                                 "Long Hair",
+#                             ],
+#                             index=0,
+#                             key="hair_style",
+#                         )
 
-#         generate_clicked = st.button(
-#             "Generate Character Identity",
-#             type="primary",
-#             use_container_width=True,
-#         )
+#                     with hair_col2:
+#                         st.selectbox(
+#                             "Hair Color",
+#                             options=[
+#                                 "Chestnut",
+#                                 "Black",
+#                                 "Dark Brown",
+#                                 "Brown",
+#                                 "Blonde",
+#                                 "Auburn",
+#                             ],
+#                             index=0,
+#                             key="hair_color",
+#                         )
 
-#         if generate_clicked:
-#             csv_text = st.session_state.get("csv_text", "")
+#                     with hair_col3:
+#                         st.selectbox(
+#                             "Hair Length",
+#                             options=["-", "Short", "Medium", "Long", "Shoulder Length"],
+#                             index=0,
+#                             key="hair_length",
+#                         )
 
-#             if not csv_text.strip():
-#                 st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+#             with st.expander("Fine-Grained Appearance Attributes", expanded=False):
+#                 skin_keys = list(SKIN_DEFAULTS.keys())
+#                 skin_cols = st.columns(3)
 
-#             elif (
-#                 st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
-#                 and len(st.session_state.get("custom_shots", [])) == 0
-#             ):
-#                 st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+#                 for i, key in enumerate(skin_keys):
+#                     with skin_cols[i % 3]:
+#                         default_checked = SKIN_DEFAULTS[key] > 0
 
-#             else:
-#                 config = build_face_ui_config()
+#                         st.checkbox(
+#                             key,
+#                             value=default_checked,
+#                             key=f"skin_{key}",
+#                         )
 
-#                 st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
-#                 st.subheader("Collected Character Identity Config")
-#                 st.json(config)
+#             st.divider()
+
+#             generate_clicked = st.button(
+#                 "Generate Character Identity",
+#                 type="primary",
+#                 use_container_width=True,
+#             )
+
+#             if generate_clicked:
+#                 csv_text = st.session_state.get("csv_text", "")
+
+#                 if not csv_text.strip():
+#                     st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+
+#                 elif (
+#                     st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
+#                     and len(st.session_state.get("custom_shots", [])) == 0
+#                 ):
+#                     st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+
+#                 else:
+#                     config = build_face_ui_config()
+
+#                     st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
+#                     st.subheader("Collected Character Identity Config")
+#                     st.json(config)
 
 #     st.divider()
 
-#     st.markdown("## 2B. Full-Body Reference Generation")
+#     with st.container(border=True):
+#         st.markdown("## 2B. Full-Body Reference Generation")
 
-#     initialize_body_prompts()
+#         initialize_body_prompts()
 
-#     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
+#         preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
-#     with preview_col:
-#         st.subheader("Full-Body Reference Preview")
+#         with preview_col:
+#             st.subheader("Full-Body Reference Preview")
 
-#         body_preview_col1, body_preview_col2 = st.columns(2, gap="medium")
+#             body_preview_col1, body_preview_col2 = st.columns(2, gap="medium")
 
-#         with body_preview_col1:
-#             st.markdown("#### Image 1 - Boy")
+#             with body_preview_col1:
+#                 st.markdown("#### Image 1 - Boy")
 
-#             if "body_result_image_c1" in st.session_state:
-#                 st.image(
-#                     st.session_state["body_result_image_c1"],
-#                     caption="Image 1 - Boy Body Reference",
-#                     use_container_width=True,
-#                 )
-#             else:
-#                 render_empty_preview_box(
-#                     "Image 1 - Boy body reference will appear here.",
-#                     520,
-#                 )
+#                 if "body_result_image_c1" in st.session_state:
+#                     st.image(
+#                         st.session_state["body_result_image_c1"],
+#                         caption="Image 1 - Boy Body Reference",
+#                         use_container_width=True,
+#                     )
+#                 else:
+#                     render_empty_preview_box(
+#                         "Image 1 - Boy body reference will appear here.",
+#                         520,
+#                     )
 
-#         with body_preview_col2:
-#             st.markdown("#### Image 2 - Girl")
+#             with body_preview_col2:
+#                 st.markdown("#### Image 2 - Girl")
 
-#             if "body_result_image_c2" in st.session_state:
-#                 st.image(
-#                     st.session_state["body_result_image_c2"],
-#                     caption="Image 2 - Girl Body Reference",
-#                     use_container_width=True,
-#                 )
-#             else:
-#                 render_empty_preview_box(
-#                     "Image 2 - Girl body reference will appear here.",
-#                     520,
-#                 )
+#                 if "body_result_image_c2" in st.session_state:
+#                     st.image(
+#                         st.session_state["body_result_image_c2"],
+#                         caption="Image 2 - Girl Body Reference",
+#                         use_container_width=True,
+#                     )
+#                 else:
+#                     render_empty_preview_box(
+#                         "Image 2 - Girl body reference will appear here.",
+#                         520,
+#                     )
 
-#     with settings_col:
-#         st.subheader("Reference Generation Control")
+#         with settings_col:
+#             st.subheader("Reference Generation Control")
 
-#         st.radio(
-#             "body_character_filter",
-#             options=["Image 1 - Boy", "Image 2 - Girl"],
-#             index=0,
-#             horizontal=True,
-#             key="body_character_filter_label",
-#             help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
-#         )
-
-#         st.divider()
-
-#         st.markdown("### Full-Body Prompt Editor")
-
-#         selected_body_target = st.session_state.get(
-#             "body_character_filter_label",
-#             "Image 1 - Boy",
-#         )
-
-#         if selected_body_target == "Image 1 - Boy":
-#             st.text_area(
-#                 "Image 1 - Boy Body Prompt",
-#                 key="body_prompt_c1",
-#                 height=260,
-#                 placeholder=BODY_PROMPT_PLACEHOLDER,
-#                 help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
+#             st.radio(
+#                 "body_character_filter",
+#                 options=["Image 1 - Boy", "Image 2 - Girl"],
+#                 index=0,
+#                 horizontal=True,
+#                 key="body_character_filter_label",
+#                 help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
 #             )
 
-#         else:
-#             st.text_area(
-#                 "Image 2 - Girl Body Prompt",
-#                 key="body_prompt_c2",
-#                 height=260,
-#                 placeholder=BODY_PROMPT_PLACEHOLDER,
-#                 help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
+#             st.divider()
+
+#             st.markdown("### Full-Body Prompt Editor")
+
+#             selected_body_target = st.session_state.get(
+#                 "body_character_filter_label",
+#                 "Image 1 - Boy",
 #             )
 
-#         with st.expander("Reference Prompt Guidelines", expanded=False):
-#             st.markdown(
-#                 """
-#                 - 얼굴 reference와 같은 인물로 보이도록 identity 유지 문장을 포함하는 것이 좋습니다.
-#                 - 전신이 모두 보이도록 `full-body`, `head to toe`, `entire body visible` 표현을 포함하세요.
-#                 - 의상은 상의, 하의, 양말, 신발까지 구체적으로 작성하는 것이 좋습니다.
-#                 - 이후 Scene Generation에서 reference로 쓰기 좋게 `clean background`를 유지하는 것이 좋습니다.
-#                 - 복잡한 포즈나 강한 카메라 앵글은 전신 reference 생성 단계에서는 피하는 것이 좋습니다.
-#                 """
-#             )
-
-#         st.divider()
-
-#         generate_body_clicked = st.button(
-#             "Generate Full-Body Reference",
-#             type="primary",
-#             use_container_width=True,
-#         )
-
-#         if generate_body_clicked:
-#             csv_text = st.session_state.get("csv_text", "")
-
-#             if not csv_text.strip():
-#                 st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
-
-#             elif (
-#                 st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
-#                 and len(st.session_state.get("custom_shots", [])) == 0
-#             ):
-#                 st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+#             if selected_body_target == "Image 1 - Boy":
+#                 st.text_area(
+#                     "Image 1 - Boy Body Prompt",
+#                     key="body_prompt_c1",
+#                     height=260,
+#                     placeholder=BODY_PROMPT_PLACEHOLDER,
+#                     help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
+#                 )
 
 #             else:
-#                 body_config = build_body_ui_config()
+#                 st.text_area(
+#                     "Image 2 - Girl Body Prompt",
+#                     key="body_prompt_c2",
+#                     height=260,
+#                     placeholder=BODY_PROMPT_PLACEHOLDER,
+#                     help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
+#                 )
 
-#                 st.success("Body branch UI 입력값이 정상적으로 수집되었습니다.")
-#                 st.subheader("Collected Full-Body Reference Config")
-#                 st.json(body_config)
+#             with st.expander("Reference Prompt Guidelines", expanded=False):
+#                 st.markdown(
+#                     """
+#                     - 얼굴 reference와 같은 인물로 보이도록 identity 유지 문장을 포함하는 것이 좋습니다.
+#                     - 전신이 모두 보이도록 `full-body`, `head to toe`, `entire body visible` 표현을 포함하세요.
+#                     - 의상은 상의, 하의, 양말, 신발까지 구체적으로 작성하는 것이 좋습니다.
+#                     - 이후 Scene Generation에서 reference로 쓰기 좋게 `clean background`를 유지하는 것이 좋습니다.
+#                     - 복잡한 포즈나 강한 카메라 앵글은 전신 reference 생성 단계에서는 피하는 것이 좋습니다.
+#                     """
+#                 )
+
+#             st.divider()
+
+#             generate_body_clicked = st.button(
+#                 "Generate Full-Body Reference",
+#                 type="primary",
+#                 use_container_width=True,
+#             )
+
+#             if generate_body_clicked:
+#                 csv_text = st.session_state.get("csv_text", "")
+
+#                 if not csv_text.strip():
+#                     st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+
+#                 elif (
+#                     st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
+#                     and len(st.session_state.get("custom_shots", [])) == 0
+#                 ):
+#                     st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+
+#                 else:
+#                     body_config = build_body_ui_config()
+
+#                     st.success("Body branch UI 입력값이 정상적으로 수집되었습니다.")
+#                     st.subheader("Collected Full-Body Reference Config")
+#                     st.json(body_config)
 
 # # =========================
 # # Step 3. Reference-Guided Scene Generation
