@@ -1247,6 +1247,12 @@ with tab3:
                         )
             
                     images = result.get("images", [])
+                    # ----------------DEBUG--------------------------
+                    st.write("DEBUG extracted body images:", images)
+
+                    with st.expander("DEBUG raw body result", expanded=True):
+                        st.json(result)
+                    # -----------------DEBUG-------------------------
             
                     if not images:
                         st.error("RunComfy 실행은 완료되었지만 scene 결과 이미지가 없습니다.")
