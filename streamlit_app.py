@@ -1096,15 +1096,25 @@ with tab2:
                                 )
             
                             images = result.get("images", [])
-            
+
                             if not images:
-                                st.error("RunComfy 실행은 완료되었지만 body 결과 이미지가 없습니다.")
-            
-                                with st.expander("RunComfy Raw Body Result", expanded=False):
-                                    st.json(result)
-            
-                                with st.expander("Collected Full-Body Reference Config", expanded=False):
-                                    st.json(body_config)
+                                raw_result = result.get("result", result)
+                                outputs = raw_result.get("outputs", {})
+                                save_output = outputs.get("1226", {})
+                                raw_images = save_output.get("images", [])
+                            
+                                images = [
+                                    {
+                                        "label": f"{'Boy Body' if character_code == 'c1' else 'Girl Body'} {idx + 1}",
+                                        "image": item.get("url", ""),
+                                        "url": item.get("url", ""),
+                                        "filename": item.get("filename", ""),
+                                        "node_id": "1226",
+                                        "raw": item,
+                                    }
+                                    for idx, item in enumerate(raw_images)
+                                    if item.get("url")
+                                ]
             
                             else:
                                 st.session_state[f"body_candidates_{character_code}"] = images
