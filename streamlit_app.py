@@ -894,7 +894,7 @@ with tab3:
 # Step 4. Cinematic Scene Synthesis
 # =========================
 with tab4:
-    st.header("Step 4. Cinematic Scene Synthesis")
+    st.header("Step 4. Reference-Guided Scene Generation")
 
     boy_candidates = get_body_reference_candidates("c1")
     girl_candidates = get_body_reference_candidates("c2")
