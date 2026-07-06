@@ -1365,7 +1365,7 @@ with tab5:
     scene_candidates = get_scene_result_candidates()
     sync_scene_reference_selection("camera_input_scene_label", scene_candidates)
 
-    preview_col, settings_col = st.columns([1.8, 1.0], gap="large")
+    preview_col, settings_col = st.columns([1.6, 1.1], gap="large")
 
     with preview_col:
         st.subheader("Camera Refinement Preview")
