@@ -591,17 +591,7 @@ with tab2:
         )
 
     with st.container(border=True):
-        title_icon_col, title_text_col = st.columns([0.08, 0.92])
-
-        with title_icon_col:
-            st.image(
-                "free-icon-face-recognition-13320393.png",
-                width=42,
-            )
-        
-        with title_text_col:
-            st.markdown("## 2A. Character Identity Generation")
-        # st.markdown("## 2A. Character Identity Generation")
+        st.markdown("## 2A. Character Identity Generation")
 
         preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
