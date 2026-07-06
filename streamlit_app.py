@@ -738,9 +738,9 @@ with tab1:
                     if images:
                         st.success("CSV Parser Test 성공: RunComfy에서 output image가 반환되었습니다.")
                     else:
-                        st.warning(
-                            "CSV Parser Test는 완료되었지만 반환된 image output이 없습니다. "
-                            "테스트 workflow에 SaveImage가 연결되어 있는지 확인하세요."
+                        st.success(
+                            "CSV Parser Test 완료: RunComfy에서 workflow가 정상 실행되었습니다. "
+                            "현재 테스트 workflow에는 SaveImage가 없으므로 image output이 비어 있는 것은 정상입니다."
                         )
             
                     st.rerun()
@@ -774,7 +774,9 @@ with tab1:
                                 use_container_width=True,
                             )
                 else:
-                    st.info("RunComfy result는 성공했지만 image output은 비어 있습니다.")
+                    st.info(
+                            "CSV Parser Test workflow는 텍스트/JSON 출력 검증용이며 SaveImage가 없기 때문에 image output은 표시되지 않습니다."
+                        )
             
                 with st.expander("Debug: RunComfy Request", expanded=False):
                     st.json(csv_parser_test_result.get("request", {}))
