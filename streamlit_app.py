@@ -1053,7 +1053,7 @@ with tab2:
             
                     try:
                         api_key = st.secrets["RUNCOMFY_API_KEY"]
-                        deployment_id = st.secrets["RUNCOMFY_FACE_DEPLOYMENT_ID"]
+                        deployment_id = st.secrets["DEPLOYMENT_ID"]
             
                         with st.spinner("RunComfy에서 Character Identity를 생성하는 중입니다..."):
                             result = run_face_generation(
@@ -1095,7 +1095,7 @@ with tab2:
             
                     except KeyError as e:
                         st.error("RunComfy secret 설정이 없습니다.")
-                        st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 RUNCOMFY_FACE_DEPLOYMENT_ID를 추가해야 합니다.")
+                        st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
                         st.exception(e)
             
                         with st.expander("Collected Character Identity Config", expanded=False):
