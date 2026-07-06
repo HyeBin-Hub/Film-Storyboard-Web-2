@@ -334,13 +334,16 @@ def get_selected_face_reference_entries():
 
         if code == "c1":
             label = "Image 1 - Boy"
+            display_label = "Selected Boy"
         else:
             label = "Image 2 - Girl"
+            display_label = "Selected Girl"
 
         entries.append(
             {
                 "code": code,
                 "label": label,
+                "display_label": display_label,
                 "image": image,
                 "filename": st.session_state.get(f"face_result_filename_{code}", ""),
             }
@@ -778,9 +781,12 @@ with tab2:
 
                 for idx, entry in enumerate(selected_face_entries):
                     with selected_cols[idx]:
+                        st.markdown(f"##### {entry['display_label']}")
+                        st.caption(entry["label"])
+
                         st.image(
                             entry["image"],
-                            caption=f"Selected {entry['label']} Face Reference",
+                            caption=f"{entry['display_label']} Face Reference",
                             use_container_width=True,
                         )
             else:
@@ -1491,7 +1497,6 @@ with tab4:
                 st.subheader("Collected Camera Refinement Config")
                 st.json(camera_config)
 
-
 # import csv
 # import io
 # import pandas as pd
@@ -1795,7 +1800,52 @@ with tab4:
 #         st.session_state[f"face_result_image_{character_code}"] = selected_candidate["image"]
 #         st.session_state[f"face_result_filename_{character_code}"] = selected_candidate.get("filename", "")
 
+#         selected_order = st.session_state.get("selected_face_reference_order", [])
+#         if character_code not in selected_order:
+#             selected_order.append(character_code)
+#             st.session_state["selected_face_reference_order"] = selected_order
+
 #     return selected_candidate
+
+
+# def get_selected_face_reference_entries():
+#     """
+#     Selected Face Reference 영역에 표시할 최종 선택 이미지 목록을 반환합니다.
+
+#     - 먼저 선택된 캐릭터가 먼저 표시됩니다.
+#     - 이후 다른 캐릭터를 선택하면 기존 이미지 옆에 추가됩니다.
+#     - order가 없지만 face_result_image가 존재하는 경우에도 누락되지 않도록 보정합니다.
+#     """
+#     selected_order = st.session_state.get("selected_face_reference_order", [])
+#     character_codes = ["c1", "c2"]
+
+#     display_order = [code for code in selected_order if code in character_codes]
+
+#     for code in character_codes:
+#         if code not in display_order and st.session_state.get(f"face_result_image_{code}") is not None:
+#             display_order.append(code)
+
+#     entries = []
+#     for code in display_order:
+#         image = st.session_state.get(f"face_result_image_{code}")
+#         if image is None:
+#             continue
+
+#         if code == "c1":
+#             label = "Image 1 - Boy"
+#         else:
+#             label = "Image 2 - Girl"
+
+#         entries.append(
+#             {
+#                 "code": code,
+#                 "label": label,
+#                 "image": image,
+#                 "filename": st.session_state.get(f"face_result_filename_{code}", ""),
+#             }
+#         )
+
+#     return entries
 
 
 # def sync_scene_reference_selection(session_key, candidates):
@@ -2220,15 +2270,21 @@ with tab4:
 
 #             st.markdown("#### Selected Face Reference")
 
-#             if selected_face and selected_face.get("image") is not None:
-#                 st.image(
-#                     selected_face["image"],
-#                     caption=f"Selected {active_character_label} Face Reference",
-#                     use_container_width=True,
-#                 )
+#             selected_face_entries = get_selected_face_reference_entries()
+
+#             if selected_face_entries:
+#                 selected_cols = st.columns(len(selected_face_entries), gap="small")
+
+#                 for idx, entry in enumerate(selected_face_entries):
+#                     with selected_cols[idx]:
+#                         st.image(
+#                             entry["image"],
+#                             caption=f"Selected {entry['label']} Face Reference",
+#                             use_container_width=True,
+#                         )
 #             else:
 #                 render_empty_preview_box(
-#                     f"Selected {active_character_label} face reference will appear here.",
+#                     "Selected face references will appear here. Choose a candidate for Image 1 - Boy and Image 2 - Girl.",
 #                     300,
 #                 )
 
@@ -2933,6 +2989,7 @@ with tab4:
 #                 st.success("Camera refinement UI 입력값이 정상적으로 수집되었습니다.")
 #                 st.subheader("Collected Camera Refinement Config")
 #                 st.json(camera_config)
+
 
 
 
