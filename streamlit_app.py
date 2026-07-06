@@ -774,7 +774,7 @@ with tab2:
         st.markdown("**Face Identity** → **Full-Body Reference** → **Scene Input**")
         st.caption("2A defines each character's visual identity, and 2B converts that identity into full-body references used by Scene Generation.")
 
-    with st.container(border=True):
+    with st.container(border=True , height=300):
         st.markdown("### 2A. Character Identity Generation")
 
         preview_col, settings_col = st.columns([1.25, 1.15], gap="large")
