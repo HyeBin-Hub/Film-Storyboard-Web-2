@@ -13,6 +13,7 @@ WORKFLOW_DIR = Path(__file__).parent / "workflows"
 CSV_PARSER_TEST_WORKFLOW_PATH = WORKFLOW_DIR / "csv_parser_test_workflow_api.json"
 FACE_WORKFLOW_PATH = WORKFLOW_DIR / "face_workflow_api.json"
 BODY_WORKFLOW_PATH = WORKFLOW_DIR / "body_workflow_api.json"
+SCENE_WORKFLOW_PATH = WORKFLOW_DIR / "scene_workflow_api.json"
 
 
 # =========================
@@ -553,6 +554,149 @@ def run_body_generation(
         images.append(
             {
                 "label": f"{label_prefix} {idx}",
+                "image": url,
+                "url": url,
+                "filename": item.get("filename", ""),
+                "node_id": item.get("node_id", ""),
+                "raw": item.get("raw", {}),
+            }
+        )
+
+    return {
+        "request": request_data,
+        "result": result_data,
+        "images": images,
+        "workflow_api_json": workflow,
+    }
+
+# =========================
+# Scene Generation
+# =========================
+def patch_scene_workflow(workflow: dict, config: dict) -> dict:
+    """
+    Step 3 Reference-Guided Scene Generation workflow patch.
+
+    scene_workflow_api.json 기준 주요 노드:
+    - 26: CSVStoryboardParser
+    - 27: LoadImageFromUrl - boy
+    - 28: LoadImageFromUrl - girl
+    - 10: KSampler
+    - 11: SaveImage
+    """
+    workflow = deepcopy(workflow)
+
+    storyboard_input = config.get("storyboard_input", {})
+    scene_config = config.get("scene_generation", {})
+
+    csv_text = storyboard_input.get("csv_text", "")
+    shot_filter = scene_config.get("shot_filter") or storyboard_input.get("shot_filter", "ALL")
+    custom_shot_ids = scene_config.get("custom_shot_ids") or storyboard_input.get("custom_shot_ids", "")
+
+    reference_images = scene_config.get("reference_images", {})
+
+    boy_body_image_url = (
+        reference_images.get("image_1_boy_body", {}).get("image")
+        or scene_config.get("boy_body_image_url")
+        or ""
+    )
+
+    girl_body_image_url = (
+        reference_images.get("image_2_girl_body", {}).get("image")
+        or scene_config.get("girl_body_image_url")
+        or ""
+    )
+
+    if not csv_text.strip():
+        raise ValueError("csv_text is empty. Upload a CSV file first.")
+
+    if not boy_body_image_url:
+        raise ValueError("boy_body_image_url is empty. Generate Image 1 - Boy body reference first.")
+
+    if not girl_body_image_url:
+        raise ValueError("girl_body_image_url is empty. Generate Image 2 - Girl body reference first.")
+
+    seed = random.randint(1, 4_294_967_295)
+    filename_prefix = f"scene_{seed}"
+
+    # 26: CSVStoryboardParser
+    workflow["26"]["inputs"]["csv_file"] = "CUSTOM"
+    workflow["26"]["inputs"]["csv_text"] = csv_text
+    workflow["26"]["inputs"]["shot_filter"] = shot_filter
+    workflow["26"]["inputs"]["custom_shot_ids"] = custom_shot_ids
+
+    # 27: Load Image From URL - boy
+    workflow["27"]["inputs"]["image"] = boy_body_image_url
+    workflow["27"]["inputs"]["keep_alpha_channel"] = False
+    workflow["27"]["inputs"]["output_mode"] = False
+
+    # 28: Load Image From URL - girl
+    workflow["28"]["inputs"]["image"] = girl_body_image_url
+    workflow["28"]["inputs"]["keep_alpha_channel"] = False
+    workflow["28"]["inputs"]["output_mode"] = False
+
+    # 23: ThinkingLLM seed
+    if "23" in workflow and "seed" in workflow["23"]["inputs"]:
+        workflow["23"]["inputs"]["seed"] = seed
+
+    # 10: KSampler
+    workflow["10"]["inputs"]["seed"] = seed
+
+    # 11: SaveImage
+    workflow["11"]["inputs"]["filename_prefix"] = filename_prefix
+
+    return workflow
+
+
+def run_scene_generation(
+    api_key: str,
+    deployment_id: str,
+    config: dict,
+    workflow_path: str | Path = SCENE_WORKFLOW_PATH,
+    poll_interval: int = 10,
+    timeout_seconds: int = 1800,
+) -> dict:
+    base_workflow = load_workflow_api_json(workflow_path)
+
+    workflow = patch_scene_workflow(
+        workflow=base_workflow,
+        config=config,
+    )
+
+    request_data = submit_runcomfy_dynamic_workflow(
+        api_key=api_key,
+        deployment_id=deployment_id,
+        workflow_api_json=workflow,
+    )
+
+    status_url = request_data.get("status_url")
+    result_url = request_data.get("result_url")
+
+    if not status_url or not result_url:
+        raise RuntimeError(
+            f"RunComfy response does not include status/result URL: {request_data}"
+        )
+
+    result_data = poll_runcomfy_result(
+        api_key=api_key,
+        status_url=status_url,
+        result_url=result_url,
+        poll_interval=poll_interval,
+        timeout_seconds=timeout_seconds,
+    )
+
+    raw_images = extract_output_images(result_data)
+
+    images = []
+
+    for idx, item in enumerate(raw_images, start=1):
+        url = item.get("url") or item.get("image") or ""
+
+        if not url:
+            continue
+
+        images.append(
+            {
+                "label": f"Scene {idx}",
                 "image": url,
                 "url": url,
                 "filename": item.get("filename", ""),
