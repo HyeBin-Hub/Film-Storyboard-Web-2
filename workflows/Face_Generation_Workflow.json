@@ -1,0 +1,388 @@
+{
+  "993": {
+    "inputs": {
+      "samples": [
+        "1018",
+        0
+      ],
+      "vae": [
+        "998",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Portraut_VAE Decode"
+    }
+  },
+  "994": {
+    "inputs": {
+      "width": [
+        "1017",
+        0
+      ],
+      "height": [
+        "1017",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "995": {
+    "inputs": {
+      "unet_name": "flux1-krea-dev.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "996": {
+    "inputs": {
+      "lora_name": "UltraRealPhoto.safetensors",
+      "strength_model": 1,
+      "model": [
+        "995",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "997": {
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5/t5xxl_fp8_e4m3fn.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "998": {
+    "inputs": {
+      "vae_name": "FLUX1/ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "999": {
+    "inputs": {
+      "seed": 222855461340521
+    },
+    "class_type": "Seed (rgthree)",
+    "_meta": {
+      "title": "Portrait_Seed"
+    }
+  },
+  "1000": {
+    "inputs": {
+      "storyboard_json": [
+        "1002",
+        0
+      ],
+      "character_filter": "C2",
+      "custom_character_id": "",
+      "age": 9,
+      "include_character_id": "false"
+    },
+    "class_type": "CharacterRegistryParser",
+    "_meta": {
+      "title": "Character Registry Parser"
+    }
+  },
+  "1002": {
+    "inputs": {
+      "input_mode": "Sonagi_S07.csv",
+      "csv_file": "CUSTOM",
+      "csv_text": "7-1, 7-2",
+      "shot_filter": "ALL",
+      "custom_shot_ids": ""
+    },
+    "class_type": "CSVStoryboardParser",
+    "_meta": {
+      "title": "CSV Storyboard Parser"
+    }
+  },
+  "1003": {
+    "inputs": {
+      "shot": "Head and shoulders portrait",
+      "shot_weight": 2,
+      "gender": "Woman",
+      "androgynous": 0,
+      "ugly": 0,
+      "ordinary_face": 0.25,
+      "age": "-",
+      "nationality_1": "South Korean",
+      "nationality_2": "-",
+      "nationality_mix": 0,
+      "body_type": "Slim",
+      "body_type_weight": 0,
+      "breast_size": "-",
+      "breast_size_weight": 0,
+      "butt_size": "-",
+      "butt_size_weight": 0,
+      "eyes_color": "Brown",
+      "eyes_shape": "Double Eyelid Eyes Shape",
+      "lips_color": "Peach Lips",
+      "lips_shape": "Thin Lips",
+      "facial_expression": "Curious",
+      "facial_expression_weight": 0,
+      "face_shape": "Square with Soft Jaw",
+      "face_shape_weight": 0,
+      "facial_asymmetry": 0,
+      "hair_style": "Bob",
+      "hair_color": "Chestnut",
+      "hair_length": "-",
+      "disheveled": 0,
+      "beard": "-",
+      "beard_color": "-",
+      "active": true,
+      "load_preset": "-- disabled --",
+      "save_preset_as": "",
+      "save_preset": false,
+      "seed": [
+        "999",
+        0
+      ]
+    },
+    "class_type": "PortraitMasterBaseCharacter",
+    "_meta": {
+      "title": "Portrait Master: Base Character"
+    }
+  },
+  "1004": {
+    "inputs": {
+      "natural_skin": 0.74,
+      "bare_face": 0.75,
+      "washed_face": 0,
+      "dried_face": 0,
+      "skin_details": 0.3,
+      "skin_pores": 0.1,
+      "dimples": 0,
+      "wrinkles": 0,
+      "freckles": 0,
+      "moles": 0,
+      "skin_imperfections": 0,
+      "skin_acne": 0,
+      "tanned_skin": 0,
+      "eyes_details": 1.01,
+      "iris_details": 0,
+      "circular_iris": 0,
+      "circular_pupil": 0,
+      "active": true,
+      "load_preset": "-- disabled --",
+      "save_preset_as": "",
+      "save_preset": false,
+      "seed": [
+        "999",
+        0
+      ],
+      "text_in": [
+        "1003",
+        0
+      ]
+    },
+    "class_type": "PortraitMasterSkinDetails",
+    "_meta": {
+      "title": "Portrait Master: Skin Details"
+    }
+  },
+  "1005": {
+    "inputs": {
+      "inputcount": 2,
+      "delimiter": ", ",
+      "return_list": false,
+      "Update inputs": null,
+      "string_1": [
+        "1008",
+        0
+      ],
+      "string_2": [
+        "1004",
+        0
+      ]
+    },
+    "class_type": "JoinStringMulti",
+    "_meta": {
+      "title": "Join String Multi"
+    }
+  },
+  "1007": {
+    "inputs": {
+      "text": "gray background, white t-shirt"
+    },
+    "class_type": "ttN text",
+    "_meta": {
+      "title": "Base Background & Clothing Prompt"
+    }
+  },
+  "1008": {
+    "inputs": {
+      "inputcount": 2,
+      "delimiter": ", ",
+      "return_list": false,
+      "Update inputs": null,
+      "string_1": [
+        "1007",
+        0
+      ],
+      "string_2": [
+        "1000",
+        0
+      ]
+    },
+    "class_type": "JoinStringMulti",
+    "_meta": {
+      "title": "Base Prompt + Shot Data Join"
+    }
+  },
+  "1011": {
+    "inputs": {
+      "prompt": "You are an expert AI image prompt engineer specializing in the Flux.1-krea model. \n\nYour task is to translate user-provided, tag-based inputs (which include SD-style weights like (tag:1.15)) into highly detailed, rich, and natural language descriptions optimized for Flux.1-dev.\n\nObjective: Generate a photorealistic, highly detailed natural language prompt for a character portrait based on the user's input.\n\n[Rules for Translation & Expansion]\n1. Natural Language Translation: Flux.1-krea thrives on descriptive paragraphs. Convert standalone tags and weighted tags into flowing, grammatically correct English sentences. \n2. Interpret Weights Effectively: If a user specifies a high weight (e.g., 1.15 or above), emphasize that feature strongly in your descriptive text using expressive adjectives (e.g., \"(south korean:1.15)\" -> \"distinctly authentic South Korean facial features\"). Lower weights (e.g., 0.72) should be integrated naturally as subtle but present details.\n3. Portrait Specifics: Strictly adhere to the requested composition (e.g., \"head and shoulders portrait\", \"white background\"). Emphasize sharp focus on the subject's face, and a clean, undistracting background.\n4. Texture & Realism: The input emphasizes \"bare face\", \"natural skin\", and \"washed-face\". Strongly describe realistic, highly detailed skin textures, visible pores, soft natural lighting without makeup, and clear, striking eyes.\n5. Do Not Hallucinate: Do not add unnecessary accessories, complex clothing, or background elements unless specified in the input. Keep the focus entirely on the character's face and shoulders.\n\n[Output Format]\nOutput ONLY the final English natural language prompt. Do not include any introductory text, explanations, or quotes. The output should read like a professional photography description.\n\n"
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "1012": {
+    "inputs": {
+      "a": [
+        "1011",
+        0
+      ],
+      "b": [
+        "1005",
+        0
+      ]
+    },
+    "class_type": "JWStringConcat",
+    "_meta": {
+      "title": "String Concatenate"
+    }
+  },
+  "1014": {
+    "inputs": {
+      "model_name": "Qwen3-VL-8B-Instruct-Abliterated [DL: 15GB, VRAM: 12.0GB]",
+      "attention_mode": "auto",
+      "preset_prompt": "🚫 No preset (image-only)",
+      "custom_prompt": [
+        "1012",
+        0
+      ],
+      "max_tokens": 500,
+      "keep_model_loaded": true,
+      "seed": 104590621298564,
+      "keep_last_prompt": false,
+      "stream_tokens_to_terminal": false,
+      "enable_thinking": false,
+      "hf_token": ""
+    },
+    "class_type": "AILab_QwenVL",
+    "_meta": {
+      "title": "ThinkingLLM"
+    }
+  },
+  "1015": {
+    "inputs": {
+      "clip_l": [
+        "1014",
+        0
+      ],
+      "t5xxl": [
+        "1014",
+        0
+      ],
+      "guidance": 4,
+      "clip": [
+        "997",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncodeFlux",
+    "_meta": {
+      "title": "Portraut_CLIPTextEncodeFlux"
+    }
+  },
+  "1016": {
+    "inputs": {
+      "text": "3d render, cartoon, anime,  plastic skin,  chibi, stylized, unnatural",
+      "clip": [
+        "997",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Portraut_CLIP Text Encode (Prompt) -Negative"
+    }
+  },
+  "1017": {
+    "inputs": {
+      "megapixel": "0.6",
+      "aspect_ratio": "3:4 (Golden Ratio)",
+      "divisible_by": "64",
+      "custom_ratio": false,
+      "custom_aspect_ratio": "1:1"
+    },
+    "class_type": "FluxResolutionNode",
+    "_meta": {
+      "title": "Flux Resolution Calc"
+    }
+  },
+  "1018": {
+    "inputs": {
+      "seed": 741574139708934,
+      "steps": 25,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "beta",
+      "denoise": 1,
+      "model": [
+        "995",
+        0
+      ],
+      "positive": [
+        "1015",
+        0
+      ],
+      "negative": [
+        "1016",
+        0
+      ],
+      "latent_image": [
+        "994",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "Portraut_KSampler"
+    }
+  },
+  "1019": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "993",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}
