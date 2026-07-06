@@ -133,38 +133,148 @@ def poll_runcomfy_result(
     return result_data
 
 
+# def extract_output_images(result: dict) -> list[dict]:
+#     outputs = result.get("outputs", {})
+#     images = []
+
+#     for node_id, node_output in outputs.items():
+#         if not isinstance(node_output, dict):
+#             continue
+
+#         for image_item in node_output.get("images", []):
+#             if not isinstance(image_item, dict):
+#                 continue
+
+#             url = (
+#                 image_item.get("url")
+#                 or image_item.get("image_url")
+#                 or image_item.get("file_url")
+#                 or ""
+#             )
+
+#             images.append(
+#                 {
+#                     "node_id": node_id,
+#                     "url": url,
+#                     "image": url,
+#                     "filename": image_item.get("filename", ""),
+#                     "subfolder": image_item.get("subfolder", ""),
+#                     "type": image_item.get("type", ""),
+#                     "raw": image_item,
+#                 }
+#             )
+
+#     return images
+
 def extract_output_images(result: dict) -> list[dict]:
-    outputs = result.get("outputs", {})
+    """
+    RunComfy 결과에서 이미지 URL을 최대한 안전하게 추출합니다.
+
+    지원 구조:
+    1. outputs -> node_id -> images -> url
+    2. outputs -> node_id -> images -> image_url / file_url
+    3. outputs -> node_id -> files / output_files
+    4. result 전체를 재귀적으로 탐색해서 url이 있는 png/jpg/webp 파일 찾기
+    """
     images = []
 
-    for node_id, node_output in outputs.items():
-        if not isinstance(node_output, dict):
-            continue
+    def add_image_item(item: dict, node_id: str = ""):
+        if not isinstance(item, dict):
+            return
 
-        for image_item in node_output.get("images", []):
-            if not isinstance(image_item, dict):
+        url = (
+            item.get("url")
+            or item.get("image")
+            or item.get("image_url")
+            or item.get("file_url")
+            or item.get("download_url")
+            or item.get("path")
+            or ""
+        )
+
+        filename = item.get("filename", "")
+
+        # filename이 없으면 url에서 추정
+        if not filename and isinstance(url, str) and "/" in url:
+            filename = url.split("?")[0].rstrip("/").split("/")[-1]
+
+        if not isinstance(url, str) or not url:
+            return
+
+        lower_url = url.lower()
+        lower_filename = str(filename).lower()
+
+        is_image = (
+            lower_url.endswith((".png", ".jpg", ".jpeg", ".webp"))
+            or ".png" in lower_url
+            or ".jpg" in lower_url
+            or ".jpeg" in lower_url
+            or ".webp" in lower_url
+            or lower_filename.endswith((".png", ".jpg", ".jpeg", ".webp"))
+        )
+
+        if not is_image:
+            return
+
+        images.append(
+            {
+                "node_id": node_id,
+                "url": url,
+                "image": url,
+                "filename": filename,
+                "subfolder": item.get("subfolder", ""),
+                "type": item.get("type", ""),
+                "raw": item,
+            }
+        )
+
+    # 1차: RunComfy outputs 구조 우선 탐색
+    outputs = result.get("outputs", {})
+
+    if isinstance(outputs, dict):
+        for node_id, node_output in outputs.items():
+            if not isinstance(node_output, dict):
                 continue
 
-            url = (
-                image_item.get("url")
-                or image_item.get("image_url")
-                or image_item.get("file_url")
-                or ""
-            )
+            for key in ["images", "files", "output_files"]:
+                items = node_output.get(key, [])
 
-            images.append(
-                {
-                    "node_id": node_id,
-                    "url": url,
-                    "image": url,
-                    "filename": image_item.get("filename", ""),
-                    "subfolder": image_item.get("subfolder", ""),
-                    "type": image_item.get("type", ""),
-                    "raw": image_item,
-                }
-            )
+                if isinstance(items, dict):
+                    items = [items]
 
-    return images
+                if isinstance(items, list):
+                    for item in items:
+                        add_image_item(item, node_id=str(node_id))
+
+    # 2차: 그래도 못 찾으면 result 전체 재귀 탐색
+    if not images:
+        def walk(obj, node_id: str = ""):
+            if isinstance(obj, dict):
+                add_image_item(obj, node_id=node_id)
+
+                for key, value in obj.items():
+                    next_node_id = node_id
+                    if str(key).isdigit():
+                        next_node_id = str(key)
+                    walk(value, node_id=next_node_id)
+
+            elif isinstance(obj, list):
+                for value in obj:
+                    walk(value, node_id=node_id)
+
+        walk(result)
+
+    # 중복 제거
+    deduped = []
+    seen = set()
+
+    for item in images:
+        key = item.get("url", "")
+        if key and key not in seen:
+            deduped.append(item)
+            seen.add(key)
+
+    return deduped
 
 
 def find_nodes_by_class_type(workflow: dict, class_type: str) -> list[str]:
