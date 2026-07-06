@@ -3,7 +3,7 @@ import io
 import pandas as pd
 import streamlit as st
 
-from backend import run_face_generation
+from backend import run_face_generation, run_csv_parser_test
 
 # =========================
 # Fixed Values
@@ -701,28 +701,89 @@ with tab1:
                     st.warning("CSV에서 추출된 shot id가 없습니다.")
 
             st.divider()
-
-            st.subheader("Storyboard Input Summary")
-
-            storyboard_input_config = build_storyboard_input_config()
-            storyboard_input = storyboard_input_config["storyboard_input"]
-
-            if storyboard_input["shot_filter"] == "ALL":
-                st.caption(
-                    f"Shot Filter: ALL / "
-                    f"{storyboard_input['selected_shot_count']} shot(s)"
-                )
-            else:
-                if storyboard_input["custom_shot_ids"]:
-                    st.caption(
-                        f"Shot Filter: CUSTOM / "
-                        f"{storyboard_input['custom_shot_ids']}"
-                    )
+            
+            st.subheader("RunComfy CSV Parser Test")
+            
+            st.caption(
+                "Step 1에서 업로드한 CSV가 RunComfy의 CSVStoryboardParser까지 정상적으로 전달되는지 먼저 확인합니다."
+            )
+            
+            csv_parser_test_disabled = not bool(st.session_state.get("csv_text", "").strip())
+            
+            if st.button(
+                "Test CSV Parser on RunComfy",
+                type="secondary",
+                disabled=csv_parser_test_disabled,
+            ):
+                try:
+                    api_key = st.secrets["RUNCOMFY_API_KEY"]
+                    deployment_id = st.secrets["DEPLOYMENT_ID"]
+            
+                    storyboard_input_config = build_storyboard_input_config()
+            
+                    with st.spinner("RunComfy에서 CSVStoryboardParser 테스트를 실행하는 중입니다..."):
+                        result = run_csv_parser_test(
+                            api_key=api_key,
+                            deployment_id=deployment_id,
+                            storyboard_input_config=storyboard_input_config,
+                            poll_interval=5,
+                            timeout_seconds=900,
+                        )
+            
+                    st.session_state["csv_parser_test_result"] = result
+                    st.session_state["csv_parser_test_images"] = result.get("images", [])
+            
+                    images = result.get("images", [])
+            
+                    if images:
+                        st.success("CSV Parser Test 성공: RunComfy에서 output image가 반환되었습니다.")
+                    else:
+                        st.warning(
+                            "CSV Parser Test는 완료되었지만 반환된 image output이 없습니다. "
+                            "테스트 workflow에 SaveImage가 연결되어 있는지 확인하세요."
+                        )
+            
+                    st.rerun()
+            
+                except KeyError:
+                    st.error("RunComfy secret 설정이 없습니다.")
+                    st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
+            
+                except Exception as e:
+                    st.error("RunComfy CSV Parser Test 실행 중 오류가 발생했습니다.")
+                    st.exception(e)
+            
+                    with st.expander("Debug: Storyboard Input Config", expanded=False):
+                        st.json(build_storyboard_input_config())
+            
+            
+            csv_parser_test_result = st.session_state.get("csv_parser_test_result")
+            csv_parser_test_images = st.session_state.get("csv_parser_test_images", [])
+            
+            if csv_parser_test_result:
+                st.markdown("#### CSV Parser Test Result")
+            
+                if csv_parser_test_images:
+                    cols = st.columns(min(len(csv_parser_test_images), 3))
+            
+                    for idx, image_item in enumerate(csv_parser_test_images):
+                        with cols[idx % len(cols)]:
+                            st.image(
+                                image_item.get("url", ""),
+                                caption=image_item.get("filename", f"CSV Parser Test Output {idx + 1}"),
+                                use_container_width=True,
+                            )
                 else:
-                    st.caption("Shot Filter: CUSTOM / No shot selected")
-
-            with st.expander("Prepared Storyboard Input Config", expanded=False):
-                st.json(storyboard_input_config)
+                    st.info("RunComfy result는 성공했지만 image output은 비어 있습니다.")
+            
+                with st.expander("Debug: RunComfy Request", expanded=False):
+                    st.json(csv_parser_test_result.get("request", {}))
+            
+                with st.expander("Debug: RunComfy Result", expanded=False):
+                    st.json(csv_parser_test_result.get("result", {}))
+            
+                with st.expander("Debug: Patched workflow_api_json", expanded=False):
+                    st.json(csv_parser_test_result.get("workflow_api_json", {}))
 
     else:
         st.info(
