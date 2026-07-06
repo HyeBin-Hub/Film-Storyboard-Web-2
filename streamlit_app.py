@@ -34,14 +34,6 @@ SKIN_DEFAULTS = {
     "circular_pupil": 0.0,
 }
 
-BASE_CHARACTER_CHECK_DEFAULTS = {
-    "androgynous": 1.0,
-    "ugly": 1.0,
-    "ordinary_face": 0.25,
-    "facial_asymmetry": 1.0,
-    "disheveled": 1.0,
-}
-
 
 # =========================
 # Helper Functions
@@ -137,6 +129,7 @@ def get_selected_shot_dataframe():
 
     return df[df[shot_col].astype(str).isin([str(x) for x in custom_shots])]
 
+
 def build_storyboard_input_config():
     """
     Step 1에서 업로드/선택된 storyboard 입력값을
@@ -145,7 +138,6 @@ def build_storyboard_input_config():
     이 함수는 RunComfy를 직접 호출하지 않습니다.
     이후 각 branch workflow에 넘길 공통 입력값을 준비하는 역할만 합니다.
     """
-
     csv_text = st.session_state.get("csv_text", "")
     shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
     custom_shots = st.session_state.get("custom_shots", [])
@@ -169,6 +161,7 @@ def build_storyboard_input_config():
         }
     }
 
+
 def character_label_to_value(label):
     mapping = {
         "Image 1 - Boy": "C1",
@@ -185,10 +178,6 @@ def body_character_label_to_value(label):
     return mapping.get(label, "C1")
 
 
-def get_checkbox_value(key, on_value):
-    return on_value if st.session_state.get(key, False) else 0.0
-
-
 def initialize_body_prompts():
     if "body_prompt_c1" not in st.session_state:
         st.session_state["body_prompt_c1"] = ""
@@ -198,20 +187,19 @@ def initialize_body_prompts():
 
 
 def get_scene_shot_filter_config():
-    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
-    custom_shots = st.session_state.get("custom_shots", [])
+    storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
-    if shot_filter_mode == "ALL":
-        return "ALL", ""
-
-    return "CUSTOM", ", ".join(custom_shots)
+    return (
+        storyboard_input["shot_filter"],
+        storyboard_input["custom_shot_ids"],
+    )
 
 
 def get_body_reference_candidates(character_code):
     """
     character_code: 'c1' or 'c2'
 
-    Step3에서 여러 body 후보를 저장해둔 경우:
+    Step 2B에서 여러 body 후보를 저장해둔 경우:
     st.session_state["body_candidates_c1"] = [
         {"label": "Boy Body 1", "image": ..., "filename": "..."},
         {"label": "Boy Body 2", "image": ..., "filename": "..."},
@@ -219,7 +207,6 @@ def get_body_reference_candidates(character_code):
 
     후보 리스트가 없으면 body_result_image_c1 / body_result_image_c2를 단일 후보로 fallback.
     """
-
     candidates_key = f"body_candidates_{character_code}"
     candidates = st.session_state.get(candidates_key, [])
 
@@ -256,7 +243,6 @@ def get_body_reference_candidates(character_code):
         )
 
     return normalized
-
 
 
 def get_face_reference_candidates(character_code):
@@ -309,20 +295,6 @@ def get_face_reference_candidates(character_code):
     return normalized
 
 
-def sync_face_reference_selection():
-    for character_code in ["c1", "c2"]:
-        candidates = get_face_reference_candidates(character_code)
-        session_key = f"face_selected_label_{character_code}"
-        labels = [item["label"] for item in candidates]
-
-        if not labels:
-            st.session_state[session_key] = ""
-            continue
-
-        if st.session_state.get(session_key) not in labels:
-            st.session_state[session_key] = labels[0]
-
-
 def apply_selected_face_result(character_code):
     selected_label = st.session_state.get(f"face_selected_label_{character_code}", "")
     candidates = get_face_reference_candidates(character_code)
@@ -358,8 +330,10 @@ def get_selected_face_reference_entries():
             display_order.append(code)
 
     entries = []
+
     for code in display_order:
         image = st.session_state.get(f"face_result_image_{code}")
+
         if image is None:
             continue
 
@@ -403,23 +377,16 @@ def get_selected_candidate(candidates, selected_label):
 
 
 def build_face_ui_config():
-    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
-    custom_shots = st.session_state.get("custom_shots", [])
-
-    if shot_filter_mode == "ALL":
-        shot_filter = "ALL"
-        custom_shot_ids = ""
-    else:
-        shot_filter = "CUSTOM"
-        custom_shot_ids = ", ".join(custom_shots)
+    storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
     return {
+        "storyboard_input": storyboard_input,
         "csvstoryboardparser": {
             "input_mode": "text",
             "csv_file": "CUSTOM",
-            "csv_text": st.session_state.get("csv_text", ""),
-            "shot_filter": shot_filter,
-            "custom_shot_ids": custom_shot_ids,
+            "csv_text": storyboard_input["csv_text"],
+            "shot_filter": storyboard_input["shot_filter"],
+            "custom_shot_ids": storyboard_input["custom_shot_ids"],
         },
         "character_registry_parser": {
             "character_filter": character_label_to_value(
@@ -504,7 +471,7 @@ def build_body_ui_config():
 
 
 def build_scene_ui_config():
-    shot_filter, custom_shot_ids = get_scene_shot_filter_config()
+    storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
     boy_candidates = get_body_reference_candidates("c1")
     girl_candidates = get_body_reference_candidates("c2")
@@ -518,14 +485,13 @@ def build_scene_ui_config():
         st.session_state.get("scene_girl_reference_label", ""),
     )
 
-    selected_shot_df = get_selected_shot_dataframe()
-
     return {
+        "storyboard_input": storyboard_input,
         "scene_generation": {
-            "shot_filter": shot_filter,
-            "custom_shot_ids": custom_shot_ids,
-            "selected_shot_count": len(selected_shot_df),
-            "selected_shot_data": selected_shot_df.to_dict(orient="records"),
+            "shot_filter": storyboard_input["shot_filter"],
+            "custom_shot_ids": storyboard_input["custom_shot_ids"],
+            "selected_shot_count": storyboard_input["selected_shot_count"],
+            "selected_shot_data": storyboard_input["selected_shot_data"],
             "reference_images": {
                 "image_1_boy_body": {
                     "label": selected_boy["label"] if selected_boy else "",
@@ -536,13 +502,13 @@ def build_scene_ui_config():
                     "filename": selected_girl.get("filename", "") if selected_girl else "",
                 },
             },
-        }
+        },
     }
 
 
 def get_scene_result_candidates():
     """
-    Step3에서 생성된 scene 후보를 Step4 입력 이미지로 사용하기 위한 helper.
+    Step 3에서 생성된 scene 후보를 Step 4 입력 이미지로 사용하기 위한 helper.
 
     st.session_state["scene_candidates"] = [
         {"label": "Scene 1", "image": ..., "filename": "..."},
@@ -551,7 +517,6 @@ def get_scene_result_candidates():
 
     후보 리스트가 없으면 scene_result_image를 단일 후보로 fallback.
     """
-
     candidates = st.session_state.get("scene_candidates", [])
     normalized = []
 
@@ -581,14 +546,16 @@ def get_scene_result_candidates():
 
     return normalized
 
+
 def build_camera_refinement_ui_config():
+    storyboard_input = build_storyboard_input_config()["storyboard_input"]
+
     scene_candidates = get_scene_result_candidates()
     selected_scene = get_selected_candidate(
         scene_candidates,
         st.session_state.get("camera_input_scene_label", ""),
     )
 
-    selected_shot_df = get_selected_shot_dataframe()
     prompt_source = st.session_state.get(
         "camera_prompt_source",
         "Use Camera Angle Prompt",
@@ -597,13 +564,14 @@ def build_camera_refinement_ui_config():
     switch_setting = 1 if prompt_source == "Preserve Original Scene Prompt" else 2
 
     return {
+        "storyboard_input": storyboard_input,
         "camera_angle_refinement": {
             "input_scene": {
                 "label": selected_scene["label"] if selected_scene else "",
                 "filename": selected_scene.get("filename", "") if selected_scene else "",
             },
-            "selected_shot_count": len(selected_shot_df),
-            "selected_shot_data": selected_shot_df.to_dict(orient="records"),
+            "selected_shot_count": storyboard_input["selected_shot_count"],
+            "selected_shot_data": storyboard_input["selected_shot_data"],
             "camera_control": {
                 "horizontal_angle": st.session_state.get("camera_horizontal_angle", 0),
                 "vertical_angle": st.session_state.get("camera_vertical_angle", 0),
@@ -615,7 +583,7 @@ def build_camera_refinement_ui_config():
                 "mode": prompt_source,
                 "two_way_switch_selection": switch_setting,
             },
-        }
+        },
     }
 
 
@@ -651,7 +619,9 @@ st.set_page_config(
 )
 
 st.title("🎬 AI Storyboard Generation Pipeline")
-st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
+st.caption(
+    "A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement"
+)
 
 
 # =========================
@@ -666,70 +636,6 @@ tab1, tab2, tab3, tab4 = st.tabs(
     ]
 )
 
-
-# # =========================
-# # Step 1. Storyboard Data Parsing
-# # =========================
-# with tab1:
-#     st.header("Step 1. Storyboard Data Parsing")
-
-#     uploaded_csv = st.file_uploader(
-#         "Upload Storyboard CSV",
-#         type=["csv"],
-#         help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
-#     )
-
-#     if uploaded_csv is not None:
-#         csv_text = decode_uploaded_file(uploaded_csv)
-#         st.session_state["csv_text"] = csv_text
-#         st.success(f"업로드 완료: {uploaded_csv.name}")
-#     else:
-#         csv_text = st.session_state.get("csv_text", "")
-
-#     if csv_text:
-#         preview_col, filter_col = st.columns([1.55, 1.0], gap="large")
-
-#         with preview_col:
-#             with st.expander("Parsed Storyboard Data Preview", expanded=True):
-#                 try:
-#                     preview_df = pd.read_csv(io.StringIO(csv_text))
-
-#                     st.dataframe(
-#                         preview_df,
-#                         use_container_width=True,
-#                         hide_index=True,
-#                     )
-
-#                 except Exception:
-#                     st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
-#                     st.code(csv_text)
-
-#         with filter_col:
-#             st.subheader("Shot Selection Control")
-
-#             shot_ids = extract_shot_ids_from_csv(csv_text)
-
-#             st.radio(
-#                 "shot_filter",
-#                 options=["ALL", "CUSTOM"],
-#                 horizontal=True,
-#                 key="shot_filter_mode",
-#                 help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
-#             )
-
-#             if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
-#                 if shot_ids:
-#                     st.multiselect(
-#                         "Select Storyboard Shots",
-#                         options=shot_ids,
-#                         default=[],
-#                         key="custom_shots",
-#                         help="CUSTOM일 때만 shot을 선택합니다.",
-#                     )
-#                 else:
-#                     st.warning("CSV에서 추출된 shot id가 없습니다.")
-#     else:
-#         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
 
 # =========================
 # Step 1. Storyboard Data Parsing
@@ -818,14 +724,19 @@ with tab1:
                 st.json(storyboard_input_config)
 
     else:
-        st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
+        st.info(
+            "CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다."
+        )
+
 
 # =========================
 # Step 2. Character Reference Generation
 # =========================
 with tab2:
     st.header("Step 2. Character Reference Generation")
-    st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
+    st.caption(
+        "Generate face identity references first, then convert them into full-body references for scene generation."
+    )
 
     with st.container(border=True):
         st.markdown("#### Character Reference Pipeline")
@@ -850,7 +761,7 @@ with tab2:
                 "c1" if active_character_label == "Image 1 - Boy" else "c2"
             )
             active_candidates = get_face_reference_candidates(active_character_code)
-            selected_face = apply_selected_face_result(active_character_code)
+            apply_selected_face_result(active_character_code)
 
             st.caption(
                 f"Current Target: {active_character_label} | Generated candidates appear at the top, and the selected final reference appears below."
@@ -883,7 +794,7 @@ with tab2:
                     help="생성된 후보 중 최종 reference로 사용할 얼굴 이미지를 선택합니다.",
                 )
 
-                selected_face = apply_selected_face_result(active_character_code)
+                apply_selected_face_result(active_character_code)
 
             else:
                 render_empty_preview_box(
@@ -1139,6 +1050,7 @@ with tab2:
                     st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
                     st.subheader("Collected Character Identity Config")
                     st.json(config)
+
     st.divider()
 
     with st.container(border=True):
@@ -1260,6 +1172,7 @@ with tab2:
                     st.subheader("Collected Full-Body Reference Config")
                     st.json(body_config)
 
+
 # =========================
 # Step 3. Reference-Guided Scene Generation
 # =========================
@@ -1277,12 +1190,12 @@ with tab3:
     with preview_col:
         st.subheader("Generated Storyboard Preview")
 
-        selected_shot_df = get_selected_shot_dataframe()
+        storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
-        if selected_shot_df.empty:
+        if storyboard_input["selected_shot_count"] == 0:
             st.caption("Selected Storyboard Context: None")
         else:
-            st.caption(f"Selected Scene Count: {len(selected_shot_df)}")
+            st.caption(f"Selected Scene Count: {storyboard_input['selected_shot_count']}")
 
         if "scene_result_image" in st.session_state:
             st.image(
@@ -1302,22 +1215,24 @@ with tab3:
         with st.container(border=True):
             st.markdown("###### Selected Storyboard Context")
 
-            selected_shot_df = get_selected_shot_dataframe()
-            shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
-            custom_shots = st.session_state.get("custom_shots", [])
+            storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
-            if selected_shot_df.empty:
+            if storyboard_input["selected_shot_count"] == 0:
                 st.warning("표시할 scene 정보가 없습니다. Step 1에서 CSV와 shot 선택을 확인하세요.")
             else:
-                if shot_filter_mode == "ALL":
-                    st.caption(f"Shot Filter: ALL / {len(selected_shot_df)} scene(s)")
-                elif custom_shots:
-                    st.caption(f"Shot Filter: CUSTOM / {', '.join(custom_shots)}")
+                if storyboard_input["shot_filter"] == "ALL":
+                    st.caption(
+                        f"Shot Filter: ALL / {storyboard_input['selected_shot_count']} scene(s)"
+                    )
+                elif storyboard_input["custom_shot_ids"]:
+                    st.caption(
+                        f"Shot Filter: CUSTOM / {storyboard_input['custom_shot_ids']}"
+                    )
                 else:
                     st.caption("Shot Filter: CUSTOM / No shot selected")
 
                 st.dataframe(
-                    selected_shot_df,
+                    pd.DataFrame(storyboard_input["selected_shot_data"]),
                     use_container_width=True,
                     hide_index=True,
                 )
@@ -1435,14 +1350,14 @@ with tab4:
 
     with preview_col:
         st.subheader("Camera Refinement Preview")
-    
+
         st.markdown("#### Input Scene")
-    
+
         selected_input_scene = get_selected_candidate(
             scene_candidates,
             st.session_state.get("camera_input_scene_label", ""),
         )
-    
+
         if selected_input_scene and selected_input_scene.get("image") is not None:
             st.image(
                 selected_input_scene["image"],
@@ -1454,11 +1369,11 @@ with tab4:
                 "A generated scene from Step 3 will appear here.",
                 360,
             )
-    
+
         st.divider()
-    
+
         st.markdown("#### Refined Scene")
-    
+
         if "camera_refined_result_image" in st.session_state:
             st.image(
                 st.session_state["camera_refined_result_image"],
@@ -1600,12 +1515,14 @@ with tab4:
         )
 
         if generate_camera_clicked:
+            storyboard_input = build_storyboard_input_config()["storyboard_input"]
+
             if not scene_candidates:
                 st.error("Step 3 결과 이미지가 없습니다. 먼저 Scene Generation을 진행하세요.")
 
             elif (
                 st.session_state.get("camera_prompt_source") == "Preserve Original Scene Prompt"
-                and get_selected_shot_dataframe().empty
+                and storyboard_input["selected_shot_count"] == 0
             ):
                 st.error("Preserve Original Scene Prompt를 사용하려면 Step 1의 shot 데이터가 필요합니다.")
 
@@ -1615,6 +1532,7 @@ with tab4:
                 st.success("Camera refinement UI 입력값이 정상적으로 수집되었습니다.")
                 st.subheader("Collected Camera Refinement Config")
                 st.json(camera_config)
+
 
 # import csv
 # import io
@@ -1755,6 +1673,37 @@ with tab4:
 
 #     return df[df[shot_col].astype(str).isin([str(x) for x in custom_shots])]
 
+# def build_storyboard_input_config():
+#     """
+#     Step 1에서 업로드/선택된 storyboard 입력값을
+#     Step 2, Step 3, Step 4에서 공통으로 사용할 수 있는 형태로 정리합니다.
+
+#     이 함수는 RunComfy를 직접 호출하지 않습니다.
+#     이후 각 branch workflow에 넘길 공통 입력값을 준비하는 역할만 합니다.
+#     """
+
+#     csv_text = st.session_state.get("csv_text", "")
+#     shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+#     custom_shots = st.session_state.get("custom_shots", [])
+
+#     selected_shot_df = get_selected_shot_dataframe()
+
+#     if shot_filter_mode == "ALL":
+#         shot_filter = "ALL"
+#         custom_shot_ids = ""
+#     else:
+#         shot_filter = "CUSTOM"
+#         custom_shot_ids = ", ".join([str(x) for x in custom_shots])
+
+#     return {
+#         "storyboard_input": {
+#             "csv_text": csv_text,
+#             "shot_filter": shot_filter,
+#             "custom_shot_ids": custom_shot_ids,
+#             "selected_shot_count": len(selected_shot_df),
+#             "selected_shot_data": selected_shot_df.to_dict(orient="records"),
+#         }
+#     }
 
 # def character_label_to_value(label):
 #     mapping = {
@@ -1952,13 +1901,16 @@ with tab4:
 
 #         if code == "c1":
 #             label = "Image 1 - Boy"
+#             display_label = "Selected Boy"
 #         else:
 #             label = "Image 2 - Girl"
+#             display_label = "Selected Girl"
 
 #         entries.append(
 #             {
 #                 "code": code,
 #                 "label": label,
+#                 "display_label": display_label,
 #                 "image": image,
 #                 "filename": st.session_state.get(f"face_result_filename_{code}", ""),
 #             }
@@ -2251,6 +2203,70 @@ with tab4:
 # )
 
 
+# # # =========================
+# # # Step 1. Storyboard Data Parsing
+# # # =========================
+# # with tab1:
+# #     st.header("Step 1. Storyboard Data Parsing")
+
+# #     uploaded_csv = st.file_uploader(
+# #         "Upload Storyboard CSV",
+# #         type=["csv"],
+# #         help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
+# #     )
+
+# #     if uploaded_csv is not None:
+# #         csv_text = decode_uploaded_file(uploaded_csv)
+# #         st.session_state["csv_text"] = csv_text
+# #         st.success(f"업로드 완료: {uploaded_csv.name}")
+# #     else:
+# #         csv_text = st.session_state.get("csv_text", "")
+
+# #     if csv_text:
+# #         preview_col, filter_col = st.columns([1.55, 1.0], gap="large")
+
+# #         with preview_col:
+# #             with st.expander("Parsed Storyboard Data Preview", expanded=True):
+# #                 try:
+# #                     preview_df = pd.read_csv(io.StringIO(csv_text))
+
+# #                     st.dataframe(
+# #                         preview_df,
+# #                         use_container_width=True,
+# #                         hide_index=True,
+# #                     )
+
+# #                 except Exception:
+# #                     st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
+# #                     st.code(csv_text)
+
+# #         with filter_col:
+# #             st.subheader("Shot Selection Control")
+
+# #             shot_ids = extract_shot_ids_from_csv(csv_text)
+
+# #             st.radio(
+# #                 "shot_filter",
+# #                 options=["ALL", "CUSTOM"],
+# #                 horizontal=True,
+# #                 key="shot_filter_mode",
+# #                 help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
+# #             )
+
+# #             if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
+# #                 if shot_ids:
+# #                     st.multiselect(
+# #                         "Select Storyboard Shots",
+# #                         options=shot_ids,
+# #                         default=[],
+# #                         key="custom_shots",
+# #                         help="CUSTOM일 때만 shot을 선택합니다.",
+# #                     )
+# #                 else:
+# #                     st.warning("CSV에서 추출된 shot id가 없습니다.")
+# #     else:
+# #         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
+
 # # =========================
 # # Step 1. Storyboard Data Parsing
 # # =========================
@@ -2312,9 +2328,33 @@ with tab4:
 #                     )
 #                 else:
 #                     st.warning("CSV에서 추출된 shot id가 없습니다.")
+
+#             st.divider()
+
+#             st.subheader("Storyboard Input Summary")
+
+#             storyboard_input_config = build_storyboard_input_config()
+#             storyboard_input = storyboard_input_config["storyboard_input"]
+
+#             if storyboard_input["shot_filter"] == "ALL":
+#                 st.caption(
+#                     f"Shot Filter: ALL / "
+#                     f"{storyboard_input['selected_shot_count']} shot(s)"
+#                 )
+#             else:
+#                 if storyboard_input["custom_shot_ids"]:
+#                     st.caption(
+#                         f"Shot Filter: CUSTOM / "
+#                         f"{storyboard_input['custom_shot_ids']}"
+#                     )
+#                 else:
+#                     st.caption("Shot Filter: CUSTOM / No shot selected")
+
+#             with st.expander("Prepared Storyboard Input Config", expanded=False):
+#                 st.json(storyboard_input_config)
+
 #     else:
 #         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
-
 
 # # =========================
 # # Step 2. Character Reference Generation
@@ -2396,9 +2436,12 @@ with tab4:
 
 #                 for idx, entry in enumerate(selected_face_entries):
 #                     with selected_cols[idx]:
+#                         st.markdown(f"##### {entry['display_label']}")
+#                         st.caption(entry["label"])
+
 #                         st.image(
 #                             entry["image"],
-#                             caption=f"Selected {entry['label']} Face Reference",
+#                             caption=f"{entry['display_label']} Face Reference",
 #                             use_container_width=True,
 #                         )
 #             else:
@@ -3108,7 +3151,6 @@ with tab4:
 #                 st.success("Camera refinement UI 입력값이 정상적으로 수집되었습니다.")
 #                 st.subheader("Collected Camera Refinement Config")
 #                 st.json(camera_config)
-
 
 
 
