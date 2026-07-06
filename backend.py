@@ -11,6 +11,7 @@ RUNCOMFY_API_BASE = "https://api.runcomfy.net"
 
 WORKFLOW_DIR = Path(__file__).parent / "workflows"
 CSV_PARSER_TEST_WORKFLOW_PATH = WORKFLOW_DIR / "csv_parser_test_workflow_api.json"
+FACE_WORKFLOW_PATH = WORKFLOW_DIR / "face_workflow_api.json"
 
 
 # =========================
@@ -141,13 +142,22 @@ def extract_output_images(result: dict) -> list[dict]:
             if not isinstance(image_item, dict):
                 continue
 
+            url = (
+                image_item.get("url")
+                or image_item.get("image_url")
+                or image_item.get("file_url")
+                or ""
+            )
+
             images.append(
                 {
                     "node_id": node_id,
-                    "url": image_item.get("url", ""),
+                    "url": url,
+                    "image": url,
                     "filename": image_item.get("filename", ""),
                     "subfolder": image_item.get("subfolder", ""),
                     "type": image_item.get("type", ""),
+                    "raw": image_item,
                 }
             )
 
@@ -275,6 +285,174 @@ def run_csv_parser_test(
     )
 
     images = extract_output_images(result_data)
+
+    return {
+        "request": request_data,
+        "result": result_data,
+        "images": images,
+        "workflow_api_json": workflow,
+    }
+
+# =========================
+# Face Generation
+# =========================
+def patch_face_workflow(workflow: dict, config: dict) -> dict:
+    """
+    Step 2A Face Identity Generation workflow patch.
+
+    face_workflow_api.json 기준 주요 노드:
+    - 1002: CSVStoryboardParser
+    - 1000: CharacterRegistryParser
+    - 1007: Base Background & Clothing Prompt
+    - 1003: PortraitMasterBaseCharacter
+    - 1004: PortraitMasterSkinDetails
+    - 1014: ThinkingLLM
+    - 1018: KSampler
+    - 1019: SaveImage
+    """
+    workflow = deepcopy(workflow)
+
+    storyboard_input = config.get("storyboard_input", {})
+    csv_config = config.get("csvstoryboardparser", {})
+    character_config = config.get("character_registry_parser", {})
+    base_prompt_config = config.get("base_background_clothing_prompt", {})
+    base_character_config = config.get("portrait_master_base_character", {})
+    skin_config = config.get("portrait_master_skin_details", {})
+
+    csv_text = csv_config.get("csv_text") or storyboard_input.get("csv_text", "")
+    shot_filter = csv_config.get("shot_filter") or storyboard_input.get("shot_filter", "ALL")
+    custom_shot_ids = csv_config.get("custom_shot_ids") or storyboard_input.get("custom_shot_ids", "")
+
+    if not csv_text.strip():
+        raise ValueError("csv_text is empty. Upload a CSV file first.")
+
+    character_filter = character_config.get("character_filter", "C2")
+
+    if character_filter == "C1":
+        character_name = "boy"
+    elif character_filter == "C2":
+        character_name = "girl"
+    else:
+        character_name = character_filter.lower()
+
+    seed = random.randint(1, 999_999_999_999_999)
+    filename_prefix = f"face_{character_name}_{seed}"
+
+    # 1002: CSVStoryboardParser
+    # input_mode은 face_workflow_api.json에 이미 "text"로 되어 있으므로 그대로 유지해도 됩니다.
+    workflow["1002"]["inputs"]["csv_file"] = "CUSTOM"
+    workflow["1002"]["inputs"]["csv_text"] = csv_text
+    workflow["1002"]["inputs"]["shot_filter"] = shot_filter
+    workflow["1002"]["inputs"]["custom_shot_ids"] = custom_shot_ids
+
+    # 1000: CharacterRegistryParser
+    workflow["1000"]["inputs"]["character_filter"] = character_filter
+    workflow["1000"]["inputs"]["custom_character_id"] = character_config.get("custom_character_id", "")
+    workflow["1000"]["inputs"]["age"] = character_config.get("age", 9)
+    workflow["1000"]["inputs"]["include_character_id"] = character_config.get("include_character_id", "false")
+
+    # 1007: Base Background & Clothing Prompt
+    workflow["1007"]["inputs"]["text"] = base_prompt_config.get(
+        "text",
+        "gray background, white t-shirt",
+    )
+
+    # 1003: PortraitMasterBaseCharacter
+    for key, value in base_character_config.items():
+        if key in workflow["1003"]["inputs"]:
+            workflow["1003"]["inputs"][key] = value
+
+    # 1004: PortraitMasterSkinDetails
+    for key, value in skin_config.items():
+        if key in workflow["1004"]["inputs"]:
+            workflow["1004"]["inputs"][key] = value
+
+    # 999: Portrait_Seed
+    if "999" in workflow and "seed" in workflow["999"]["inputs"]:
+        workflow["999"]["inputs"]["seed"] = seed
+
+    # 1014: ThinkingLLM seed
+    if "1014" in workflow and "seed" in workflow["1014"]["inputs"]:
+        workflow["1014"]["inputs"]["seed"] = seed
+
+    # 1018: KSampler
+    workflow["1018"]["inputs"]["seed"] = seed
+
+    # 1019: SaveImage
+    workflow["1019"]["inputs"]["filename_prefix"] = filename_prefix
+
+    return workflow
+
+
+def run_face_generation(
+    api_key: str,
+    deployment_id: str,
+    config: dict,
+    workflow_path: str | Path = FACE_WORKFLOW_PATH,
+    poll_interval: int = 5,
+    timeout_seconds: int = 900,
+) -> dict:
+    base_workflow = load_workflow_api_json(workflow_path)
+
+    workflow = patch_face_workflow(
+        workflow=base_workflow,
+        config=config,
+    )
+
+    request_data = submit_runcomfy_dynamic_workflow(
+        api_key=api_key,
+        deployment_id=deployment_id,
+        workflow_api_json=workflow,
+    )
+
+    status_url = request_data.get("status_url")
+    result_url = request_data.get("result_url")
+
+    if not status_url or not result_url:
+        raise RuntimeError(
+            f"RunComfy response does not include status/result URL: {request_data}"
+        )
+
+    result_data = poll_runcomfy_result(
+        api_key=api_key,
+        status_url=status_url,
+        result_url=result_url,
+        poll_interval=poll_interval,
+        timeout_seconds=timeout_seconds,
+    )
+
+    raw_images = extract_output_images(result_data)
+
+    character_filter = config.get("character_registry_parser", {}).get(
+        "character_filter",
+        "C2",
+    )
+
+    if character_filter == "C1":
+        label_prefix = "Boy Face"
+    elif character_filter == "C2":
+        label_prefix = "Girl Face"
+    else:
+        label_prefix = "Face"
+
+    images = []
+
+    for idx, item in enumerate(raw_images, start=1):
+        url = item.get("url") or item.get("image") or ""
+
+        if not url:
+            continue
+
+        images.append(
+            {
+                "label": f"{label_prefix} {idx}",
+                "image": url,
+                "url": url,
+                "filename": item.get("filename", ""),
+                "node_id": item.get("node_id", ""),
+                "raw": item.get("raw", {}),
+            }
+        )
 
     return {
         "request": request_data,
