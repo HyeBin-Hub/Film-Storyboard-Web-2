@@ -1372,6 +1372,14 @@ with tab2:
                             )
             
                         images = result.get("images", [])
+                        # --------------------------------DEBUG--------------------------------
+                        st.write("DEBUG character_filter:", character_filter)
+                        st.write("DEBUG character_code:", character_code)
+                        st.write("DEBUG images:", images)
+                        # --------------------------------DEBUG--------------------------------
+                        
+                        with st.expander("DEBUG Full Face Generation Result", expanded=True):
+                            st.json(result)
             
                         if not images:
                             st.error("RunComfy 실행은 완료되었지만 결과 이미지가 없습니다.")
@@ -1390,6 +1398,22 @@ with tab2:
                             st.session_state[f"face_result_image_{character_code}"] = first_image["image"]
                             st.session_state[f"face_result_filename_{character_code}"] = first_image.get("filename", "")
                             st.session_state[f"face_selected_label_{character_code}"] = first_image["label"]
+                            
+                            # --------------------------------DEBUG--------------------------------
+                            st.write("DEBUG saved candidates:", st.session_state.get(f"face_candidates_{character_code}"))
+                            st.write("DEBUG saved result image:", st.session_state.get(f"face_result_image_{character_code}"))
+                            st.write("DEBUG saved filename:", st.session_state.get(f"face_result_filename_{character_code}"))
+                            st.write("DEBUG saved selected label:", st.session_state.get(f"face_selected_label_{character_code}"))
+                            
+                            with st.expander("DEBUG Face Session State", expanded=True):
+                                st.write("face_candidates_c1:", st.session_state.get("face_candidates_c1"))
+                                st.write("face_candidates_c2:", st.session_state.get("face_candidates_c2"))
+                                st.write("face_result_image_c1:", st.session_state.get("face_result_image_c1"))
+                                st.write("face_result_image_c2:", st.session_state.get("face_result_image_c2"))
+                                st.write("face_selected_label_c1:", st.session_state.get("face_selected_label_c1"))
+                                st.write("face_selected_label_c2:", st.session_state.get("face_selected_label_c2"))
+                                st.write("selected_face_reference_order:", st.session_state.get("selected_face_reference_order"))
+                             # --------------------------------DEBUG--------------------------------
             
                             selected_order = st.session_state.get("selected_face_reference_order", [])
             
@@ -1398,7 +1422,7 @@ with tab2:
                                 st.session_state["selected_face_reference_order"] = selected_order
             
                             st.success("Character Identity 생성이 완료되었습니다.")
-                            st.rerun()
+                            # st.rerun()
             
                     except KeyError as e:
                         st.error("RunComfy secret 설정이 없습니다.")
