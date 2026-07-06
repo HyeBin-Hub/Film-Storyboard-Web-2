@@ -154,7 +154,7 @@
   "1252": {
     "inputs": {
       "image": [
-        "1271",
+        "1275",
         0
       ]
     },
@@ -214,7 +214,7 @@
   "1258": {
     "inputs": {
       "upscale_method": "lanczos",
-      "scale_by": 2.0000000000000004,
+      "scale_by": 2,
       "image": [
         "1244",
         0
@@ -443,15 +443,6 @@
       "title": "Switch (Two Way)"
     }
   },
-  "1271": {
-    "inputs": {
-      "image": "10e50d24-3e37-442a-9255-bb4d19aa8bea.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
-    }
-  },
   "1272": {
     "inputs": {
       "clip_name": "qwen_3_8b.safetensors",
@@ -483,6 +474,17 @@
     "class_type": "SaveImage",
     "_meta": {
       "title": "Save Image"
+    }
+  },
+  "1275": {
+    "inputs": {
+      "image": "",
+      "keep_alpha_channel": false,
+      "output_mode": false
+    },
+    "class_type": "LoadImageFromUrl",
+    "_meta": {
+      "title": "Load Image From URL"
     }
   }
 }
