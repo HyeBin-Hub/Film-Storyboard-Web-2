@@ -960,14 +960,14 @@ with tab2:
             body_preview_col1, body_preview_col2 = st.columns(2, gap="medium")
 
             with body_preview_col1:
-                st.markdown("#### Image 1 - Boy")
+                st.markdown("##### Image 1 - Boy")
                 if "body_result_image_c1" in st.session_state:
                     st.image(st.session_state["body_result_image_c1"], caption="Image 1 - Boy Body Reference", width=240)
                 else:
                     render_empty_preview_box("Image 1 - Boy body reference will appear here.", 400)
 
             with body_preview_col2:
-                st.markdown("#### Image 2 - Girl")
+                st.markdown("##### Image 2 - Girl")
                 if "body_result_image_c2" in st.session_state:
                     st.image(st.session_state["body_result_image_c2"], caption="Image 2 - Girl Body Reference", width=240)
                 else:
