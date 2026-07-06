@@ -427,6 +427,43 @@ def get_scene_result_candidates():
 
 
 
+# def build_camera_refinement_ui_config():
+#     scene_candidates = get_scene_result_candidates()
+#     selected_scene = get_selected_candidate(
+#         scene_candidates,
+#         st.session_state.get("camera_input_scene_label", ""),
+#     )
+
+#     selected_shot_df = get_selected_shot_dataframe()
+#     prompt_source = st.session_state.get(
+#         "camera_prompt_source",
+#         "Qwen Multi-Angle Prompt",
+#     )
+
+#     switch_setting = 1 if prompt_source == "Structured Scene Prompt" else 2
+
+#     return {
+#         "camera_angle_refinement": {
+#             "input_scene": {
+#                 "label": selected_scene["label"] if selected_scene else "",
+#                 "filename": selected_scene.get("filename", "") if selected_scene else "",
+#             },
+#             "selected_shot_count": len(selected_shot_df),
+#             "selected_shot_data": selected_shot_df.to_dict(orient="records"),
+#             "camera_control": {
+#                 "horizontal_angle": st.session_state.get("camera_horizontal_angle", 0),
+#                 "vertical_angle": st.session_state.get("camera_vertical_angle", 0),
+#                 "zoom": st.session_state.get("camera_zoom", 5),
+#                 "default_prompts": st.session_state.get("camera_default_prompts", True),
+#                 "camera_view": st.session_state.get("camera_view", False),
+#             },
+#             "prompt_source": {
+#                 "mode": prompt_source,
+#                 "two_way_switch_selection": switch_setting,
+#             },
+#         }
+#     }
+
 def build_camera_refinement_ui_config():
     scene_candidates = get_scene_result_candidates()
     selected_scene = get_selected_candidate(
@@ -437,10 +474,10 @@ def build_camera_refinement_ui_config():
     selected_shot_df = get_selected_shot_dataframe()
     prompt_source = st.session_state.get(
         "camera_prompt_source",
-        "Qwen Multi-Angle Prompt",
+        "Use Camera Angle Prompt",
     )
 
-    switch_setting = 1 if prompt_source == "Structured Scene Prompt" else 2
+    switch_setting = 1 if prompt_source == "Preserve Original Scene Prompt" else 2
 
     return {
         "camera_angle_refinement": {
@@ -1319,42 +1356,203 @@ with tab4:
 #                 st.subheader("Collected Camera Refinement Config")
 #                 st.json(camera_config)
 
-def build_camera_refinement_ui_config():
+# =========================
+# Step 5. Camera Angle Refinement
+# =========================
+with tab5:
+    st.header("Step 5. Camera Angle Refinement")
+
     scene_candidates = get_scene_result_candidates()
-    selected_scene = get_selected_candidate(
-        scene_candidates,
-        st.session_state.get("camera_input_scene_label", ""),
-    )
+    sync_scene_reference_selection("camera_input_scene_label", scene_candidates)
 
-    selected_shot_df = get_selected_shot_dataframe()
-    prompt_source = st.session_state.get(
-        "camera_prompt_source",
-        "Use Camera Angle Prompt",
-    )
+    preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
-    switch_setting = 1 if prompt_source == "Preserve Original Scene Prompt" else 2
+    with preview_col:
+        st.subheader("Camera Refinement Preview")
 
-    return {
-        "camera_angle_refinement": {
-            "input_scene": {
-                "label": selected_scene["label"] if selected_scene else "",
-                "filename": selected_scene.get("filename", "") if selected_scene else "",
-            },
-            "selected_shot_count": len(selected_shot_df),
-            "selected_shot_data": selected_shot_df.to_dict(orient="records"),
-            "camera_control": {
-                "horizontal_angle": st.session_state.get("camera_horizontal_angle", 0),
-                "vertical_angle": st.session_state.get("camera_vertical_angle", 0),
-                "zoom": st.session_state.get("camera_zoom", 5),
-                "default_prompts": st.session_state.get("camera_default_prompts", True),
-                "camera_view": st.session_state.get("camera_view", False),
-            },
-            "prompt_source": {
-                "mode": prompt_source,
-                "two_way_switch_selection": switch_setting,
-            },
-        }
-    }
+        source_col, refined_col = st.columns(2, gap="medium")
+
+        with source_col:
+            st.markdown("#### Input Scene")
+
+            selected_input_scene = get_selected_candidate(
+                scene_candidates,
+                st.session_state.get("camera_input_scene_label", ""),
+            )
+
+            if selected_input_scene and selected_input_scene.get("image") is not None:
+                st.image(
+                    selected_input_scene["image"],
+                    caption=selected_input_scene["label"],
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "A generated scene from Step 4 will appear here.",
+                    520,
+                )
+
+        with refined_col:
+            st.markdown("#### Refined Scene")
+
+            if "camera_refined_result_image" in st.session_state:
+                st.image(
+                    st.session_state["camera_refined_result_image"],
+                    caption="Camera-Refined Storyboard Scene",
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "The camera-refined scene will appear here.",
+                    520,
+                )
+
+    with settings_col:
+        st.subheader("Camera Refinement Control")
+
+        with st.container(border=True):
+            st.markdown("###### Source Scene Input")
+
+            if scene_candidates:
+                st.selectbox(
+                    "Select Input Scene",
+                    options=[item["label"] for item in scene_candidates],
+                    key="camera_input_scene_label",
+                )
+
+                selected_input_scene = get_selected_candidate(
+                    scene_candidates,
+                    st.session_state.get("camera_input_scene_label", ""),
+                )
+
+                if selected_input_scene:
+                    filename = selected_input_scene.get("filename", "")
+                    if filename:
+                        st.caption(f"Selected File: {filename}")
+            else:
+                st.warning("Step 4에서 생성된 scene 이미지가 없습니다. 먼저 Scene Generation을 진행하세요.")
+
+        st.divider()
+
+        with st.container(border=True):
+            st.markdown("###### Prompt Source Control")
+
+            st.radio(
+                "Prompt Source",
+                options=[
+                    "Preserve Original Scene Prompt",
+                    "Use Camera Angle Prompt",
+                ],
+                index=1,
+                key="camera_prompt_source",
+                help=(
+                    "Preserve Original Scene Prompt는 기존 scene description을 유지하고, "
+                    "Use Camera Angle Prompt는 Qwen Multi-Angle Camera의 앵글 제어 프롬프트를 사용합니다."
+                ),
+            )
+
+            if st.session_state.get("camera_prompt_source") == "Preserve Original Scene Prompt":
+                st.caption("TwoWaySwitch Selection: 1 (ScenePromptBuilder output)")
+            else:
+                st.caption("TwoWaySwitch Selection: 2 (Qwen Multi-Angle Camera output)")
+
+        if st.session_state.get("camera_prompt_source") == "Use Camera Angle Prompt":
+            st.divider()
+
+            with st.container(border=True):
+                st.markdown("###### Camera Angle Control")
+
+                angle_col1, angle_col2 = st.columns(2)
+
+                with angle_col1:
+                    st.slider(
+                        "Horizontal Angle",
+                        min_value=-180,
+                        max_value=180,
+                        value=0,
+                        step=1,
+                        key="camera_horizontal_angle",
+                        help="좌우 시점 변화를 제어합니다.",
+                    )
+
+                    st.slider(
+                        "Vertical Angle",
+                        min_value=-90,
+                        max_value=90,
+                        value=0,
+                        step=1,
+                        key="camera_vertical_angle",
+                        help="상하 시점 변화를 제어합니다.",
+                    )
+
+                with angle_col2:
+                    st.slider(
+                        "Zoom",
+                        min_value=0,
+                        max_value=10,
+                        value=5,
+                        step=1,
+                        key="camera_zoom",
+                        help="카메라 줌 강도를 제어합니다.",
+                    )
+
+                    st.checkbox(
+                        "Use Default Angle Prompts",
+                        value=True,
+                        key="camera_default_prompts",
+                        help="Qwen Multi-Angle Camera의 기본 프롬프트를 사용합니다.",
+                    )
+
+                    st.checkbox(
+                        "Enable Camera View Mode",
+                        value=False,
+                        key="camera_view",
+                        help="카메라 관점 중심의 view 해석을 활성화합니다.",
+                    )
+
+        else:
+            st.info(
+                "Camera Angle Control is available only when "
+                "'Use Camera Angle Prompt' is selected."
+            )
+
+        with st.expander("Camera Refinement Guide", expanded=False):
+            st.markdown(
+                """
+                - Step 5는 Step 4에서 생성된 장면을 입력으로 받아 카메라 앵글을 다시 조정하는 단계입니다.
+                - Preserve Original Scene Prompt는 기존 storyboard scene description을 유지하는 모드입니다.
+                - Use Camera Angle Prompt는 Qwen Multi-Angle Camera가 생성한 앵글 제어 프롬프트를 사용하는 모드입니다.
+                - Horizontal Angle은 좌/우 시점 변화를, Vertical Angle은 상/하 시점 변화를 의미합니다.
+                - Zoom은 인물 및 장면의 프레이밍 강도를 조정합니다.
+                """
+            )
+
+        st.divider()
+
+        generate_camera_clicked = st.button(
+            "Generate Camera-Refined Scene",
+            type="primary",
+            use_container_width=True,
+        )
+
+        if generate_camera_clicked:
+            if not scene_candidates:
+                st.error("Step 4 결과 이미지가 없습니다. 먼저 Scene Generation을 진행하세요.")
+
+            elif (
+                st.session_state.get("camera_prompt_source") == "Preserve Original Scene Prompt"
+                and get_selected_shot_dataframe().empty
+            ):
+                st.error("Preserve Original Scene Prompt를 사용하려면 Step 1의 shot 데이터가 필요합니다.")
+
+            else:
+                camera_config = build_camera_refinement_ui_config()
+
+                st.success("Camera refinement UI 입력값이 정상적으로 수집되었습니다.")
+                st.subheader("Collected Camera Refinement Config")
+                st.json(camera_config)
+
+
 
 
 # import csv
