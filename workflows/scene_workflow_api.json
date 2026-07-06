@@ -2,7 +2,7 @@
   "1": {
     "inputs": {
       "lora_name": "bfs_head_v1_flux-klein_9b_step3500_rank128.safetensors",
-      "strength_model": 0.5000000000000001,
+      "strength_model": 0.5,
       "model": [
         "16",
         0
@@ -28,7 +28,7 @@
       ],
       "background_color": "#ffffff",
       "image": [
-        "17",
+        "27",
         0
       ]
     },
@@ -61,7 +61,7 @@
       ],
       "background_color": "#ffffff",
       "image": [
-        "18",
+        "28",
         0
       ]
     },
@@ -232,24 +232,6 @@
       "title": "Load Diffusion Model"
     }
   },
-  "17": {
-    "inputs": {
-      "image": "ComfyUI_00360_.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
-    }
-  },
-  "18": {
-    "inputs": {
-      "image": "pl-dreamo_00008_.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
-    }
-  },
   "19": {
     "inputs": {
       "a": [
@@ -364,6 +346,28 @@
     "class_type": "CSVStoryboardParser",
     "_meta": {
       "title": "CSV Storyboard Parser"
+    }
+  },
+  "27": {
+    "inputs": {
+      "image": "",
+      "keep_alpha_channel": false,
+      "output_mode": false
+    },
+    "class_type": "LoadImageFromUrl",
+    "_meta": {
+      "title": "Load Image From URL - boy"
+    }
+  },
+  "28": {
+    "inputs": {
+      "image": "",
+      "keep_alpha_channel": false,
+      "output_mode": false
+    },
+    "class_type": "LoadImageFromUrl",
+    "_meta": {
+      "title": "Load Image From URL - girl"
     }
   }
 }
