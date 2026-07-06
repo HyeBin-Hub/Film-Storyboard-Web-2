@@ -1247,11 +1247,13 @@ with tab3:
                         )
             
                     images = result.get("images", [])
-                    # ----------------DEBUG--------------------------
-                    st.write("DEBUG extracted body images:", images)
 
-                    with st.expander("DEBUG raw body result", expanded=True):
-                        st.json(result)
+                
+                    # ----------------DEBUG--------------------------
+                    # st.write("DEBUG extracted body images:", images)
+
+                    # with st.expander("DEBUG raw body result", expanded=True):
+                    #     st.json(result)
                     # -----------------DEBUG-------------------------
             
                     if not images:
