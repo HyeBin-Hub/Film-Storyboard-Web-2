@@ -984,8 +984,12 @@ with tab2:
                 help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
             )
 
-            st.divider()
-            st.divider()
+            # st.divider()
+            st.markdown("""
+                    <div style="margin: 0.2rem 0;">
+                      <hr style="margin:0; border:none; border-top:1px solid rgba(128,128,128,0.3);">
+                    </div>
+                    """, unsafe_allow_html=True)
             st.markdown("### Full-Body Prompt Editor")
             selected_body_target = st.session_state.get("body_character_filter_label", "Image 1 - Boy")
 
