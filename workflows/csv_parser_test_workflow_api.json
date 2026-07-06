@@ -1,0 +1,69 @@
+{
+  "3": {
+    "inputs": {
+      "input_mode": "file",
+      "csv_file": "Sonagi_S07.csv",
+      "csv_text": "",
+      "shot_filter": "ALL",
+      "custom_shot_ids": ""
+    },
+    "class_type": "CSVStoryboardParser",
+    "_meta": {
+      "title": "CSV Storyboard Parser"
+    }
+  },
+  "4": {
+    "inputs": {
+      "storyboard_json": [
+        "3",
+        0
+      ],
+      "character_filter": "AUTO_FIRST",
+      "custom_character_id": "",
+      "age": 12,
+      "include_character_id": "false"
+    },
+    "class_type": "CharacterRegistryParser",
+    "_meta": {
+      "title": "Character Registry Parser"
+    }
+  },
+  "5": {
+    "inputs": {
+      "storyboard_json": [
+        "3",
+        0
+      ],
+      "description_source": "english",
+      "include_technical_settings": "false"
+    },
+    "class_type": "ScenePromptBuilder",
+    "_meta": {
+      "title": "Scene Prompt Builder"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  }
+}
