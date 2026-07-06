@@ -842,7 +842,8 @@ with tab2:
                             st.image(
                                 candidate["image"],
                                 caption=candidate["label"],
-                                use_container_width=True,
+                                # use_container_width=True,
+                                width=220,
                             )
                         else:
                             render_empty_preview_box(
@@ -881,7 +882,8 @@ with tab2:
                         st.image(
                             entry["image"],
                             caption=f"{entry['display_label']} Face Reference",
-                            use_container_width=True,
+                            # use_container_width=True,
+                            width=220,
                         )
             else:
                 render_empty_preview_box(
@@ -1334,7 +1336,8 @@ with tab2:
             generate_clicked = st.button(
                 "Generate Character Identity",
                 type="primary",
-                use_container_width=True,
+                # use_container_width=True,
+                width=220,
             )
             
             if generate_clicked:
@@ -1434,7 +1437,7 @@ with tab2:
                         st.session_state["body_result_image_c1"],
                         caption="Image 1 - Boy Body Reference",
                         # use_container_width=True,
-                        width=320,
+                        width=240,
                     )
                 else:
                     render_empty_preview_box(
@@ -1450,7 +1453,7 @@ with tab2:
                         st.session_state["body_result_image_c2"],
                         caption="Image 2 - Girl Body Reference",
                         # use_container_width=True,
-                        width=320,
+                        width=240,
                     )
                 else:
                     render_empty_preview_box(
@@ -1513,7 +1516,8 @@ with tab2:
             generate_body_clicked = st.button(
                 "Generate Full-Body Reference",
                 type="primary",
-                use_container_width=True,
+                # use_container_width=True,
+                width=220,
             )
 
             if generate_body_clicked:
@@ -1623,7 +1627,8 @@ with tab3:
                 st.image(
                     selected_boy["image"],
                     caption=selected_boy["label"],
-                    use_container_width=True,
+                    # use_container_width=True,
+                    width=240,
                 )
             else:
                 render_empty_preview_box(
@@ -1655,7 +1660,8 @@ with tab3:
                 st.image(
                     selected_girl["image"],
                     caption=selected_girl["label"],
-                    use_container_width=True,
+                    # use_container_width=True,
+                    width=240,
                 )
             else:
                 render_empty_preview_box(
