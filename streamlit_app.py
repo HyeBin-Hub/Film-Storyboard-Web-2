@@ -427,7 +427,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
         "Step 1. Storyboard Data",
         "Step 2. Character Identity",
         "Step 3. Body Reference",
-        "Step 4. Scene Synthesis",
+        "Step 4. Reference-Guided Scene Generation",
     ]
 )
 
@@ -905,7 +905,7 @@ with tab4:
     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
     with preview_col:
-        st.subheader("Synthesized Storyboard Preview")
+        st.subheader("Generated Storyboard Preview")
 
         selected_shot_df = get_selected_shot_dataframe()
 
@@ -927,7 +927,7 @@ with tab4:
             )
 
     with settings_col:
-        st.subheader("Scene Synthesis Control")
+        st.subheader("Scene Generation Control")
 
         with st.container(border=True):
             st.markdown("###### Selected Storyboard Context")
