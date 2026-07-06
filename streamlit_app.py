@@ -985,6 +985,7 @@ with tab2:
             )
 
             st.divider()
+            st.divider()
             st.markdown("### Full-Body Prompt Editor")
             selected_body_target = st.session_state.get("body_character_filter_label", "Image 1 - Boy")
 
