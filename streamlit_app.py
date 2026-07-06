@@ -137,6 +137,37 @@ def get_selected_shot_dataframe():
 
     return df[df[shot_col].astype(str).isin([str(x) for x in custom_shots])]
 
+def build_storyboard_input_config():
+    """
+    Step 1에서 업로드/선택된 storyboard 입력값을
+    Step 2, Step 3, Step 4에서 공통으로 사용할 수 있는 형태로 정리합니다.
+
+    이 함수는 RunComfy를 직접 호출하지 않습니다.
+    이후 각 branch workflow에 넘길 공통 입력값을 준비하는 역할만 합니다.
+    """
+
+    csv_text = st.session_state.get("csv_text", "")
+    shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
+    custom_shots = st.session_state.get("custom_shots", [])
+
+    selected_shot_df = get_selected_shot_dataframe()
+
+    if shot_filter_mode == "ALL":
+        shot_filter = "ALL"
+        custom_shot_ids = ""
+    else:
+        shot_filter = "CUSTOM"
+        custom_shot_ids = ", ".join([str(x) for x in custom_shots])
+
+    return {
+        "storyboard_input": {
+            "csv_text": csv_text,
+            "shot_filter": shot_filter,
+            "custom_shot_ids": custom_shot_ids,
+            "selected_shot_count": len(selected_shot_df),
+            "selected_shot_data": selected_shot_df.to_dict(orient="records"),
+        }
+    }
 
 def character_label_to_value(label):
     mapping = {
@@ -636,6 +667,70 @@ tab1, tab2, tab3, tab4 = st.tabs(
 )
 
 
+# # =========================
+# # Step 1. Storyboard Data Parsing
+# # =========================
+# with tab1:
+#     st.header("Step 1. Storyboard Data Parsing")
+
+#     uploaded_csv = st.file_uploader(
+#         "Upload Storyboard CSV",
+#         type=["csv"],
+#         help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
+#     )
+
+#     if uploaded_csv is not None:
+#         csv_text = decode_uploaded_file(uploaded_csv)
+#         st.session_state["csv_text"] = csv_text
+#         st.success(f"업로드 완료: {uploaded_csv.name}")
+#     else:
+#         csv_text = st.session_state.get("csv_text", "")
+
+#     if csv_text:
+#         preview_col, filter_col = st.columns([1.55, 1.0], gap="large")
+
+#         with preview_col:
+#             with st.expander("Parsed Storyboard Data Preview", expanded=True):
+#                 try:
+#                     preview_df = pd.read_csv(io.StringIO(csv_text))
+
+#                     st.dataframe(
+#                         preview_df,
+#                         use_container_width=True,
+#                         hide_index=True,
+#                     )
+
+#                 except Exception:
+#                     st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
+#                     st.code(csv_text)
+
+#         with filter_col:
+#             st.subheader("Shot Selection Control")
+
+#             shot_ids = extract_shot_ids_from_csv(csv_text)
+
+#             st.radio(
+#                 "shot_filter",
+#                 options=["ALL", "CUSTOM"],
+#                 horizontal=True,
+#                 key="shot_filter_mode",
+#                 help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
+#             )
+
+#             if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
+#                 if shot_ids:
+#                     st.multiselect(
+#                         "Select Storyboard Shots",
+#                         options=shot_ids,
+#                         default=[],
+#                         key="custom_shots",
+#                         help="CUSTOM일 때만 shot을 선택합니다.",
+#                     )
+#                 else:
+#                     st.warning("CSV에서 추출된 shot id가 없습니다.")
+#     else:
+#         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
+
 # =========================
 # Step 1. Storyboard Data Parsing
 # =========================
@@ -697,9 +792,33 @@ with tab1:
                     )
                 else:
                     st.warning("CSV에서 추출된 shot id가 없습니다.")
+
+            st.divider()
+
+            st.subheader("Storyboard Input Summary")
+
+            storyboard_input_config = build_storyboard_input_config()
+            storyboard_input = storyboard_input_config["storyboard_input"]
+
+            if storyboard_input["shot_filter"] == "ALL":
+                st.caption(
+                    f"Shot Filter: ALL / "
+                    f"{storyboard_input['selected_shot_count']} shot(s)"
+                )
+            else:
+                if storyboard_input["custom_shot_ids"]:
+                    st.caption(
+                        f"Shot Filter: CUSTOM / "
+                        f"{storyboard_input['custom_shot_ids']}"
+                    )
+                else:
+                    st.caption("Shot Filter: CUSTOM / No shot selected")
+
+            with st.expander("Prepared Storyboard Input Config", expanded=False):
+                st.json(storyboard_input_config)
+
     else:
         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
-
 
 # =========================
 # Step 2. Character Reference Generation
