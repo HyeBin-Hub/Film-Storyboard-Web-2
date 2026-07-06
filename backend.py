@@ -1,13 +1,20 @@
+import json
 import time
 import random
+from copy import deepcopy
+from pathlib import Path
+
 import requests
 
 
 RUNCOMFY_API_BASE = "https://api.runcomfy.net"
 
+WORKFLOW_DIR = Path(__file__).parent / "workflows"
+FACE_WORKFLOW_PATH = WORKFLOW_DIR / "face_workflow_api.json"
+
 
 # =========================
-# RunComfy Common API
+# Common
 # =========================
 def _headers(api_key: str, include_content_type: bool = True) -> dict:
     if not api_key:
@@ -23,23 +30,30 @@ def _headers(api_key: str, include_content_type: bool = True) -> dict:
     return headers
 
 
-def submit_runcomfy_inference(
+def load_workflow_api_json(workflow_path: str | Path) -> dict:
+    workflow_path = Path(workflow_path)
+
+    if not workflow_path.exists():
+        raise FileNotFoundError(f"workflow_api_json file not found: {workflow_path}")
+
+    with workflow_path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def submit_runcomfy_dynamic_workflow(
     api_key: str,
     deployment_id: str,
-    overrides: dict,
+    workflow_api_json: dict,
 ) -> dict:
     """
-    RunComfy Async Queue에 inference job을 제출합니다.
+    RunComfy dynamic workflow 실행.
 
     문서 기준:
     POST /prod/v2/deployments/{deployment_id}/inference
 
-    반환:
+    payload:
     {
-        "request_id": "...",
-        "status_url": "...",
-        "result_url": "...",
-        "cancel_url": "..."
+        "workflow_api_json": { ... full workflow_api_json ... }
     }
     """
     if not deployment_id:
@@ -48,7 +62,7 @@ def submit_runcomfy_inference(
     url = f"{RUNCOMFY_API_BASE}/prod/v2/deployments/{deployment_id}/inference"
 
     payload = {
-        "overrides": overrides,
+        "workflow_api_json": workflow_api_json,
     }
 
     response = requests.post(
@@ -60,7 +74,8 @@ def submit_runcomfy_inference(
 
     if response.status_code >= 400:
         raise RuntimeError(
-            f"RunComfy submit failed: {response.status_code} / {response.text}"
+            f"RunComfy dynamic workflow submit failed: "
+            f"{response.status_code} / {response.text}"
         )
 
     return response.json()
@@ -73,21 +88,6 @@ def poll_runcomfy_result(
     poll_interval: int = 5,
     timeout_seconds: int = 900,
 ) -> dict:
-    """
-    status_url을 polling하다가 status == completed가 되면
-    result_url에서 최종 결과를 가져옵니다.
-
-    status endpoint 기준:
-    - in_queue
-    - in_progress
-    - completed
-    - cancelled
-
-    result endpoint 기준:
-    - succeeded
-    - failed
-    - cancelled
-    """
     start_time = time.time()
 
     while True:
@@ -133,18 +133,14 @@ def poll_runcomfy_result(
         )
 
     result_data = result_response.json()
-    result_status = result_data.get("status", "")
 
-    if result_status != "succeeded":
+    if result_data.get("status") != "succeeded":
         raise RuntimeError(f"RunComfy result is not succeeded: {result_data}")
 
     return result_data
 
 
 def extract_output_images(result: dict) -> list[dict]:
-    """
-    result endpoint의 outputs에서 image 결과를 추출합니다.
-    """
     outputs = result.get("outputs", {})
     images = []
 
@@ -152,9 +148,7 @@ def extract_output_images(result: dict) -> list[dict]:
         if not isinstance(node_output, dict):
             continue
 
-        node_images = node_output.get("images", [])
-
-        for image_item in node_images:
+        for image_item in node_output.get("images", []):
             if not isinstance(image_item, dict):
                 continue
 
@@ -172,14 +166,14 @@ def extract_output_images(result: dict) -> list[dict]:
 
 
 # =========================
-# Face Workflow Overrides
+# Face workflow patch
 # =========================
-def build_face_generation_overrides(config: dict) -> dict:
+def patch_face_workflow(workflow: dict, config: dict) -> dict:
     """
-    app.py의 build_face_ui_config() 결과를
-    RunComfy overrides 형식으로 변환합니다.
+    face_workflow_api.json 전체를 받아서
+    app.py의 UI config 값으로 노드 input을 직접 수정합니다.
 
-    Face workflow node mapping:
+    첨부한 Face workflow 기준 node ID:
     - 1002: CSVStoryboardParser
     - 1000: CharacterRegistryParser
     - 1007: Base Background & Clothing Prompt
@@ -188,6 +182,8 @@ def build_face_generation_overrides(config: dict) -> dict:
     - 1018: KSampler
     - 1019: SaveImage
     """
+    workflow = deepcopy(workflow)
+
     csv_config = config["csvstoryboardparser"]
     character_config = config["character_registry_parser"]
     base_prompt_config = config["base_background_clothing_prompt"]
@@ -206,69 +202,59 @@ def build_face_generation_overrides(config: dict) -> dict:
     seed = random.randint(1, 999_999_999_999_999)
     filename_prefix = f"face_{character_name}"
 
-    overrides = {
-        "1002": {
-            "inputs": {
-                "input_mode": "text",
-                "csv_file": "CUSTOM",
-                "csv_text": csv_config.get("csv_text", ""),
-                "shot_filter": csv_config.get("shot_filter", "ALL"),
-                "custom_shot_ids": csv_config.get("custom_shot_ids", ""),
-            }
-        },
-        "1000": {
-            "inputs": {
-                "character_filter": character_config.get("character_filter", "C2"),
-                "custom_character_id": character_config.get("custom_character_id", ""),
-                "age": character_config.get("age", 9),
-                "include_character_id": character_config.get(
-                    "include_character_id",
-                    "false",
-                ),
-            }
-        },
-        "1007": {
-            "inputs": {
-                "text": base_prompt_config.get(
-                    "text",
-                    "gray background, white t-shirt",
-                )
-            }
-        },
-        "1003": {
-            "inputs": base_character_config
-        },
-        "1004": {
-            "inputs": skin_config
-        },
-        "1018": {
-            "inputs": {
-                "seed": seed,
-            }
-        },
-        "1019": {
-            "inputs": {
-                "filename_prefix": filename_prefix,
-            }
-        },
-    }
+    # 1002: CSVStoryboardParser
+    workflow["1002"]["inputs"]["input_mode"] = "text"
+    workflow["1002"]["inputs"]["csv_file"] = "CUSTOM"
+    workflow["1002"]["inputs"]["csv_text"] = csv_config.get("csv_text", "")
+    workflow["1002"]["inputs"]["shot_filter"] = csv_config.get("shot_filter", "ALL")
+    workflow["1002"]["inputs"]["custom_shot_ids"] = csv_config.get("custom_shot_ids", "")
 
-    return overrides
+    # 1000: CharacterRegistryParser
+    workflow["1000"]["inputs"]["character_filter"] = character_config.get("character_filter", "C2")
+    workflow["1000"]["inputs"]["custom_character_id"] = character_config.get("custom_character_id", "")
+    workflow["1000"]["inputs"]["age"] = character_config.get("age", 9)
+    workflow["1000"]["inputs"]["include_character_id"] = character_config.get("include_character_id", "false")
+
+    # 1007: Base Background & Clothing Prompt
+    workflow["1007"]["inputs"]["text"] = base_prompt_config.get(
+        "text",
+        "gray background, white t-shirt",
+    )
+
+    # 1003: PortraitMasterBaseCharacter
+    for key, value in base_character_config.items():
+        if key in workflow["1003"]["inputs"]:
+            workflow["1003"]["inputs"][key] = value
+
+    # 1004: PortraitMasterSkinDetails
+    for key, value in skin_config.items():
+        if key in workflow["1004"]["inputs"]:
+            workflow["1004"]["inputs"][key] = value
+
+    # 1018: KSampler
+    workflow["1018"]["inputs"]["seed"] = seed
+
+    # 1019: SaveImage
+    workflow["1019"]["inputs"]["filename_prefix"] = filename_prefix
+
+    return workflow
 
 
 def run_face_generation(
     api_key: str,
     deployment_id: str,
     config: dict,
+    workflow_path: str | Path = FACE_WORKFLOW_PATH,
     poll_interval: int = 5,
     timeout_seconds: int = 900,
 ) -> dict:
-    overrides = build_face_generation_overrides(config)
+    base_workflow = load_workflow_api_json(workflow_path)
+    workflow = patch_face_workflow(base_workflow, config)
 
-    request_data = submit_runcomfy_inference(
+    request_data = submit_runcomfy_dynamic_workflow(
         api_key=api_key,
         deployment_id=deployment_id,
-        overrides=overrides,
+        workflow_api_json=workflow,
     )
 
     status_url = request_data.get("status_url")
@@ -320,5 +306,5 @@ def run_face_generation(
         "request": request_data,
         "result": result_data,
         "images": images,
-        "overrides": overrides,
+        "workflow_api_json": workflow,
     }
