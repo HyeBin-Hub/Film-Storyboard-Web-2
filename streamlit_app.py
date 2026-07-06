@@ -1032,25 +1032,81 @@ with tab2:
                 type="primary",
                 use_container_width=True,
             )
-
+            
             if generate_clicked:
                 csv_text = st.session_state.get("csv_text", "")
-
+            
                 if not csv_text.strip():
                     st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
-
+            
                 elif (
                     st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
                     and len(st.session_state.get("custom_shots", [])) == 0
                 ):
                     st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
-
+            
                 else:
                     config = build_face_ui_config()
-
-                    st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
-                    st.subheader("Collected Character Identity Config")
-                    st.json(config)
+            
+                    character_filter = config["character_registry_parser"]["character_filter"]
+                    character_code = "c1" if character_filter == "C1" else "c2"
+            
+                    try:
+                        api_key = st.secrets["RUNCOMFY_API_KEY"]
+                        deployment_id = st.secrets["RUNCOMFY_FACE_DEPLOYMENT_ID"]
+            
+                        with st.spinner("RunComfy에서 Character Identity를 생성하는 중입니다..."):
+                            result = run_face_generation(
+                                api_key=api_key,
+                                deployment_id=deployment_id,
+                                config=config,
+                                poll_interval=5,
+                                timeout_seconds=900,
+                            )
+            
+                        images = result.get("images", [])
+            
+                        if not images:
+                            st.error("RunComfy 실행은 완료되었지만 결과 이미지가 없습니다.")
+            
+                            with st.expander("RunComfy Raw Result", expanded=False):
+                                st.json(result)
+            
+                            with st.expander("Collected Character Identity Config", expanded=False):
+                                st.json(config)
+            
+                        else:
+                            st.session_state[f"face_candidates_{character_code}"] = images
+            
+                            first_image = images[0]
+            
+                            st.session_state[f"face_result_image_{character_code}"] = first_image["image"]
+                            st.session_state[f"face_result_filename_{character_code}"] = first_image.get("filename", "")
+                            st.session_state[f"face_selected_label_{character_code}"] = first_image["label"]
+            
+                            selected_order = st.session_state.get("selected_face_reference_order", [])
+            
+                            if character_code not in selected_order:
+                                selected_order.append(character_code)
+                                st.session_state["selected_face_reference_order"] = selected_order
+            
+                            st.success("Character Identity 생성이 완료되었습니다.")
+                            st.rerun()
+            
+                    except KeyError as e:
+                        st.error("RunComfy secret 설정이 없습니다.")
+                        st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 RUNCOMFY_FACE_DEPLOYMENT_ID를 추가해야 합니다.")
+                        st.exception(e)
+            
+                        with st.expander("Collected Character Identity Config", expanded=False):
+                            st.json(config)
+            
+                    except Exception as e:
+                        st.error("RunComfy Character Identity 실행 중 오류가 발생했습니다.")
+                        st.exception(e)
+            
+                        with st.expander("Collected Character Identity Config", expanded=False):
+                            st.json(config)
 
     st.divider()
 
