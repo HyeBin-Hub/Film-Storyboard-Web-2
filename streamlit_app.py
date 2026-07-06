@@ -432,6 +432,64 @@ tab1, tab2, tab3, tab4 = st.tabs(
 )
 
 
+# # =========================
+# # Step 1. CSV Upload
+# # =========================
+# with tab1:
+#     st.header("Step 1. CSV file upload")
+
+#     uploaded_csv = st.file_uploader(
+#         "Upload CSV file",
+#         type=["csv"],
+#         help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
+#     )
+
+#     if uploaded_csv is not None:
+#         csv_text = decode_uploaded_file(uploaded_csv)
+#         st.session_state["csv_text"] = csv_text
+#         st.success(f"업로드 완료: {uploaded_csv.name}")
+#     else:
+#         csv_text = st.session_state.get("csv_text", "")
+
+#     if csv_text:
+#         with st.expander("Preview uploaded CSV", expanded=True):
+#             try:
+#                 preview_df = pd.read_csv(io.StringIO(csv_text))
+
+#                 st.dataframe(
+#                     preview_df,
+#                     use_container_width=True,
+#                     hide_index=True,
+#                 )
+
+#             except Exception:
+#                 st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
+#                 st.code(csv_text)
+
+#         shot_ids = extract_shot_ids_from_csv(csv_text)
+
+#         st.subheader("Shot Filter")
+
+#         st.radio(
+#             "shot_filter",
+#             options=["ALL", "CUSTOM"],
+#             horizontal=True,
+#             key="shot_filter_mode",
+#             help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
+#         )
+
+#         if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
+#             if shot_ids:
+#                 st.multiselect(
+#                     "Select shots",
+#                     options=shot_ids,
+#                     default=[],
+#                     key="custom_shots",
+#                     help="CUSTOM일 때만 shot을 선택합니다.",
+#                 )
+#             else:
+#                 st.warning("CSV에서 추출된 shot id가 없습니다.")
+
 # =========================
 # Step 1. CSV Upload
 # =========================
@@ -452,44 +510,49 @@ with tab1:
         csv_text = st.session_state.get("csv_text", "")
 
     if csv_text:
-        with st.expander("Preview uploaded CSV", expanded=True):
-            try:
-                preview_df = pd.read_csv(io.StringIO(csv_text))
+        preview_col, filter_col = st.columns([1.55, 1.0], gap="large")
 
-                st.dataframe(
-                    preview_df,
-                    use_container_width=True,
-                    hide_index=True,
-                )
+        with preview_col:
+            with st.expander("Preview uploaded CSV", expanded=True):
+                try:
+                    preview_df = pd.read_csv(io.StringIO(csv_text))
 
-            except Exception:
-                st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
-                st.code(csv_text)
+                    st.dataframe(
+                        preview_df,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
 
-        shot_ids = extract_shot_ids_from_csv(csv_text)
+                except Exception:
+                    st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
+                    st.code(csv_text)
 
-        st.subheader("Shot Filter")
+        with filter_col:
+            st.subheader("Shot Filter")
 
-        st.radio(
-            "shot_filter",
-            options=["ALL", "CUSTOM"],
-            horizontal=True,
-            key="shot_filter_mode",
-            help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
-        )
+            shot_ids = extract_shot_ids_from_csv(csv_text)
 
-        if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
-            if shot_ids:
-                st.multiselect(
-                    "Select shots",
-                    options=shot_ids,
-                    default=[],
-                    key="custom_shots",
-                    help="CUSTOM일 때만 shot을 선택합니다.",
-                )
-            else:
-                st.warning("CSV에서 추출된 shot id가 없습니다.")
+            st.radio(
+                "shot_filter",
+                options=["ALL", "CUSTOM"],
+                horizontal=True,
+                key="shot_filter_mode",
+                help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
+            )
 
+            if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
+                if shot_ids:
+                    st.multiselect(
+                        "Select shots",
+                        options=shot_ids,
+                        default=[],
+                        key="custom_shots",
+                        help="CUSTOM일 때만 shot을 선택합니다.",
+                    )
+                else:
+                    st.warning("CSV에서 추출된 shot id가 없습니다.")
+    else:
+        st.info("CSV 파일을 업로드하면 Preview와 Shot Filter가 표시됩니다.")
 
 # =========================
 # Step 2. Face Settings
