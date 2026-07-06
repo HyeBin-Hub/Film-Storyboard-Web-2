@@ -435,7 +435,7 @@ def build_face_ui_config():
         "portrait_master_base_character": {
             "shot": "Head and shoulders portrait",
             "shot_weight": 2,
-            "gender": "Woman",
+            "gender": "-",
             "age": "-",
             "nationality_1": st.session_state.get("nationality", "South Korean"),
             "nationality_2": "-",
