@@ -301,7 +301,52 @@ def apply_selected_face_result(character_code):
         st.session_state[f"face_result_image_{character_code}"] = selected_candidate["image"]
         st.session_state[f"face_result_filename_{character_code}"] = selected_candidate.get("filename", "")
 
+        selected_order = st.session_state.get("selected_face_reference_order", [])
+        if character_code not in selected_order:
+            selected_order.append(character_code)
+            st.session_state["selected_face_reference_order"] = selected_order
+
     return selected_candidate
+
+
+def get_selected_face_reference_entries():
+    """
+    Selected Face Reference 영역에 표시할 최종 선택 이미지 목록을 반환합니다.
+
+    - 먼저 선택된 캐릭터가 먼저 표시됩니다.
+    - 이후 다른 캐릭터를 선택하면 기존 이미지 옆에 추가됩니다.
+    - order가 없지만 face_result_image가 존재하는 경우에도 누락되지 않도록 보정합니다.
+    """
+    selected_order = st.session_state.get("selected_face_reference_order", [])
+    character_codes = ["c1", "c2"]
+
+    display_order = [code for code in selected_order if code in character_codes]
+
+    for code in character_codes:
+        if code not in display_order and st.session_state.get(f"face_result_image_{code}") is not None:
+            display_order.append(code)
+
+    entries = []
+    for code in display_order:
+        image = st.session_state.get(f"face_result_image_{code}")
+        if image is None:
+            continue
+
+        if code == "c1":
+            label = "Image 1 - Boy"
+        else:
+            label = "Image 2 - Girl"
+
+        entries.append(
+            {
+                "code": code,
+                "label": label,
+                "image": image,
+                "filename": st.session_state.get(f"face_result_filename_{code}", ""),
+            }
+        )
+
+    return entries
 
 
 def sync_scene_reference_selection(session_key, candidates):
@@ -726,15 +771,21 @@ with tab2:
 
             st.markdown("#### Selected Face Reference")
 
-            if selected_face and selected_face.get("image") is not None:
-                st.image(
-                    selected_face["image"],
-                    caption=f"Selected {active_character_label} Face Reference",
-                    use_container_width=True,
-                )
+            selected_face_entries = get_selected_face_reference_entries()
+
+            if selected_face_entries:
+                selected_cols = st.columns(len(selected_face_entries), gap="small")
+
+                for idx, entry in enumerate(selected_face_entries):
+                    with selected_cols[idx]:
+                        st.image(
+                            entry["image"],
+                            caption=f"Selected {entry['label']} Face Reference",
+                            use_container_width=True,
+                        )
             else:
                 render_empty_preview_box(
-                    f"Selected {active_character_label} face reference will appear here.",
+                    "Selected face references will appear here. Choose a candidate for Image 1 - Boy and Image 2 - Girl.",
                     300,
                 )
 
@@ -1670,6 +1721,83 @@ with tab4:
 #     return normalized
 
 
+
+# def get_face_reference_candidates(character_code):
+#     """
+#     character_code: 'c1' or 'c2'
+
+#     Step 2A에서 여러 face 후보를 저장해둔 경우:
+#     st.session_state["face_candidates_c1"] = [
+#         {"label": "Boy Face 1", "image": ..., "filename": "..."},
+#         {"label": "Boy Face 2", "image": ..., "filename": "..."},
+#     ]
+
+#     후보 리스트가 없으면 face_result_image_c1 / face_result_image_c2를 단일 후보로 fallback.
+#     """
+#     candidates_key = f"face_candidates_{character_code}"
+#     candidates = st.session_state.get(candidates_key, [])
+
+#     normalized = []
+
+#     for i, item in enumerate(candidates, start=1):
+#         if not isinstance(item, dict):
+#             continue
+
+#         normalized.append(
+#             {
+#                 "label": item.get(
+#                     "label",
+#                     f"{'Boy' if character_code == 'c1' else 'Girl'} Face {i}",
+#                 ),
+#                 "image": item.get("image"),
+#                 "filename": item.get("filename", ""),
+#             }
+#         )
+
+#     fallback_image = st.session_state.get(f"face_result_image_{character_code}")
+#     fallback_filename = st.session_state.get(
+#         f"face_result_filename_{character_code}",
+#         "",
+#     )
+
+#     if not normalized and fallback_image is not None:
+#         normalized.append(
+#             {
+#                 "label": f"{'Boy' if character_code == 'c1' else 'Girl'} Face 1",
+#                 "image": fallback_image,
+#                 "filename": fallback_filename,
+#             }
+#         )
+
+#     return normalized
+
+
+# def sync_face_reference_selection():
+#     for character_code in ["c1", "c2"]:
+#         candidates = get_face_reference_candidates(character_code)
+#         session_key = f"face_selected_label_{character_code}"
+#         labels = [item["label"] for item in candidates]
+
+#         if not labels:
+#             st.session_state[session_key] = ""
+#             continue
+
+#         if st.session_state.get(session_key) not in labels:
+#             st.session_state[session_key] = labels[0]
+
+
+# def apply_selected_face_result(character_code):
+#     selected_label = st.session_state.get(f"face_selected_label_{character_code}", "")
+#     candidates = get_face_reference_candidates(character_code)
+#     selected_candidate = get_selected_candidate(candidates, selected_label)
+
+#     if selected_candidate and selected_candidate.get("image") is not None:
+#         st.session_state[f"face_result_image_{character_code}"] = selected_candidate["image"]
+#         st.session_state[f"face_result_filename_{character_code}"] = selected_candidate.get("filename", "")
+
+#     return selected_candidate
+
+
 # def sync_scene_reference_selection(session_key, candidates):
 #     labels = [item["label"] for item in candidates]
 
@@ -2024,7 +2152,7 @@ with tab4:
 # # =========================
 # with tab2:
 #     st.header("Step 2. Character Reference Generation")
-#     # st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
+#     st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
 
 #     with st.container(border=True):
 #         st.markdown("#### Character Reference Pipeline")
@@ -2036,42 +2164,73 @@ with tab4:
 #     with st.container(border=True):
 #         st.markdown("## 2A. Character Identity Generation")
 
-#         preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
+#         preview_col, settings_col = st.columns([1.25, 1.15], gap="large")
 
 #         with preview_col:
 #             st.subheader("Character Identity Preview")
 
-#             face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
+#             active_character_label = st.session_state.get(
+#                 "character_filter_label",
+#                 "Image 2 - Girl",
+#             )
+#             active_character_code = (
+#                 "c1" if active_character_label == "Image 1 - Boy" else "c2"
+#             )
+#             active_candidates = get_face_reference_candidates(active_character_code)
+#             selected_face = apply_selected_face_result(active_character_code)
 
-#             with face_preview_col1:
-#                 st.markdown("#### Image 1 - Boy")
+#             st.caption(
+#                 f"Current Target: {active_character_label} | Generated candidates appear at the top, and the selected final reference appears below."
+#             )
 
-#                 if "face_result_image_c1" in st.session_state:
-#                     st.image(
-#                         st.session_state["face_result_image_c1"],
-#                         caption="Image 1 - Boy Face Reference",
-#                         use_container_width=True,
-#                     )
-#                 else:
-#                     render_empty_preview_box(
-#                         "Image 1 - Boy face reference will appear here.",
-#                         520,
-#                     )
+#             if active_candidates:
+#                 st.markdown(f"#### {active_character_label} Candidate Images")
 
-#             with face_preview_col2:
-#                 st.markdown("#### Image 2 - Girl")
+#                 candidate_cols = st.columns(len(active_candidates), gap="small")
 
-#                 if "face_result_image_c2" in st.session_state:
-#                     st.image(
-#                         st.session_state["face_result_image_c2"],
-#                         caption="Image 2 - Girl Face Reference",
-#                         use_container_width=True,
-#                     )
-#                 else:
-#                     render_empty_preview_box(
-#                         "Image 2 - Girl face reference will appear here.",
-#                         520,
-#                     )
+#                 for idx, candidate in enumerate(active_candidates):
+#                     with candidate_cols[idx]:
+#                         if candidate.get("image") is not None:
+#                             st.image(
+#                                 candidate["image"],
+#                                 caption=candidate["label"],
+#                                 use_container_width=True,
+#                             )
+#                         else:
+#                             render_empty_preview_box(
+#                                 f"{candidate['label']} preview is not available.",
+#                                 180,
+#                             )
+
+#                 st.radio(
+#                     "Select Face Candidate",
+#                     options=[item["label"] for item in active_candidates],
+#                     horizontal=True,
+#                     key=f"face_selected_label_{active_character_code}",
+#                     help="생성된 후보 중 최종 reference로 사용할 얼굴 이미지를 선택합니다.",
+#                 )
+
+#                 selected_face = apply_selected_face_result(active_character_code)
+
+#             else:
+#                 render_empty_preview_box(
+#                     f"{active_character_label} candidate images will appear here after generation.",
+#                     180,
+#                 )
+
+#             st.markdown("#### Selected Face Reference")
+
+#             if selected_face and selected_face.get("image") is not None:
+#                 st.image(
+#                     selected_face["image"],
+#                     caption=f"Selected {active_character_label} Face Reference",
+#                     use_container_width=True,
+#                 )
+#             else:
+#                 render_empty_preview_box(
+#                     f"Selected {active_character_label} face reference will appear here.",
+#                     300,
+#                 )
 
 #         with settings_col:
 #             st.subheader("Target Character Control")
@@ -2298,7 +2457,6 @@ with tab4:
 #                     st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
 #                     st.subheader("Collected Character Identity Config")
 #                     st.json(config)
-
 #     st.divider()
 
 #     with st.container(border=True):
@@ -2775,4 +2933,6 @@ with tab4:
 #                 st.success("Camera refinement UI 입력값이 정상적으로 수집되었습니다.")
 #                 st.subheader("Collected Camera Refinement Config")
 #                 st.json(camera_config)
+
+
 
