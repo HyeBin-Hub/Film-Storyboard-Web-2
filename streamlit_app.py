@@ -785,7 +785,7 @@ with tab2:
             face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
         
             with face_preview_col1:
-                st.markdown("#### Image 1 - Boy")
+                st.markdown("##### Image 1 - Boy")
         
                 if st.session_state.get("face_result_image_c1") is not None:
                     st.image(
@@ -800,7 +800,7 @@ with tab2:
                     )
         
             with face_preview_col2:
-                st.markdown("#### Image 2 - Girl")
+                st.markdown("##### Image 2 - Girl")
         
                 if st.session_state.get("face_result_image_c2") is not None:
                     st.image(
