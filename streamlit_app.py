@@ -1004,6 +1004,38 @@ with tab2:
 
         with settings_col:
             st.subheader("Reference Generation Control")
+
+            st.markdown("### Manual Face Reference Input")
+
+            manual_face_url = st.text_input(
+                "Manual Face Reference URL for 2B Test",
+                value="",
+                key="manual_face_reference_url",
+                placeholder="Paste a RunComfy output image URL here",
+                help="2A를 다시 실행하지 않고, 기존 face reference URL을 직접 넣어서 2B만 테스트합니다.",
+            )
+            
+            if st.button("Use this URL as Face Reference", type="secondary", use_container_width=True):
+                selected_body_target = st.session_state.get(
+                    "body_character_filter_label",
+                    "Image 1 - Boy",
+                )
+            
+                if not manual_face_url.strip():
+                    st.error("Face reference URL을 입력하세요.")
+            
+                elif selected_body_target == "Image 1 - Boy":
+                    st.session_state["face_result_image_c1"] = manual_face_url.strip()
+                    st.session_state["face_result_filename_c1"] = "manual_boy_face_reference.png"
+                    st.success("Image 1 - Boy face reference URL이 수동으로 설정되었습니다.")
+                    st.rerun()
+            
+                else:
+                    st.session_state["face_result_image_c2"] = manual_face_url.strip()
+                    st.session_state["face_result_filename_c2"] = "manual_girl_face_reference.png"
+                    st.success("Image 2 - Girl face reference URL이 수동으로 설정되었습니다.")
+                    st.rerun()
+            
             st.radio(
                 "body_character_filter",
                 options=["Image 1 - Boy", "Image 2 - Girl"],
