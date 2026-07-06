@@ -104,9 +104,9 @@
   },
   "1002": {
     "inputs": {
-      "input_mode": "Sonagi_S07.csv",
-      "csv_file": "CUSTOM",
-      "csv_text": "7-1, 7-2",
+      "input_mode": "text",
+      "csv_file": "Sonagi_S07.csv",
+      "csv_text": "",
       "shot_filter": "ALL",
       "custom_shot_ids": ""
     },
