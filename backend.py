@@ -390,7 +390,7 @@ def run_face_generation(
     config: dict,
     workflow_path: str | Path = FACE_WORKFLOW_PATH,
     poll_interval: int = 5,
-    timeout_seconds: int = 900,
+    timeout_seconds: int = 1200,
 ) -> dict:
     base_workflow = load_workflow_api_json(workflow_path)
 
