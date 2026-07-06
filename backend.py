@@ -199,8 +199,22 @@ def patch_face_workflow(workflow: dict, config: dict) -> dict:
     else:
         character_name = character_filter.lower()
 
+    # seed = random.randint(1, 999_999_999_999_999)
+    # filename_prefix = f"face_{character_name}"
     seed = random.randint(1, 999_999_999_999_999)
-    filename_prefix = f"face_{character_name}"
+    filename_prefix = f"face_{character_name}_{seed}"
+    
+    # 999: Portrait_Seed
+    if "999" in workflow and "seed" in workflow["999"]["inputs"]:
+        workflow["999"]["inputs"]["seed"] = seed
+    
+    # 1018: KSampler
+    if "1018" in workflow and "seed" in workflow["1018"]["inputs"]:
+        workflow["1018"]["inputs"]["seed"] = seed
+    
+    # 1019: SaveImage
+    if "1019" in workflow and "filename_prefix" in workflow["1019"]["inputs"]:
+        workflow["1019"]["inputs"]["filename_prefix"] = filename_prefix
 
     # 1002: CSVStoryboardParser
     workflow["1002"]["inputs"]["input_mode"] = "text"
