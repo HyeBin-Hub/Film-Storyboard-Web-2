@@ -775,7 +775,7 @@ with tab2:
         st.caption("2A defines each character's visual identity, and 2B converts that identity into full-body references used by Scene Generation.")
 
     with st.container(border=True):
-        st.markdown("## 2A. Character Identity Generation")
+        st.markdown("### 2A. Character Identity Generation")
 
         preview_col, settings_col = st.columns([1.25, 1.15], gap="large")
 
@@ -950,7 +950,7 @@ with tab2:
     st.divider()
 
     with st.container(border=True):
-        st.markdown("## 2B. Full-Body Reference Generation")
+        st.markdown("### 2B. Full-Body Reference Generation")
         initialize_body_prompts()
 
         preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
@@ -964,14 +964,14 @@ with tab2:
                 if "body_result_image_c1" in st.session_state:
                     st.image(st.session_state["body_result_image_c1"], caption="Image 1 - Boy Body Reference", width=240)
                 else:
-                    render_empty_preview_box("Image 1 - Boy body reference will appear here.", 520)
+                    render_empty_preview_box("Image 1 - Boy body reference will appear here.", 400)
 
             with body_preview_col2:
                 st.markdown("#### Image 2 - Girl")
                 if "body_result_image_c2" in st.session_state:
                     st.image(st.session_state["body_result_image_c2"], caption="Image 2 - Girl Body Reference", width=240)
                 else:
-                    render_empty_preview_box("Image 2 - Girl body reference will appear here.", 520)
+                    render_empty_preview_box("Image 2 - Girl body reference will appear here.", 400)
 
         with settings_col:
             st.subheader("Reference Generation Control")
