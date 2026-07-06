@@ -3,7 +3,7 @@ import io
 import pandas as pd
 import streamlit as st
 
-from backend import run_csv_parser_test
+from backend import run_csv_parser_test, run_face_generation
 
 # =========================
 # Fixed Values
