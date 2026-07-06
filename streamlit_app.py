@@ -781,53 +781,41 @@ with tab2:
 
         with preview_col:
             st.subheader("Character Identity Preview")
+        
+            face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
+        
+            with face_preview_col1:
+                st.markdown("#### Image 1 - Boy")
+        
+                if st.session_state.get("face_result_image_c1") is not None:
+                    st.image(
+                        st.session_state["face_result_image_c1"],
+                        caption="Image 1 - Boy Face Reference",
+                        width=220,
+                    )
+                else:
+                    render_empty_preview_box(
+                        "Image 1 - Boy face reference will appear here.",
+                        300,
+                    )
+        
+            with face_preview_col2:
+                st.markdown("#### Image 2 - Girl")
+        
+                if st.session_state.get("face_result_image_c2") is not None:
+                    st.image(
+                        st.session_state["face_result_image_c2"],
+                        caption="Image 2 - Girl Face Reference",
+                        width=220,
+                    )
+                else:
+                    render_empty_preview_box(
+                        "Image 2 - Girl face reference will appear here.",
+                        300,
+                    )
 
-            active_character_label = st.session_state.get("character_filter_label", "Image 2 - Girl")
-            active_character_code = "c1" if active_character_label == "Image 1 - Boy" else "c2"
-            active_candidates = get_face_reference_candidates(active_character_code)
-            apply_selected_face_result(active_character_code)
 
-            st.caption(f"Current Target: {active_character_label} | Generated candidates appear at the top, and the selected final reference appears below.")
-
-            if active_candidates:
-                st.markdown(f"#### {active_character_label} Candidate Images")
-                candidate_cols = st.columns(len(active_candidates), gap="small")
-
-                for idx, candidate in enumerate(active_candidates):
-                    with candidate_cols[idx]:
-                        if candidate.get("image") is not None:
-                            st.image(candidate["image"], caption=candidate["label"], width=220)
-                        else:
-                            render_empty_preview_box(f"{candidate['label']} preview is not available.", 180)
-
-                st.radio(
-                    "Select Face Candidate",
-                    options=[item["label"] for item in active_candidates],
-                    horizontal=True,
-                    key=f"face_selected_label_{active_character_code}",
-                    help="생성된 후보 중 최종 reference로 사용할 얼굴 이미지를 선택합니다.",
-                )
-
-                apply_selected_face_result(active_character_code)
-            else:
-                render_empty_preview_box(f"{active_character_label} candidate images will appear here after generation.", 180)
-
-            st.markdown("#### Selected Face Reference")
-            selected_face_entries = get_selected_face_reference_entries()
-
-            if selected_face_entries:
-                selected_cols = st.columns(len(selected_face_entries), gap="small")
-                for idx, entry in enumerate(selected_face_entries):
-                    with selected_cols[idx]:
-                        st.markdown(f"##### {entry['display_label']}")
-                        st.caption(entry["label"])
-                        st.image(entry["image"], caption=f"{entry['display_label']} Face Reference", width=220)
-            else:
-                render_empty_preview_box(
-                    "Selected face references will appear here. Choose a candidate for Image 1 - Boy and Image 2 - Girl.",
-                    300,
-                )
-
+            
         with settings_col:
             st.subheader("Target Character Control")
 
