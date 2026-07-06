@@ -30,7 +30,7 @@
   "1047": {
     "inputs": {
       "lora_name": "dreamo_quality_lora_neg_comfyui.safetensors",
-      "strength_model": -0.8000000000000002,
+      "strength_model": -0.8,
       "model": [
         "1051",
         0
@@ -99,7 +99,7 @@
   "1051": {
     "inputs": {
       "lora_name": "dreamo_quality_lora_pos_comfyui.safetensors",
-      "strength_model": 0.15000000000000002,
+      "strength_model": 0.15,
       "model": [
         "1046",
         0
@@ -193,22 +193,13 @@
       "size": 1024,
       "mode": true,
       "images": [
-        "1064",
+        "1239",
         0
       ]
     },
     "class_type": "ImageScaleDownToSize",
     "_meta": {
       "title": "Scale Down To Size"
-    }
-  },
-  "1064": {
-    "inputs": {
-      "image": "ComfyUI_00910_.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
     }
   },
   "1065": {
@@ -378,6 +369,17 @@
     "class_type": "ttN text",
     "_meta": {
       "title": "text"
+    }
+  },
+  "1239": {
+    "inputs": {
+      "image": "",
+      "keep_alpha_channel": false,
+      "output_mode": false
+    },
+    "class_type": "LoadImageFromUrl",
+    "_meta": {
+      "title": "Load Image From URL"
     }
   }
 }
