@@ -14,6 +14,7 @@ CSV_PARSER_TEST_WORKFLOW_PATH = WORKFLOW_DIR / "csv_parser_test_workflow_api.jso
 FACE_WORKFLOW_PATH = WORKFLOW_DIR / "face_workflow_api.json"
 BODY_WORKFLOW_PATH = WORKFLOW_DIR / "body_workflow_api.json"
 SCENE_WORKFLOW_PATH = WORKFLOW_DIR / "scene_workflow_api.json"
+CAMERA_REFINEMENT_WORKFLOW_PATH = WORKFLOW_DIR / "camera_refinement_workflow_api.json"
 
 
 # =========================
@@ -711,6 +712,160 @@ def run_scene_generation(
         "images": images,
         "workflow_api_json": workflow,
     }
+
+# =========================
+# Camera Refinement
+# =========================
+def patch_camera_refinement_workflow(workflow: dict, config: dict) -> dict:
+    """
+    Step 4 Camera Angle Refinement workflow patch.
+
+    camera_refinement_workflow_api.json 기준 주요 노드:
+    - 1275: LoadImageFromUrl
+    - 1269: CSVStoryboardParser
+    - 1253: QwenMultiangleCameraNode
+    - 1270: TwoWaySwitch
+    - 1243: KSampler
+    - 1263: SeedVR2VideoUpscaler
+    - 1274: SaveImage
+    """
+    workflow = deepcopy(workflow)
+
+    storyboard_input = config.get("storyboard_input", {})
+    camera_config = config.get("camera_angle_refinement", {})
+
+    input_scene = camera_config.get("input_scene", {})
+    camera_control = camera_config.get("camera_control", {})
+    prompt_source = camera_config.get("prompt_source", {})
+
+    csv_text = storyboard_input.get("csv_text", "")
+    shot_filter = storyboard_input.get("shot_filter", "ALL")
+    custom_shot_ids = storyboard_input.get("custom_shot_ids", "")
+
+    scene_image_url = (
+        input_scene.get("image")
+        or camera_config.get("scene_image_url")
+        or ""
+    )
+
+    if not csv_text.strip():
+        raise ValueError("csv_text is empty. Upload a CSV file first.")
+
+    if not scene_image_url:
+        raise ValueError("scene_image_url is empty. Generate a scene first.")
+
+    horizontal_angle = camera_control.get("horizontal_angle", 0)
+    vertical_angle = camera_control.get("vertical_angle", 0)
+    zoom = camera_control.get("zoom", 5)
+    default_prompts = camera_control.get("default_prompts", True)
+    camera_view = camera_control.get("camera_view", False)
+
+    switch_setting = prompt_source.get("two_way_switch_selection", 2)
+
+    seed = random.randint(1, 4_294_967_295)
+    filename_prefix = f"camera_refined_{seed}"
+
+    # 1275: Load Image From URL
+    workflow["1275"]["inputs"]["image"] = scene_image_url
+    workflow["1275"]["inputs"]["keep_alpha_channel"] = False
+    workflow["1275"]["inputs"]["output_mode"] = False
+
+    # 1269: CSVStoryboardParser
+    workflow["1269"]["inputs"]["csv_file"] = "CUSTOM"
+    workflow["1269"]["inputs"]["csv_text"] = csv_text
+    workflow["1269"]["inputs"]["shot_filter"] = shot_filter
+    workflow["1269"]["inputs"]["custom_shot_ids"] = custom_shot_ids
+
+    # 1253: Qwen Multiangle Camera
+    workflow["1253"]["inputs"]["horizontal_angle"] = horizontal_angle
+    workflow["1253"]["inputs"]["vertical_angle"] = vertical_angle
+    workflow["1253"]["inputs"]["zoom"] = zoom
+    workflow["1253"]["inputs"]["default_prompts"] = bool(default_prompts)
+    workflow["1253"]["inputs"]["camera_view"] = bool(camera_view)
+
+    # 1270: TwoWaySwitch
+    # 1 = ScenePromptBuilder prompt
+    # 2 = Qwen Multiangle Camera prompt
+    workflow["1270"]["inputs"]["selection_setting"] = switch_setting
+
+    # 1243: KSampler
+    workflow["1243"]["inputs"]["seed"] = seed
+
+    # 1263: SeedVR2VideoUpscaler
+    if "1263" in workflow and "seed" in workflow["1263"]["inputs"]:
+        workflow["1263"]["inputs"]["seed"] = seed
+
+    # 1274: SaveImage
+    workflow["1274"]["inputs"]["filename_prefix"] = filename_prefix
+
+    return workflow
+
+
+def run_camera_refinement(
+    api_key: str,
+    deployment_id: str,
+    config: dict,
+    workflow_path: str | Path = CAMERA_REFINEMENT_WORKFLOW_PATH,
+    poll_interval: int = 10,
+    timeout_seconds: int = 1800,
+) -> dict:
+    base_workflow = load_workflow_api_json(workflow_path)
+
+    workflow = patch_camera_refinement_workflow(
+        workflow=base_workflow,
+        config=config,
+    )
+
+    request_data = submit_runcomfy_dynamic_workflow(
+        api_key=api_key,
+        deployment_id=deployment_id,
+        workflow_api_json=workflow,
+    )
+
+    status_url = request_data.get("status_url")
+    result_url = request_data.get("result_url")
+
+    if not status_url or not result_url:
+        raise RuntimeError(
+            f"RunComfy response does not include status/result URL: {request_data}"
+        )
+
+    result_data = poll_runcomfy_result(
+        api_key=api_key,
+        status_url=status_url,
+        result_url=result_url,
+        poll_interval=poll_interval,
+        timeout_seconds=timeout_seconds,
+    )
+
+    raw_images = extract_output_images(result_data)
+
+    images = []
+
+    for idx, item in enumerate(raw_images, start=1):
+        url = item.get("url") or item.get("image") or ""
+
+        if not url:
+            continue
+
+        images.append(
+            {
+                "label": f"Camera Refined Scene {idx}",
+                "image": url,
+                "url": url,
+                "filename": item.get("filename", ""),
+                "node_id": item.get("node_id", ""),
+                "raw": item.get("raw", {}),
+            }
+        )
+
+    return {
+        "request": request_data,
+        "result": result_data,
+        "images": images,
+        "workflow_api_json": workflow,
+    }
+
 
 # import json
 # import time
