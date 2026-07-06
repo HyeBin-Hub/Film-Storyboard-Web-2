@@ -3,7 +3,12 @@ import io
 import pandas as pd
 import streamlit as st
 
-from backend import run_csv_parser_test, run_face_generation, run_body_generation
+from backend import (
+    run_csv_parser_test,
+    run_face_generation,
+    run_body_generation,
+    run_scene_generation,
+)
 
 # =========================
 # Fixed Values
@@ -527,10 +532,12 @@ def build_scene_ui_config():
             "reference_images": {
                 "image_1_boy_body": {
                     "label": selected_boy["label"] if selected_boy else "",
+                    "image": selected_boy.get("image", "") if selected_boy else "",
                     "filename": selected_boy.get("filename", "") if selected_boy else "",
                 },
                 "image_2_girl_body": {
                     "label": selected_girl["label"] if selected_girl else "",
+                    "image": selected_girl.get("image", "") if selected_girl else "",
                     "filename": selected_girl.get("filename", "") if selected_girl else "",
                 },
             },
@@ -1213,9 +1220,57 @@ with tab3:
                 st.error("Image 2 - Girl body reference 후보가 없습니다. 먼저 Step 2를 진행하세요.")
             else:
                 scene_config = build_scene_ui_config()
-                st.success("Scene branch UI 입력값이 정상적으로 수집되었습니다.")
-                st.subheader("Collected Scene Generation Config")
-                st.json(scene_config)
+            
+                try:
+                    api_key = st.secrets["RUNCOMFY_API_KEY"]
+                    deployment_id = st.secrets["DEPLOYMENT_ID"]
+            
+                    with st.spinner("RunComfy에서 Storyboard Scene을 생성하는 중입니다..."):
+                        result = run_scene_generation(
+                            api_key=api_key,
+                            deployment_id=deployment_id,
+                            config=scene_config,
+                            poll_interval=10,
+                            timeout_seconds=1800,
+                        )
+            
+                    images = result.get("images", [])
+            
+                    if not images:
+                        st.error("RunComfy 실행은 완료되었지만 scene 결과 이미지가 없습니다.")
+            
+                        with st.expander("RunComfy Raw Scene Result", expanded=False):
+                            st.json(result)
+            
+                        with st.expander("Collected Scene Generation Config", expanded=False):
+                            st.json(scene_config)
+            
+                    else:
+                        st.session_state["scene_candidates"] = images
+            
+                        first_image = images[0]
+            
+                        st.session_state["scene_result_image"] = first_image["image"]
+                        st.session_state["scene_result_filename"] = first_image.get("filename", "")
+                        st.session_state["scene_selected_label"] = first_image["label"]
+            
+                        st.success("Storyboard Scene 생성이 완료되었습니다.")
+                        st.rerun()
+            
+                except KeyError as e:
+                    st.error("RunComfy secret 설정이 없습니다.")
+                    st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
+                    st.exception(e)
+            
+                    with st.expander("Collected Scene Generation Config", expanded=False):
+                        st.json(scene_config)
+            
+                except Exception as e:
+                    st.error("RunComfy Storyboard Scene 실행 중 오류가 발생했습니다.")
+                    st.exception(e)
+            
+                    with st.expander("Collected Scene Generation Config", expanded=False):
+                        st.json(scene_config)
 
 
 # =========================
