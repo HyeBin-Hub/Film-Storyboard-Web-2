@@ -884,7 +884,7 @@ with tab2:
                         default_checked = SKIN_DEFAULTS[key] > 0
                         st.checkbox(key, value=default_checked, key=f"skin_{key}")
 
-            st.divider()
+            # st.divider()
 
             generate_clicked = st.button("Generate Character Identity", type="primary", use_container_width=True)
 
@@ -947,7 +947,7 @@ with tab2:
                         with st.expander("Collected Character Identity Config", expanded=False):
                             st.json(config)
 
-    st.divider()
+    # st.divider()
 
     with st.container(border=True):
         st.markdown("### 2B. Full-Body Reference Generation")
