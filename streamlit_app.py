@@ -8,6 +8,7 @@ from backend import (
     run_face_generation,
     run_body_generation,
     run_scene_generation,
+    run_camera_refinement,
 )
 
 # =========================
@@ -571,9 +572,19 @@ def get_scene_result_candidates():
 
 def build_camera_refinement_ui_config():
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
+
     scene_candidates = get_scene_result_candidates()
-    selected_scene = get_selected_candidate(scene_candidates, st.session_state.get("camera_input_scene_label", ""))
-    prompt_source = st.session_state.get("camera_prompt_source", "Use Camera Angle Prompt")
+
+    selected_scene = get_selected_candidate(
+        scene_candidates,
+        st.session_state.get("camera_input_scene_label", ""),
+    )
+
+    prompt_source = st.session_state.get(
+        "camera_prompt_source",
+        "Use Camera Angle Prompt",
+    )
+
     switch_setting = 1 if prompt_source == "Preserve Original Scene Prompt" else 2
 
     return {
@@ -581,6 +592,7 @@ def build_camera_refinement_ui_config():
         "camera_angle_refinement": {
             "input_scene": {
                 "label": selected_scene["label"] if selected_scene else "",
+                "image": selected_scene.get("image", "") if selected_scene else "",
                 "filename": selected_scene.get("filename", "") if selected_scene else "",
             },
             "selected_shot_count": storyboard_input["selected_shot_count"],
@@ -1374,9 +1386,64 @@ with tab4:
                 st.error("Preserve Original Scene Prompt를 사용하려면 Step 1의 shot 데이터가 필요합니다.")
             else:
                 camera_config = build_camera_refinement_ui_config()
-                st.success("Camera refinement UI 입력값이 정상적으로 수집되었습니다.")
-                st.subheader("Collected Camera Refinement Config")
-                st.json(camera_config)
+                camera_refinement_config = camera_config["camera_angle_refinement"]
+            
+                input_scene = camera_refinement_config.get("input_scene", {})
+                scene_image_url = input_scene.get("image", "")
+            
+                if not scene_image_url:
+                    st.error("입력 scene 이미지가 없습니다. 먼저 Step 3에서 scene을 생성하세요.")
+            
+                else:
+                    try:
+                        api_key = st.secrets["RUNCOMFY_API_KEY"]
+                        deployment_id = st.secrets["DEPLOYMENT_ID"]
+            
+                        with st.spinner("RunComfy에서 Camera-Refined Scene을 생성하는 중입니다..."):
+                            result = run_camera_refinement(
+                                api_key=api_key,
+                                deployment_id=deployment_id,
+                                config=camera_config,
+                                poll_interval=10,
+                                timeout_seconds=1800,
+                            )
+            
+                        images = result.get("images", [])
+            
+                        if not images:
+                            st.error("RunComfy 실행은 완료되었지만 camera refinement 결과 이미지가 없습니다.")
+            
+                            with st.expander("RunComfy Raw Camera Refinement Result", expanded=False):
+                                st.json(result)
+            
+                            with st.expander("Collected Camera Refinement Config", expanded=False):
+                                st.json(camera_config)
+            
+                        else:
+                            first_image = images[0]
+            
+                            st.session_state["camera_refined_candidates"] = images
+                            st.session_state["camera_refined_result_image"] = first_image["image"]
+                            st.session_state["camera_refined_result_filename"] = first_image.get("filename", "")
+                            st.session_state["camera_refined_selected_label"] = first_image["label"]
+            
+                            st.success("Camera-Refined Scene 생성이 완료되었습니다.")
+                            st.rerun()
+            
+                    except KeyError as e:
+                        st.error("RunComfy secret 설정이 없습니다.")
+                        st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
+                        st.exception(e)
+            
+                        with st.expander("Collected Camera Refinement Config", expanded=False):
+                            st.json(camera_config)
+            
+                    except Exception as e:
+                        st.error("RunComfy Camera Refinement 실행 중 오류가 발생했습니다.")
+                        st.exception(e)
+            
+                        with st.expander("Collected Camera Refinement Config", expanded=False):
+                            st.json(camera_config)
 
 
 
