@@ -668,18 +668,7 @@ with tab2:
         )
 
     with st.container(border=True):
-        sync_face_reference_selection()
-
-        title_icon_col, title_text_col = st.columns([0.08, 0.92])
-
-        with title_icon_col:
-            st.image(
-                "/mnt/data/ghostwriter_images/context/a902fc09-35c1-5256-b174-60459d568ecc.png",
-                width=38,
-            )
-
-        with title_text_col:
-            st.markdown("## 2A. Character Identity Generation")
+        st.markdown("## 2A. Character Identity Generation")
 
         preview_col, settings_col = st.columns([1.25, 1.15], gap="large")
 
