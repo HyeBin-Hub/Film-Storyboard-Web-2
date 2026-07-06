@@ -1192,7 +1192,8 @@ with tab2:
                     st.image(
                         st.session_state["body_result_image_c1"],
                         caption="Image 1 - Boy Body Reference",
-                        use_container_width=True,
+                        # use_container_width=True,
+                        width=320,
                     )
                 else:
                     render_empty_preview_box(
