@@ -986,7 +986,7 @@ with tab2:
 
             # st.divider()
             st.markdown("""
-                    <div style="margin: 0.05rem 0;">
+                    <div style="margin: 0.2rem 0;">
                       <hr style="margin:0; border:none; border-top:1px solid rgba(128,128,128,0.3);">
                     </div>
                     """, unsafe_allow_html=True)
