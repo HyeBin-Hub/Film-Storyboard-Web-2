@@ -1368,44 +1368,44 @@ with tab5:
     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
     with preview_col:
-        st.subheader("Camera Refinement Preview")
+    st.subheader("Camera Refinement Preview")
 
-        source_col, refined_col = st.columns(2, gap="medium")
+    source_col, refined_col = st.columns(2, gap="medium")
 
-        with source_col:
-            st.markdown("#### Input Scene")
+    with source_col:
+        st.markdown("#### Input Scene")
 
-            selected_input_scene = get_selected_candidate(
-                scene_candidates,
-                st.session_state.get("camera_input_scene_label", ""),
+        selected_input_scene = get_selected_candidate(
+            scene_candidates,
+            st.session_state.get("camera_input_scene_label", ""),
+        )
+
+        if selected_input_scene and selected_input_scene.get("image") is not None:
+            st.image(
+                selected_input_scene["image"],
+                caption=selected_input_scene["label"],
+                use_container_width=True,
+            )
+        else:
+            render_empty_preview_box(
+                "A generated scene from Step 4 will appear here.",
+                520,
             )
 
-            if selected_input_scene and selected_input_scene.get("image") is not None:
-                st.image(
-                    selected_input_scene["image"],
-                    caption=selected_input_scene["label"],
-                    use_container_width=True,
-                )
-            else:
-                render_empty_preview_box(
-                    "A generated scene from Step 4 will appear here.",
-                    520,
-                )
+    with refined_col:
+        st.markdown("#### Refined Scene")
 
-        with refined_col:
-            st.markdown("#### Refined Scene")
-
-            if "camera_refined_result_image" in st.session_state:
-                st.image(
-                    st.session_state["camera_refined_result_image"],
-                    caption="Camera-Refined Storyboard Scene",
-                    use_container_width=True,
-                )
-            else:
-                render_empty_preview_box(
-                    "The camera-refined scene will appear here.",
-                    520,
-                )
+        if "camera_refined_result_image" in st.session_state:
+            st.image(
+                st.session_state["camera_refined_result_image"],
+                caption="Camera-Refined Storyboard Scene",
+                use_container_width=True,
+            )
+        else:
+            render_empty_preview_box(
+                "The camera-refined scene will appear here.",
+                520,
+            )
 
     with settings_col:
         st.subheader("Camera Refinement Control")
