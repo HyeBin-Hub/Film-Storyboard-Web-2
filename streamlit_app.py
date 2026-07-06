@@ -581,7 +581,7 @@ with tab1:
 # =========================
 with tab2:
     st.header("Step 2. Character Reference Generation")
-    st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
+    # st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
 
     with st.container(border=True):
         st.markdown("#### Character Reference Pipeline")
