@@ -219,7 +219,7 @@ def patch_csv_parser_test_workflow(workflow: dict, storyboard_input_config: dict
     workflow[csv_parser_node_id]["inputs"]["shot_filter"] = shot_filter
     workflow[csv_parser_node_id]["inputs"]["custom_shot_ids"] = custom_shot_ids
 
-    seed = random.randint(1, 999_999_999_999_999)
+    seed = random.randint(1, 4_294_967_295)
     filename_prefix = f"csv_parser_test_{seed}"
 
     # 모든 KSampler seed 랜덤화
@@ -335,7 +335,7 @@ def patch_face_workflow(workflow: dict, config: dict) -> dict:
     else:
         character_name = character_filter.lower()
 
-    seed = random.randint(1, 999_999_999_999_999)
+    seed = random.randint(1, 4_294_967_295)
     filename_prefix = f"face_{character_name}_{seed}"
 
     # 1002: CSVStoryboardParser
