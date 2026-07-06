@@ -384,6 +384,87 @@ def build_scene_ui_config():
     }
 
 
+def get_scene_result_candidates():
+    """
+    Step4에서 생성된 scene 후보를 Step5 입력 이미지로 사용하기 위한 helper.
+
+    st.session_state["scene_candidates"] = [
+        {"label": "Scene 1", "image": ..., "filename": "..."},
+        {"label": "Scene 2", "image": ..., "filename": "..."},
+    ]
+
+    후보 리스트가 없으면 scene_result_image를 단일 후보로 fallback.
+    """
+
+    candidates = st.session_state.get("scene_candidates", [])
+    normalized = []
+
+    for i, item in enumerate(candidates, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        normalized.append(
+            {
+                "label": item.get("label", f"Scene {i}"),
+                "image": item.get("image"),
+                "filename": item.get("filename", ""),
+            }
+        )
+
+    fallback_image = st.session_state.get("scene_result_image")
+    fallback_filename = st.session_state.get("scene_result_filename", "")
+
+    if not normalized and fallback_image is not None:
+        normalized.append(
+            {
+                "label": "Scene 1",
+                "image": fallback_image,
+                "filename": fallback_filename,
+            }
+        )
+
+    return normalized
+
+
+
+def build_camera_refinement_ui_config():
+    scene_candidates = get_scene_result_candidates()
+    selected_scene = get_selected_candidate(
+        scene_candidates,
+        st.session_state.get("camera_input_scene_label", ""),
+    )
+
+    selected_shot_df = get_selected_shot_dataframe()
+    prompt_source = st.session_state.get(
+        "camera_prompt_source",
+        "Qwen Multi-Angle Prompt",
+    )
+
+    switch_setting = 1 if prompt_source == "Structured Scene Prompt" else 2
+
+    return {
+        "camera_angle_refinement": {
+            "input_scene": {
+                "label": selected_scene["label"] if selected_scene else "",
+                "filename": selected_scene.get("filename", "") if selected_scene else "",
+            },
+            "selected_shot_count": len(selected_shot_df),
+            "selected_shot_data": selected_shot_df.to_dict(orient="records"),
+            "camera_control": {
+                "horizontal_angle": st.session_state.get("camera_horizontal_angle", 0),
+                "vertical_angle": st.session_state.get("camera_vertical_angle", 0),
+                "zoom": st.session_state.get("camera_zoom", 5),
+                "default_prompts": st.session_state.get("camera_default_prompts", True),
+                "camera_view": st.session_state.get("camera_view", False),
+            },
+            "prompt_source": {
+                "mode": prompt_source,
+                "two_way_switch_selection": switch_setting,
+            },
+        }
+    }
+
+
 def render_empty_preview_box(message, height=520):
     st.markdown(
         f"""
@@ -422,12 +503,13 @@ st.caption("A ComfyUI-based multi-stage generation system for character-consiste
 # =========================
 # Tabs
 # =========================
-tab1, tab2, tab3, tab4 = st.tabs(
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
     [
         "Step 1. Storyboard Data",
         "Step 2. Character Identity",
         "Step 3. Body Reference",
-        "Step 4. Reference-Guided Scene Generation",
+        "Step 4. Scene Generation",
+        "Step 5. Camera Refinement",
     ]
 )
 
@@ -837,7 +919,7 @@ with tab3:
             st.text_area(
                 "Image 1 - Boy Body Prompt",
                 key="body_prompt_c1",
-                height=150,
+                height=260,
                 placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
@@ -846,7 +928,7 @@ with tab3:
             st.text_area(
                 "Image 2 - Girl Body Prompt",
                 key="body_prompt_c2",
-                height=150,
+                height=260,
                 placeholder=BODY_PROMPT_PLACEHOLDER,
                 help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
             )
@@ -891,7 +973,7 @@ with tab3:
 
 
 # =========================
-# Step 4. Cinematic Scene Synthesis
+# Step 4. Reference-Guided Scene Generation
 # =========================
 with tab4:
     st.header("Step 4. Reference-Guided Scene Generation")
@@ -912,7 +994,7 @@ with tab4:
         if selected_shot_df.empty:
             st.caption("Selected Storyboard Context: None")
         else:
-            st.caption(f"Selected Storyboard Context Count: {len(selected_shot_df)}")
+            st.caption(f"Selected Scene Count: {len(selected_shot_df)}")
 
         if "scene_result_image" in st.session_state:
             st.image(
@@ -1048,8 +1130,196 @@ with tab4:
                 scene_config = build_scene_ui_config()
 
                 st.success("Scene branch UI 입력값이 정상적으로 수집되었습니다.")
-                st.subheader("Collected Scene Synthesis Config")
+                st.subheader("Collected Scene Generation Config")
                 st.json(scene_config)
+
+# =========================
+# Step 5. Camera Angle Refinement
+# =========================
+with tab5:
+    st.header("Step 5. Camera Angle Refinement")
+
+    scene_candidates = get_scene_result_candidates()
+    sync_scene_reference_selection("camera_input_scene_label", scene_candidates)
+
+    preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
+
+    with preview_col:
+        st.subheader("Camera Refinement Preview")
+
+        source_col, refined_col = st.columns(2, gap="medium")
+
+        with source_col:
+            st.markdown("#### Input Scene")
+
+            selected_input_scene = get_selected_candidate(
+                scene_candidates,
+                st.session_state.get("camera_input_scene_label", ""),
+            )
+
+            if selected_input_scene and selected_input_scene.get("image") is not None:
+                st.image(
+                    selected_input_scene["image"],
+                    caption=selected_input_scene["label"],
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "A generated scene from Step 4 will appear here.",
+                    520,
+                )
+
+        with refined_col:
+            st.markdown("#### Refined Scene")
+
+            if "camera_refined_result_image" in st.session_state:
+                st.image(
+                    st.session_state["camera_refined_result_image"],
+                    caption="Camera-Refined Storyboard Scene",
+                    use_container_width=True,
+                )
+            else:
+                render_empty_preview_box(
+                    "The camera-refined scene will appear here.",
+                    520,
+                )
+
+    with settings_col:
+        st.subheader("Camera Refinement Control")
+
+        with st.container(border=True):
+            st.markdown("###### Source Scene Input")
+
+            if scene_candidates:
+                st.selectbox(
+                    "Select Input Scene",
+                    options=[item["label"] for item in scene_candidates],
+                    key="camera_input_scene_label",
+                )
+
+                selected_input_scene = get_selected_candidate(
+                    scene_candidates,
+                    st.session_state.get("camera_input_scene_label", ""),
+                )
+
+                if selected_input_scene:
+                    filename = selected_input_scene.get("filename", "")
+                    if filename:
+                        st.caption(f"Selected File: {filename}")
+            else:
+                st.warning("Step 4에서 생성된 scene 이미지가 없습니다. 먼저 Scene Generation을 진행하세요.")
+
+        st.divider()
+
+        with st.container(border=True):
+            st.markdown("###### Camera Angle Control")
+
+            angle_col1, angle_col2 = st.columns(2)
+
+            with angle_col1:
+                st.slider(
+                    "Horizontal Angle",
+                    min_value=-180,
+                    max_value=180,
+                    value=0,
+                    step=1,
+                    key="camera_horizontal_angle",
+                    help="좌우 시점 변화를 제어합니다.",
+                )
+
+                st.slider(
+                    "Vertical Angle",
+                    min_value=-90,
+                    max_value=90,
+                    value=0,
+                    step=1,
+                    key="camera_vertical_angle",
+                    help="상하 시점 변화를 제어합니다.",
+                )
+
+            with angle_col2:
+                st.slider(
+                    "Zoom",
+                    min_value=0,
+                    max_value=10,
+                    value=5,
+                    step=1,
+                    key="camera_zoom",
+                    help="카메라 줌 강도를 제어합니다.",
+                )
+
+                st.checkbox(
+                    "Use Default Angle Prompts",
+                    value=True,
+                    key="camera_default_prompts",
+                    help="Qwen Multi-Angle Camera의 기본 프롬프트를 사용합니다.",
+                )
+
+                st.checkbox(
+                    "Enable Camera View Mode",
+                    value=False,
+                    key="camera_view",
+                    help="카메라 관점 중심의 view 해석을 활성화합니다.",
+                )
+
+        st.divider()
+
+        with st.container(border=True):
+            st.markdown("###### Prompt Source Control")
+
+            st.radio(
+                "Prompt Source",
+                options=["Structured Scene Prompt", "Qwen Multi-Angle Prompt"],
+                index=1,
+                key="camera_prompt_source",
+                help=(
+                    "Structured Scene Prompt는 기존 scene description을 사용하고, "
+                    "Qwen Multi-Angle Prompt는 앵글 제어에 맞춰 생성된 프롬프트를 사용합니다."
+                ),
+            )
+
+            if st.session_state.get("camera_prompt_source") == "Structured Scene Prompt":
+                st.caption("TwoWaySwitch Selection: 1 (ScenePromptBuilder output)")
+            else:
+                st.caption("TwoWaySwitch Selection: 2 (Qwen Multi-Angle Camera output)")
+
+        with st.expander("Camera Refinement Guide", expanded=False):
+            st.markdown(
+                """
+                - Step 5는 Step 4에서 생성된 장면을 입력으로 받아 카메라 앵글만 다시 조정하는 단계입니다.
+                - Horizontal Angle은 좌/우 시점 변화를, Vertical Angle은 상/하 시점 변화를 의미합니다.
+                - Zoom은 인물 및 장면의 프레이밍 강도를 조정합니다.
+                - Prompt Source를 Qwen Multi-Angle Prompt로 두면, 앵글 제어에 최적화된 프롬프트를 사용할 수 있습니다.
+                - Structured Scene Prompt는 기존 shot description의 의미를 최대한 유지하고 싶을 때 적합합니다.
+                """
+            )
+
+        st.divider()
+
+        generate_camera_clicked = st.button(
+            "Generate Camera-Refined Scene",
+            type="primary",
+            use_container_width=True,
+        )
+
+        if generate_camera_clicked:
+            if not scene_candidates:
+                st.error("Step 4 결과 이미지가 없습니다. 먼저 Scene Generation을 진행하세요.")
+
+            elif (
+                st.session_state.get("camera_prompt_source") == "Structured Scene Prompt"
+                and get_selected_shot_dataframe().empty
+            ):
+                st.error("Structured Scene Prompt를 사용하려면 Step 1의 shot 데이터가 필요합니다.")
+
+            else:
+                camera_config = build_camera_refinement_ui_config()
+
+                st.success("Camera refinement UI 입력값이 정상적으로 수집되었습니다.")
+                st.subheader("Collected Camera Refinement Config")
+                st.json(camera_config)
+
+
 
 # import csv
 # import io
@@ -1463,13 +1733,13 @@ with tab4:
 # # Page Config
 # # =========================
 # st.set_page_config(
-#     page_title="Storyboard Generator",
+#     page_title="AI Storyboard Pipeline",
 #     page_icon="🎬",
 #     layout="wide",
 # )
 
-# st.title("🎬 Storyboard Generator")
-# st.caption("Face / Body / Scene Generation Branch UI Test")
+# st.title("🎬 AI Storyboard Generation Pipeline")
+# st.caption("A ComfyUI-based multi-stage generation system for character-consistent cinematic storyboard creation")
 
 
 # # =========================
@@ -1477,80 +1747,22 @@ with tab4:
 # # =========================
 # tab1, tab2, tab3, tab4 = st.tabs(
 #     [
-#         "Step 1. CSV",
-#         "Step 2. Face Settings",
-#         "Step 3. Body Settings",
-#         "Step 4. Scene Settings",
+#         "Step 1. Storyboard Data",
+#         "Step 2. Character Identity",
+#         "Step 3. Body Reference",
+#         "Step 4. Reference-Guided Scene Generation",
 #     ]
 # )
 
 
-# # # =========================
-# # # Step 1. CSV Upload
-# # # =========================
-# # with tab1:
-# #     st.header("Step 1. CSV file upload")
-
-# #     uploaded_csv = st.file_uploader(
-# #         "Upload CSV file",
-# #         type=["csv"],
-# #         help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
-# #     )
-
-# #     if uploaded_csv is not None:
-# #         csv_text = decode_uploaded_file(uploaded_csv)
-# #         st.session_state["csv_text"] = csv_text
-# #         st.success(f"업로드 완료: {uploaded_csv.name}")
-# #     else:
-# #         csv_text = st.session_state.get("csv_text", "")
-
-# #     if csv_text:
-# #         with st.expander("Preview uploaded CSV", expanded=True):
-# #             try:
-# #                 preview_df = pd.read_csv(io.StringIO(csv_text))
-
-# #                 st.dataframe(
-# #                     preview_df,
-# #                     use_container_width=True,
-# #                     hide_index=True,
-# #                 )
-
-# #             except Exception:
-# #                 st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
-# #                 st.code(csv_text)
-
-# #         shot_ids = extract_shot_ids_from_csv(csv_text)
-
-# #         st.subheader("Shot Filter")
-
-# #         st.radio(
-# #             "shot_filter",
-# #             options=["ALL", "CUSTOM"],
-# #             horizontal=True,
-# #             key="shot_filter_mode",
-# #             help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
-# #         )
-
-# #         if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
-# #             if shot_ids:
-# #                 st.multiselect(
-# #                     "Select shots",
-# #                     options=shot_ids,
-# #                     default=[],
-# #                     key="custom_shots",
-# #                     help="CUSTOM일 때만 shot을 선택합니다.",
-# #                 )
-# #             else:
-# #                 st.warning("CSV에서 추출된 shot id가 없습니다.")
-
 # # =========================
-# # Step 1. CSV Upload
+# # Step 1. Storyboard Data Parsing
 # # =========================
 # with tab1:
-#     st.header("Step 1. CSV file upload")
+#     st.header("Step 1. Storyboard Data Parsing")
 
 #     uploaded_csv = st.file_uploader(
-#         "Upload CSV file",
+#         "Upload Storyboard CSV",
 #         type=["csv"],
 #         help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
 #     )
@@ -1566,7 +1778,7 @@ with tab4:
 #         preview_col, filter_col = st.columns([1.55, 1.0], gap="large")
 
 #         with preview_col:
-#             with st.expander("Preview uploaded CSV", expanded=True):
+#             with st.expander("Parsed Storyboard Data Preview", expanded=True):
 #                 try:
 #                     preview_df = pd.read_csv(io.StringIO(csv_text))
 
@@ -1581,7 +1793,7 @@ with tab4:
 #                     st.code(csv_text)
 
 #         with filter_col:
-#             st.subheader("Shot Filter")
+#             st.subheader("Shot Selection Control")
 
 #             shot_ids = extract_shot_ids_from_csv(csv_text)
 
@@ -1596,7 +1808,7 @@ with tab4:
 #             if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
 #                 if shot_ids:
 #                     st.multiselect(
-#                         "Select shots",
+#                         "Select Storyboard Shots",
 #                         options=shot_ids,
 #                         default=[],
 #                         key="custom_shots",
@@ -1605,18 +1817,19 @@ with tab4:
 #                 else:
 #                     st.warning("CSV에서 추출된 shot id가 없습니다.")
 #     else:
-#         st.info("CSV 파일을 업로드하면 Preview와 Shot Filter가 표시됩니다.")
+#         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
+
 
 # # =========================
-# # Step 2. Face Settings
+# # Step 2. Character Identity Generation
 # # =========================
 # with tab2:
-#     st.header("Step 2. Face Generation Branch")
+#     st.header("Step 2. Character Identity Generation")
 
 #     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
 #     with preview_col:
-#         st.subheader("Generated Face Preview")
+#         st.subheader("Character Identity Preview")
 
 #         face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
 
@@ -1651,7 +1864,7 @@ with tab4:
 #                 )
 
 #     with settings_col:
-#         st.subheader("Character Target")
+#         st.subheader("Target Character Control")
 
 #         st.radio(
 #             "character_filter",
@@ -1662,9 +1875,9 @@ with tab4:
 #             help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
 #         )
 
-#         with st.expander("Main Character Appearance", expanded=True):
+#         with st.expander("Identity Attribute Controls", expanded=True):
 #             with st.container(border=True):
-#                 st.markdown("###### Basic Identity")
+#                 st.markdown("###### Core Identity")
 
 #                 basic_col1, basic_col2 = st.columns(2)
 
@@ -1835,7 +2048,7 @@ with tab4:
 #                         key="hair_length",
 #                     )
 
-#         with st.expander("Advanced Skin Details", expanded=False):
+#         with st.expander("Fine-Grained Appearance Attributes", expanded=False):
 #             skin_keys = list(SKIN_DEFAULTS.keys())
 #             skin_cols = st.columns(3)
 
@@ -1852,7 +2065,7 @@ with tab4:
 #         st.divider()
 
 #         generate_clicked = st.button(
-#             "Generate Face",
+#             "Generate Character Identity",
 #             type="primary",
 #             use_container_width=True,
 #         )
@@ -1873,22 +2086,22 @@ with tab4:
 #                 config = build_face_ui_config()
 
 #                 st.success("Face branch UI 입력값이 정상적으로 수집되었습니다.")
-#                 st.subheader("Collected Face Branch Config")
+#                 st.subheader("Collected Character Identity Config")
 #                 st.json(config)
 
 
 # # =========================
-# # Step 3. Body Settings
+# # Step 3. Full-Body Reference Generation
 # # =========================
 # with tab3:
-#     st.header("Step 3. Body Reference Generation")
+#     st.header("Step 3. Full-Body Reference Generation")
 
 #     initialize_body_prompts()
 
 #     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
 #     with preview_col:
-#         st.subheader("Generated Body Preview")
+#         st.subheader("Full-Body Reference Preview")
 
 #         body_preview_col1, body_preview_col2 = st.columns(2, gap="medium")
 
@@ -1923,7 +2136,7 @@ with tab4:
 #                 )
 
 #     with settings_col:
-#         st.subheader("Body Generation Settings")
+#         st.subheader("Reference Generation Control")
 
 #         st.radio(
 #             "body_character_filter",
@@ -1936,7 +2149,7 @@ with tab4:
 
 #         st.divider()
 
-#         st.markdown("### Body Prompt Editor")
+#         st.markdown("### Full-Body Prompt Editor")
 
 #         selected_body_target = st.session_state.get(
 #             "body_character_filter_label",
@@ -1947,7 +2160,7 @@ with tab4:
 #             st.text_area(
 #                 "Image 1 - Boy Body Prompt",
 #                 key="body_prompt_c1",
-#                 height=260,
+#                 height=150,
 #                 placeholder=BODY_PROMPT_PLACEHOLDER,
 #                 help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
 #             )
@@ -1956,12 +2169,12 @@ with tab4:
 #             st.text_area(
 #                 "Image 2 - Girl Body Prompt",
 #                 key="body_prompt_c2",
-#                 height=260,
+#                 height=150,
 #                 placeholder=BODY_PROMPT_PLACEHOLDER,
 #                 help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
 #             )
 
-#         with st.expander("Body Prompt Guide", expanded=False):
+#         with st.expander("Reference Prompt Guidelines", expanded=False):
 #             st.markdown(
 #                 """
 #                 - 얼굴 reference와 같은 인물로 보이도록 identity 유지 문장을 포함하는 것이 좋습니다.
@@ -1975,7 +2188,7 @@ with tab4:
 #         st.divider()
 
 #         generate_body_clicked = st.button(
-#             "Generate Body Reference",
+#             "Generate Full-Body Reference",
 #             type="primary",
 #             use_container_width=True,
 #         )
@@ -1996,15 +2209,15 @@ with tab4:
 #                 body_config = build_body_ui_config()
 
 #                 st.success("Body branch UI 입력값이 정상적으로 수집되었습니다.")
-#                 st.subheader("Collected Body Branch Config")
+#                 st.subheader("Collected Full-Body Reference Config")
 #                 st.json(body_config)
 
 
 # # =========================
-# # Step 4. Scene Settings
+# # Step 4. Cinematic Scene Synthesis
 # # =========================
 # with tab4:
-#     st.header("Step 4. Scene Generation")
+#     st.header("Step 4. Reference-Guided Scene Generation")
 
 #     boy_candidates = get_body_reference_candidates("c1")
 #     girl_candidates = get_body_reference_candidates("c2")
@@ -2015,14 +2228,14 @@ with tab4:
 #     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
 #     with preview_col:
-#         st.subheader("Generated Scene Preview")
+#         st.subheader("Generated Storyboard Preview")
 
 #         selected_shot_df = get_selected_shot_dataframe()
 
 #         if selected_shot_df.empty:
-#             st.caption("Selected Scene: None")
+#             st.caption("Selected Storyboard Context: None")
 #         else:
-#             st.caption(f"Selected Scene Count: {len(selected_shot_df)}")
+#             st.caption(f"Selected Storyboard Context Count: {len(selected_shot_df)}")
 
 #         if "scene_result_image" in st.session_state:
 #             st.image(
@@ -2037,10 +2250,10 @@ with tab4:
 #             )
 
 #     with settings_col:
-#         st.subheader("Scene Generation Settings")
+#         st.subheader("Scene Generation Control")
 
 #         with st.container(border=True):
-#             st.markdown("###### Current Scene Information")
+#             st.markdown("###### Selected Storyboard Context")
 
 #             selected_shot_df = get_selected_shot_dataframe()
 #             shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
@@ -2064,7 +2277,7 @@ with tab4:
 
 #         st.divider()
 
-#         st.markdown("### Reference Images")
+#         st.markdown("### Character Reference Inputs")
 
 #         st.markdown("##### Image 1 - Boy Body Reference")
 
@@ -2131,7 +2344,7 @@ with tab4:
 #         st.divider()
 
 #         generate_scene_clicked = st.button(
-#             "Generate Scene",
+#             "Generate Storyboard Scene",
 #             type="primary",
 #             use_container_width=True,
 #         )
@@ -2158,5 +2371,6 @@ with tab4:
 #                 scene_config = build_scene_ui_config()
 
 #                 st.success("Scene branch UI 입력값이 정상적으로 수집되었습니다.")
-#                 st.subheader("Collected Scene Branch Config")
+#                 st.subheader("Collected Scene Synthesis Config")
 #                 st.json(scene_config)
+
