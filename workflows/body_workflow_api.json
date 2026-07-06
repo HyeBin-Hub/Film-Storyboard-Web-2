@@ -1,0 +1,383 @@
+{
+  "1045": {
+    "inputs": {
+      "lora_name": "dreamo_comfyui.safetensors",
+      "strength_model": 1,
+      "model": [
+        "1052",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "1046": {
+    "inputs": {
+      "lora_name": "dreamo_cfg_distill_comfyui.safetensors",
+      "strength_model": 1,
+      "model": [
+        "1045",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "1047": {
+    "inputs": {
+      "lora_name": "dreamo_quality_lora_neg_comfyui.safetensors",
+      "strength_model": -0.8000000000000002,
+      "model": [
+        "1051",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "1048": {
+    "inputs": {
+      "seed": 25146299977435,
+      "steps": 25,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "1071",
+        0
+      ],
+      "positive": [
+        "1066",
+        0
+      ],
+      "negative": [
+        "1067",
+        0
+      ],
+      "latent_image": [
+        "1069",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "1049": {
+    "inputs": {
+      "samples": [
+        "1048",
+        0
+      ],
+      "vae": [
+        "1050",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "1050": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "1051": {
+    "inputs": {
+      "lora_name": "dreamo_quality_lora_pos_comfyui.safetensors",
+      "strength_model": 0.15000000000000002,
+      "model": [
+        "1046",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "1052": {
+    "inputs": {
+      "lora_name": "flux/flux.1-turbo-alpha/diffusion_pytorch_model.safetensors",
+      "strength_model": 1,
+      "model": [
+        "1053",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "1053": {
+    "inputs": {
+      "unet_name": "flux/flux1-dev.sft",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "1054": {
+    "inputs": {},
+    "class_type": "DreamOProcessorLoader",
+    "_meta": {
+      "title": "DreamO Processor Loader"
+    }
+  },
+  "1055": {
+    "inputs": {
+      "resolution": 512,
+      "ref_task": "ip",
+      "pixels": [
+        "1063",
+        0
+      ],
+      "vae": [
+        "1050",
+        0
+      ],
+      "dreamo_processor": [
+        "1054",
+        0
+      ]
+    },
+    "class_type": "DreamORefEncode",
+    "_meta": {
+      "title": "DreamO Ref Image Encode"
+    }
+  },
+  "1058": {
+    "inputs": {
+      "prompt": "You are an expert AI image prompt engineer specializing in the Flux.1-dev model.\nYour task is to analyze the provided character portrait reference image and combine it with the user's text-based clothing tags to generate a highly detailed, full-body natural language prompt.\n\nObjective: Create a photorealistic, seamless full-body description that maintains the character's identity from the reference image while incorporating the specified outfit.\n\n[Rules for Character Continuity & Full-Body Expansion]\n1. Image Analysis & Consistency: Closely observe the reference image. Extract the character's core identity features (exact age, ethnicity, facial structure, hair style/color, expression) and describe them consistently in the new prompt to maintain identity.\n2. Full-Body Composition: Expand the framing from a portrait to a \"full-body shot\" or \"whole-body portrait\". Describe the character's natural standing pose, slim body proportions, and realistic foot placement.\n3. Background Adaptation: Maintain a clean, minimalist studio background (e.g., \"a solid white background with soft studio lighting and clean floor shadows\") to keep the focus entirely on the outfit and character.\n\n[Rules for Clothing & Outfit Translation]\n4. Vivid Material & Detail Enhancement: Do not just list the clothes. Translate raw tags (e.g., \"Pink dress, white stockings, flow pattern shoes\") into rich descriptions. Specify the fabric texture, fit, folds, and intricate details (e.g., \"A vibrant pastel pink dress with soft fabric folds\", \"sheer white stockings\", \"shoes adorned with delicate floral patterns\").\n5. Natural Integration: Describe how the clothing fits the character's slim build naturally. Ensure all items (dress, stockings, shoes) are described in logical order from top to bottom.\n\n[Output Format]\nOutput ONLY the final English natural language prompt. Do not include any introductory text, explanations, or quotes."
+    },
+    "class_type": "CR Prompt Text",
+    "_meta": {
+      "title": "⚙️ CR Prompt Text"
+    }
+  },
+  "1059": {
+    "inputs": {
+      "a": [
+        "1058",
+        0
+      ],
+      "b": [
+        "1238",
+        0
+      ]
+    },
+    "class_type": "JWStringConcat",
+    "_meta": {
+      "title": "String Concatenate"
+    }
+  },
+  "1063": {
+    "inputs": {
+      "size": 1024,
+      "mode": true,
+      "images": [
+        "1064",
+        0
+      ]
+    },
+    "class_type": "ImageScaleDownToSize",
+    "_meta": {
+      "title": "Scale Down To Size"
+    }
+  },
+  "1064": {
+    "inputs": {
+      "image": "ComfyUI_00910_.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "1065": {
+    "inputs": {
+      "model_name": "Qwen3-VL-8B-Instruct-Abliterated [DL: 15GB, VRAM: 12.0GB]",
+      "attention_mode": "auto",
+      "preset_prompt": "🚫 No preset (image-only)",
+      "custom_prompt": [
+        "1059",
+        0
+      ],
+      "max_tokens": 500,
+      "keep_model_loaded": true,
+      "seed": 347234685266211,
+      "keep_last_prompt": "auto",
+      "stream_tokens_to_terminal": false,
+      "enable_thinking": false,
+      "hf_token": ""
+    },
+    "class_type": "AILab_QwenVL",
+    "_meta": {
+      "title": "ThinkingLLM"
+    }
+  },
+  "1066": {
+    "inputs": {
+      "clip_l": [
+        "1065",
+        0
+      ],
+      "t5xxl": [
+        "1065",
+        0
+      ],
+      "guidance": 2.5,
+      "clip": [
+        "1068",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncodeFlux",
+    "_meta": {
+      "title": "Portraut_CLIPTextEncodeFlux"
+    }
+  },
+  "1067": {
+    "inputs": {
+      "text": "3d render, cartoon, anime,  plastic skin,  chibi, stylized, unnatural",
+      "clip": [
+        "1068",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Portraut_CLIP Text Encode (Prompt) -Negative"
+    }
+  },
+  "1068": {
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "1069": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "1070": {
+    "inputs": {
+      "megapixel": "1.0",
+      "aspect_ratio": "3:4 (Golden Ratio)",
+      "divisible_by": "64",
+      "custom_ratio": false,
+      "custom_aspect_ratio": "1:1"
+    },
+    "class_type": "FluxResolutionNode",
+    "_meta": {
+      "title": "Flux Resolution Calc"
+    }
+  },
+  "1071": {
+    "inputs": {
+      "model": [
+        "1047",
+        0
+      ],
+      "ref1": [
+        "1055",
+        0
+      ]
+    },
+    "class_type": "ApplyDreamO",
+    "_meta": {
+      "title": "Apply DreamO"
+    }
+  },
+  "1223": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model"
+    }
+  },
+  "1224": {
+    "inputs": {
+      "upscale_model": [
+        "1223",
+        0
+      ],
+      "image": [
+        "1049",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Upscale Image (using Model)"
+    }
+  },
+  "1225": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 1,
+      "image": [
+        "1224",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "Upscale Image By"
+    }
+  },
+  "1226": {
+    "inputs": {
+      "filename_prefix": "pl-dreamo",
+      "images": [
+        "1225",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "1238": {
+    "inputs": {
+      "text": ""
+    },
+    "class_type": "ttN text",
+    "_meta": {
+      "title": "text"
+    }
+  }
+}
