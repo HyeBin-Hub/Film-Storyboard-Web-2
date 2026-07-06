@@ -791,7 +791,7 @@ with tab2:
                     st.image(
                         st.session_state["face_result_image_c1"],
                         caption="Image 1 - Boy Face Reference",
-                        width=220,
+                        width=380,
                     )
                 else:
                     render_empty_preview_box(
