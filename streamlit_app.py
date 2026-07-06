@@ -3,7 +3,7 @@ import io
 import pandas as pd
 import streamlit as st
 
-from backend import run_csv_parser_test, run_face_generation
+from backend import run_csv_parser_test, run_face_generation, run_body_generation
 
 # =========================
 # Fixed Values
@@ -473,21 +473,31 @@ def build_face_ui_config():
 
 
 def build_body_ui_config():
-    character_filter_label = st.session_state.get("body_character_filter_label", "Image 1 - Boy")
+    character_filter_label = st.session_state.get(
+        "body_character_filter_label",
+        "Image 1 - Boy",
+    )
+
     character_filter = body_character_label_to_value(character_filter_label)
 
     if character_filter == "C1":
         body_prompt = st.session_state.get("body_prompt_c1", "")
         label = "Image 1 - Boy"
+        face_image_url = st.session_state.get("face_result_image_c1", "")
+        face_filename = st.session_state.get("face_result_filename_c1", "")
     else:
         body_prompt = st.session_state.get("body_prompt_c2", "")
         label = "Image 2 - Girl"
+        face_image_url = st.session_state.get("face_result_image_c2", "")
+        face_filename = st.session_state.get("face_result_filename_c2", "")
 
     return {
         "body_generation": {
             "character_filter": character_filter,
             "label": label,
             "body_prompt": body_prompt,
+            "face_image_url": face_image_url,
+            "face_filename": face_filename,
         }
     }
 
@@ -1017,20 +1027,92 @@ with tab2:
                 )
 
             # st.divider()
-            generate_body_clicked = st.button("Generate Full-Body Reference", type="primary", use_container_width=True)
-
+            generate_body_clicked = st.button(
+                "Generate Full-Body Reference",
+                type="primary",
+                use_container_width=True,
+            )
+            
             if generate_body_clicked:
                 csv_text = st.session_state.get("csv_text", "")
-
+            
                 if not csv_text.strip():
                     st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
-                elif st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM" and len(st.session_state.get("custom_shots", [])) == 0:
+            
+                elif (
+                    st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
+                    and len(st.session_state.get("custom_shots", [])) == 0
+                ):
                     st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+            
                 else:
                     body_config = build_body_ui_config()
-                    st.success("Body branch UI 입력값이 정상적으로 수집되었습니다.")
-                    st.subheader("Collected Full-Body Reference Config")
-                    st.json(body_config)
+                    body_generation_config = body_config["body_generation"]
+            
+                    character_filter = body_generation_config["character_filter"]
+                    character_code = "c1" if character_filter == "C1" else "c2"
+                    label = body_generation_config["label"]
+            
+                    face_image_url = body_generation_config.get("face_image_url", "")
+                    body_prompt = body_generation_config.get("body_prompt", "")
+            
+                    if not face_image_url:
+                        st.error(f"{label}의 Face Reference가 없습니다. 먼저 2A에서 얼굴 이미지를 생성하세요.")
+            
+                    elif not body_prompt.strip():
+                        st.error(f"{label}의 Full-Body Prompt를 입력하세요.")
+            
+                    else:
+                        try:
+                            api_key = st.secrets["RUNCOMFY_API_KEY"]
+                            deployment_id = st.secrets["DEPLOYMENT_ID"]
+            
+                            with st.spinner("RunComfy에서 Full-Body Reference를 생성하는 중입니다..."):
+                                result = run_body_generation(
+                                    api_key=api_key,
+                                    deployment_id=deployment_id,
+                                    config=body_config,
+                                    poll_interval=10,
+                                    timeout_seconds=1800,
+                                )
+            
+                            images = result.get("images", [])
+            
+                            if not images:
+                                st.error("RunComfy 실행은 완료되었지만 body 결과 이미지가 없습니다.")
+            
+                                with st.expander("RunComfy Raw Body Result", expanded=False):
+                                    st.json(result)
+            
+                                with st.expander("Collected Full-Body Reference Config", expanded=False):
+                                    st.json(body_config)
+            
+                            else:
+                                st.session_state[f"body_candidates_{character_code}"] = images
+            
+                                first_image = images[0]
+            
+                                st.session_state[f"body_result_image_{character_code}"] = first_image["image"]
+                                st.session_state[f"body_result_filename_{character_code}"] = first_image.get("filename", "")
+                                st.session_state[f"body_selected_label_{character_code}"] = first_image["label"]
+            
+                                st.success("Full-Body Reference 생성이 완료되었습니다.")
+                                st.rerun()
+            
+                        except KeyError as e:
+                            st.error("RunComfy secret 설정이 없습니다.")
+                            st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
+                            st.exception(e)
+            
+                            with st.expander("Collected Full-Body Reference Config", expanded=False):
+                                st.json(body_config)
+            
+                        except Exception as e:
+                            st.error("RunComfy Full-Body Reference 실행 중 오류가 발생했습니다.")
+                            st.exception(e)
+            
+                            with st.expander("Collected Full-Body Reference Config", expanded=False):
+                                st.json(body_config)
 
 
 # =========================
