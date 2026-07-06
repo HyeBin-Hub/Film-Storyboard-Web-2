@@ -1,7 +1,7 @@
 {
   "3": {
     "inputs": {
-      "input_mode": "file",
+      "input_mode": "text",
       "csv_file": "Sonagi_S07.csv",
       "csv_text": "",
       "shot_filter": "ALL",
