@@ -3,20 +3,24 @@ import random
 import requests
 
 
-RUNCOMFY_API_BASE = "https://api.runcomfy.net/prod/v2"
+RUNCOMFY_API_BASE = "https://api.runcomfy.net"
 
 
 # =========================
 # RunComfy Common API
 # =========================
-def _headers(api_key: str) -> dict:
+def _headers(api_key: str, include_content_type: bool = True) -> dict:
     if not api_key:
         raise ValueError("RunComfy API key is missing.")
 
-    return {
+    headers = {
         "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
     }
+
+    if include_content_type:
+        headers["Content-Type"] = "application/json"
+
+    return headers
 
 
 def submit_runcomfy_inference(
@@ -25,9 +29,12 @@ def submit_runcomfy_inference(
     overrides: dict,
 ) -> dict:
     """
-    RunComfy Serverless API에 inference request를 제출합니다.
+    RunComfy Async Queue에 inference job을 제출합니다.
 
-    반환 예:
+    문서 기준:
+    POST /prod/v2/deployments/{deployment_id}/inference
+
+    반환:
     {
         "request_id": "...",
         "status_url": "...",
@@ -38,7 +45,7 @@ def submit_runcomfy_inference(
     if not deployment_id:
         raise ValueError("RunComfy deployment_id is missing.")
 
-    url = f"{RUNCOMFY_API_BASE}/deployments/{deployment_id}/inference"
+    url = f"{RUNCOMFY_API_BASE}/prod/v2/deployments/{deployment_id}/inference"
 
     payload = {
         "overrides": overrides,
@@ -67,7 +74,19 @@ def poll_runcomfy_result(
     timeout_seconds: int = 900,
 ) -> dict:
     """
-    RunComfy request 상태를 polling하고, 완료되면 result를 반환합니다.
+    status_url을 polling하다가 status == completed가 되면
+    result_url에서 최종 결과를 가져옵니다.
+
+    status endpoint 기준:
+    - in_queue
+    - in_progress
+    - completed
+    - cancelled
+
+    result endpoint 기준:
+    - succeeded
+    - failed
+    - cancelled
     """
     start_time = time.time()
 
@@ -77,7 +96,7 @@ def poll_runcomfy_result(
 
         status_response = requests.get(
             status_url,
-            headers=_headers(api_key),
+            headers=_headers(api_key, include_content_type=False),
             timeout=60,
         )
 
@@ -90,17 +109,20 @@ def poll_runcomfy_result(
         status_data = status_response.json()
         status = status_data.get("status", "")
 
-        if status in {"succeeded", "completed"}:
+        if status == "completed":
             break
 
-        if status in {"failed", "error", "canceled", "cancelled"}:
-            raise RuntimeError(f"RunComfy request failed: {status_data}")
+        if status in {"failed", "error", "cancelled", "canceled"}:
+            raise RuntimeError(f"RunComfy request failed during polling: {status_data}")
+
+        if status not in {"in_queue", "in_progress"}:
+            raise RuntimeError(f"Unexpected RunComfy status: {status_data}")
 
         time.sleep(poll_interval)
 
     result_response = requests.get(
         result_url,
-        headers=_headers(api_key),
+        headers=_headers(api_key, include_content_type=False),
         timeout=60,
     )
 
@@ -110,27 +132,26 @@ def poll_runcomfy_result(
             f"{result_response.status_code} / {result_response.text}"
         )
 
-    return result_response.json()
+    result_data = result_response.json()
+    result_status = result_data.get("status", "")
+
+    if result_status != "succeeded":
+        raise RuntimeError(f"RunComfy result is not succeeded: {result_data}")
+
+    return result_data
 
 
 def extract_output_images(result: dict) -> list[dict]:
     """
-    RunComfy result outputs에서 image 결과만 추출합니다.
-
-    반환 예:
-    [
-        {
-            "url": "...",
-            "filename": "ComfyUI_00001_.png",
-            "subfolder": "",
-            "type": "output"
-        }
-    ]
+    result endpoint의 outputs에서 image 결과를 추출합니다.
     """
     outputs = result.get("outputs", {})
     images = []
 
     for node_id, node_output in outputs.items():
+        if not isinstance(node_output, dict):
+            continue
+
         node_images = node_output.get("images", [])
 
         for image_item in node_images:
@@ -183,7 +204,6 @@ def build_face_generation_overrides(config: dict) -> dict:
         character_name = character_filter.lower()
 
     seed = random.randint(1, 999_999_999_999_999)
-
     filename_prefix = f"face_{character_name}"
 
     overrides = {
@@ -243,23 +263,6 @@ def run_face_generation(
     poll_interval: int = 5,
     timeout_seconds: int = 900,
 ) -> dict:
-    """
-    Step 2A Character Identity Generation 실행 함수.
-
-    반환 예:
-    {
-        "request": {...},
-        "result": {...},
-        "images": [
-            {
-                "label": "Girl Face 1",
-                "image": "https://...",
-                "url": "https://...",
-                "filename": "face_girl_00001_.png"
-            }
-        ]
-    }
-    """
     overrides = build_face_generation_overrides(config)
 
     request_data = submit_runcomfy_inference(
@@ -272,7 +275,9 @@ def run_face_generation(
     result_url = request_data.get("result_url")
 
     if not status_url or not result_url:
-        raise RuntimeError(f"RunComfy response does not include status/result URL: {request_data}")
+        raise RuntimeError(
+            f"RunComfy response does not include status/result URL: {request_data}"
+        )
 
     result_data = poll_runcomfy_result(
         api_key=api_key,
