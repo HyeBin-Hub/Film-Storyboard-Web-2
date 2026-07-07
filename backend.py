@@ -753,9 +753,17 @@ def patch_scene_workflow(workflow: dict, config: dict) -> dict:
     workflow["28"]["inputs"]["keep_alpha_channel"] = False
     workflow["28"]["inputs"]["output_mode"] = False
 
-    # 23: ThinkingLLM seed
-    if "23" in workflow and "seed" in workflow["23"]["inputs"]:
-        workflow["23"]["inputs"]["seed"] = seed
+    # 23: ThinkingLLM / AILab_QwenVL
+    if "23" in workflow:
+        inputs = workflow["23"].get("inputs", {})
+    
+        if "seed" in inputs:
+            inputs["seed"] = seed
+    
+        # 현재 RunComfy QwenVL 노드의 허용값:
+        # auto, sage, flash_attention_2, sdpa
+        if "attention_mode" in inputs:
+            inputs["attention_mode"] = "sdpa"
 
     # 10: KSampler
     workflow["10"]["inputs"]["seed"] = seed
