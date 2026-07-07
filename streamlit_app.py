@@ -608,34 +608,36 @@ with tab2:
             face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
         
             with face_preview_col1:
-                st.markdown("##### Image 1 - Boy")
+                with st.container(border=True):
+                    st.markdown("##### Image 1 - Boy")
+            
+                    if st.session_state.get("face_result_image_c1") is not None:
+                        st.image(
+                            st.session_state["face_result_image_c1"],
+                            caption="Image 1 - Boy Face Reference",
+                            width=240,
+                        )
+                    else:
+                        render_empty_preview_box(
+                            "Image 1 - Boy face reference will appear here.",
+                            400,
+                        )
         
-                if st.session_state.get("face_result_image_c1") is not None:
-                    st.image(
-                        st.session_state["face_result_image_c1"],
-                        caption="Image 1 - Boy Face Reference",
-                        width=240,
-                    )
-                else:
-                    render_empty_preview_box(
-                        "Image 1 - Boy face reference will appear here.",
-                        400,
-                    )
-        
-            with face_preview_col2:
-                st.markdown("##### Image 2 - Girl")
-        
-                if st.session_state.get("face_result_image_c2") is not None:
-                    st.image(
-                        st.session_state["face_result_image_c2"],
-                        caption="Image 2 - Girl Face Reference",
-                        width=240,
-                    )
-                else:
-                    render_empty_preview_box(
-                        "Image 2 - Girl face reference will appear here.",
-                        400,
-                    )
+                with face_preview_col2:
+                    with st.container(border=True):
+                        st.markdown("##### Image 2 - Girl")
+                
+                        if st.session_state.get("face_result_image_c2") is not None:
+                            st.image(
+                                st.session_state["face_result_image_c2"],
+                                caption="Image 2 - Girl Face Reference",
+                                width=240,
+                            )
+                        else:
+                            render_empty_preview_box(
+                                "Image 2 - Girl face reference will appear here.",
+                                400,
+                            )
 
             
         with settings_col:
