@@ -977,10 +977,28 @@ with tab3:
 
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
-    left_col, right_col = st.columns([1.45, 1.0], gap="large")
+    preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
-    # ================= LEFT: Scene Control + Preview =================
-    with left_col:
+    # ================= LEFT: Generated Storyboard Preview =================
+    with preview_col:
+        st.subheader("Generated Storyboard Preview")
+
+        if storyboard_input["selected_shot_count"] == 0:
+            st.caption("Selected Storyboard Context: None")
+        else:
+            st.caption(f"Selected Scene Count: {storyboard_input['selected_shot_count']}")
+
+        if "scene_result_image" in st.session_state:
+            st.image(
+                st.session_state["scene_result_image"],
+                caption="Generated Storyboard Scene",
+                use_container_width=True,
+            )
+        else:
+            render_empty_preview_box("Generated storyboard scene will appear here.", 560)
+
+    # ================= RIGHT: Scene Control + References + Button =================
+    with settings_col:
         st.subheader("Scene Generation Control")
 
         st.markdown("###### Selected Storyboard Context")
@@ -1003,25 +1021,6 @@ with tab3:
 
         st.divider()
 
-        with st.container(border=True):
-            st.subheader("Generated Storyboard Preview")
-
-            if storyboard_input["selected_shot_count"] == 0:
-                st.caption("Selected Storyboard Context: None")
-            else:
-                st.caption(f"Selected Scene Count: {storyboard_input['selected_shot_count']}")
-
-            if "scene_result_image" in st.session_state:
-                st.image(
-                    st.session_state["scene_result_image"],
-                    caption="Generated Storyboard Scene",
-                    use_container_width=True,
-                )
-            else:
-                render_empty_preview_box("Generated storyboard scene will appear here.", 560)
-
-    # ================= RIGHT: Character References + Button =================
-    with right_col:
         st.subheader("Character Reference Inputs")
 
         ref_col1, ref_col2 = st.columns(2, gap="medium")
@@ -1061,77 +1060,6 @@ with tab3:
             type="primary",
             use_container_width=True,
         )
-
-    # ================= Generate Scene Logic =================
-    if generate_scene_clicked:
-        csv_text = st.session_state.get("csv_text", "")
-
-        if not csv_text.strip():
-            st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
-
-        elif (
-            st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
-            and len(st.session_state.get("custom_shots", [])) == 0
-        ):
-            st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
-
-        elif not boy_body_image:
-            st.error("Image 1 character reference가 없습니다. 먼저 Step 2를 진행하세요.")
-
-        elif not girl_body_image:
-            st.error("Image 2 character reference가 없습니다. 먼저 Step 2를 진행하세요.")
-
-        else:
-            scene_config = build_scene_ui_config()
-
-            try:
-                api_key = st.secrets["RUNCOMFY_API_KEY"]
-                deployment_id = st.secrets["DEPLOYMENT_ID"]
-
-                with st.spinner("RunComfy에서 Storyboard Scene을 생성하는 중입니다..."):
-                    result = run_scene_generation(
-                        api_key=api_key,
-                        deployment_id=deployment_id,
-                        config=scene_config,
-                        poll_interval=10,
-                        timeout_seconds=1800,
-                    )
-
-                images = result.get("images", [])
-
-                if not images:
-                    st.error("RunComfy 실행은 완료되었지만 scene 결과 이미지가 없습니다.")
-
-                    with st.expander("RunComfy Raw Scene Result", expanded=False):
-                        st.json(result)
-
-                    with st.expander("Collected Scene Generation Config", expanded=False):
-                        st.json(scene_config)
-
-                else:
-                    first_image = images[0]
-
-                    st.session_state["scene_result_image"] = first_image["image"]
-                    st.session_state["scene_result_filename"] = first_image.get("filename", "")
-
-                    st.success("Storyboard Scene 생성이 완료되었습니다.")
-                    st.rerun()
-
-            except KeyError as e:
-                st.error("RunComfy secret 설정이 없습니다.")
-                st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
-                st.exception(e)
-
-                with st.expander("Collected Scene Generation Config", expanded=False):
-                    st.json(scene_config)
-
-            except Exception as e:
-                st.error("RunComfy Storyboard Scene 실행 중 오류가 발생했습니다.")
-                st.exception(e)
-
-                with st.expander("Collected Scene Generation Config", expanded=False):
-                    st.json(scene_config)
-
 
 # =========================
 # Step 4. Camera Angle Refinement
