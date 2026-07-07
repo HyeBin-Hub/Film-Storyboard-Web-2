@@ -14,7 +14,7 @@ from backend import (
 # =========================
 # Fixed Values
 # =========================
-FIXED_BASE_BACKGROUND_CLOTHING_PROMPT = "gray background, white t-shirt"
+FIXED_BASE_BACKGROUND_CLOTHING_PROMPT = "gray background"
 
 BODY_PROMPT_PLACEHOLDER = (
     "Example: white shirt, beige shorts, white socks, black shoes, "
