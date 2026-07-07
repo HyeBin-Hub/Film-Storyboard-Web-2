@@ -804,15 +804,23 @@ def run_scene_generation(
     )
 
     raw_images = extract_output_images(result_data)
-
+    
+    # Step 3에서는 최종 SaveImage 노드인 11번 결과만 사용
+    # 27, 28은 입력 reference 이미지이므로 제외
+    raw_images = [
+        item for item in raw_images
+        if str(item.get("node_id", "")) == "11"
+        and item.get("raw", {}).get("type") == "output"
+    ]
+    
     images = []
-
+    
     for idx, item in enumerate(raw_images, start=1):
         url = item.get("url") or item.get("image") or ""
-
+    
         if not url:
             continue
-
+    
         images.append(
             {
                 "label": f"Scene {idx}",
