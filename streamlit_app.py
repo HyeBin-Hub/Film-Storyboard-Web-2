@@ -1107,6 +1107,77 @@ with tab3:
             use_container_width=True,
         )
 
+        if generate_scene_clicked:
+            storyboard_input = build_storyboard_input_config()["storyboard_input"]
+
+            if not storyboard_input["csv_text"].strip():
+                st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+
+            elif (
+                storyboard_input["shot_filter"] == "CUSTOM"
+                and not storyboard_input["custom_shot_ids"]
+            ):
+                st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+
+            elif not boy_body_image:
+                st.error("Image 1 - Boy body reference가 없습니다. 먼저 Step 2B에서 생성하세요.")
+
+            elif not girl_body_image:
+                st.error("Image 2 - Girl body reference가 없습니다. 먼저 Step 2B에서 생성하세요.")
+
+            else:
+                scene_config = build_scene_ui_config()
+
+                try:
+                    api_key = st.secrets["RUNCOMFY_API_KEY"]
+                    deployment_id = st.secrets["DEPLOYMENT_ID"]
+
+                    with st.spinner("RunComfy에서 Storyboard Scene을 생성하는 중입니다..."):
+                        result = run_scene_generation(
+                            api_key=api_key,
+                            deployment_id=deployment_id,
+                            config=scene_config,
+                            poll_interval=10,
+                            timeout_seconds=1800,
+                        )
+
+                    images = result.get("images", [])
+
+                    if not images:
+                        st.error("RunComfy 실행은 완료되었지만 scene 결과 이미지가 없습니다.")
+
+                        with st.expander("RunComfy Raw Scene Result", expanded=False):
+                            st.json(result)
+
+                        with st.expander("Collected Scene Generation Config", expanded=False):
+                            st.json(scene_config)
+
+                    else:
+                        first_image = images[0]
+
+                        st.session_state["scene_candidates"] = images
+                        st.session_state["scene_result_image"] = first_image["image"]
+                        st.session_state["scene_result_filename"] = first_image.get("filename", "")
+                        st.session_state["scene_selected_label"] = first_image["label"]
+
+                        st.success("Storyboard Scene 생성이 완료되었습니다.")
+                        st.rerun()
+
+                except KeyError as e:
+                    st.error("RunComfy secret 설정이 없습니다.")
+                    st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
+                    st.exception(e)
+
+                    with st.expander("Collected Scene Generation Config", expanded=False):
+                        st.json(scene_config)
+
+                except Exception as e:
+                    st.error("RunComfy Scene Generation 실행 중 오류가 발생했습니다.")
+                    st.exception(e)
+
+                    with st.expander("Collected Scene Generation Config", expanded=False):
+                        st.json(scene_config)
+
 # =========================
 # Step 4. Camera Angle Refinement
 # =========================
