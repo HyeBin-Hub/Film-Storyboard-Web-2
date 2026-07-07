@@ -30,7 +30,7 @@
   "1047": {
     "inputs": {
       "lora_name": "dreamo_quality_lora_neg_comfyui.safetensors",
-      "strength_model": -0.8,
+      "strength_model": -0.5,
       "model": [
         "1051",
         0
@@ -43,11 +43,11 @@
   },
   "1048": {
     "inputs": {
-      "seed": 25146299977435,
-      "steps": 25,
+      "seed": 360698427147315,
+      "steps": 23,
       "cfg": 1,
       "sampler_name": "euler",
-      "scheduler": "simple",
+      "scheduler": "beta",
       "denoise": 1,
       "model": [
         "1071",
@@ -58,7 +58,7 @@
         0
       ],
       "negative": [
-        "1067",
+        "1245",
         0
       ],
       "latent_image": [
@@ -113,7 +113,7 @@
   "1052": {
     "inputs": {
       "lora_name": "flux/flux.1-turbo-alpha/diffusion_pytorch_model.safetensors",
-      "strength_model": 1,
+      "strength_model": 0.5,
       "model": [
         "1053",
         0
@@ -126,7 +126,7 @@
   },
   "1053": {
     "inputs": {
-      "unet_name": "flux/flux1-dev.sft",
+      "unet_name": "flux1-dev.safetensors",
       "weight_dtype": "default"
     },
     "class_type": "UNETLoader",
@@ -143,7 +143,7 @@
   },
   "1055": {
     "inputs": {
-      "resolution": 512,
+      "resolution": 1024,
       "ref_task": "ip",
       "pixels": [
         "1063",
@@ -165,7 +165,7 @@
   },
   "1058": {
     "inputs": {
-      "prompt": "You are an expert AI image prompt engineer specializing in the Flux.1-dev model.\nYour task is to analyze the provided character portrait reference image and combine it with the user's text-based clothing tags to generate a highly detailed, full-body natural language prompt.\n\nObjective: Create a photorealistic, seamless full-body description that maintains the character's identity from the reference image while incorporating the specified outfit.\n\n[Rules for Character Continuity & Full-Body Expansion]\n1. Image Analysis & Consistency: Closely observe the reference image. Extract the character's core identity features (exact age, ethnicity, facial structure, hair style/color, expression) and describe them consistently in the new prompt to maintain identity.\n2. Full-Body Composition: Expand the framing from a portrait to a \"full-body shot\" or \"whole-body portrait\". Describe the character's natural standing pose, slim body proportions, and realistic foot placement.\n3. Background Adaptation: Maintain a clean, minimalist studio background (e.g., \"a solid white background with soft studio lighting and clean floor shadows\") to keep the focus entirely on the outfit and character.\n\n[Rules for Clothing & Outfit Translation]\n4. Vivid Material & Detail Enhancement: Do not just list the clothes. Translate raw tags (e.g., \"Pink dress, white stockings, flow pattern shoes\") into rich descriptions. Specify the fabric texture, fit, folds, and intricate details (e.g., \"A vibrant pastel pink dress with soft fabric folds\", \"sheer white stockings\", \"shoes adorned with delicate floral patterns\").\n5. Natural Integration: Describe how the clothing fits the character's slim build naturally. Ensure all items (dress, stockings, shoes) are described in logical order from top to bottom.\n\n[Output Format]\nOutput ONLY the final English natural language prompt. Do not include any introductory text, explanations, or quotes."
+      "prompt": "You are an expert AI image prompt engineer specializing in the Flux.1-dev model. \nYour task is to expand the user's dynamic clothing and character tags into a detailed, full-body natural language prompt designed to work seamlessly alongside a Dreamo reference image.\n\n[Instructions for Prompt Expansion]\nRead the raw tags provided in [User Input] and generate a single, cohesive English paragraph by applying the following rules. Your description must strictly enforce a straight, formal standing posture while expanding the clothing details.\n\n1. Character Alignment (Dreamo Compatibility): Use the age and gender from the input (e.g., \"9 years old, boy\"). Keep facial feature descriptions minimal and generic to avoid conflicting with the Dreamo reference image, but emphasize a natural expression that matches the mood.\n2. Full-Body Composition: Explicitly change the framing to a \"full-body shot\" or \"whole-body portrait\". Describe a natural, relaxed standing pose with realistic proportions and clear, proper foot placement on the ground.\n3. Minimalist Studio Background: Place the character against a solid, seamless white backdrop with soft, diffused studio lighting and subtle floor shadows. This ensures Dreamo focuses cleanly on the character and the outfit.\n4. Vivid Clothing Translation: Do not just list the tags. Translate each clothing item into a rich, photorealistic description:\n   - Upper body (e.g., T-shirt, jacket): Detail the specific fabric (e.g., high-quality soft cotton), fit, natural folds, and realistic textile texture.\n   - Lower body (e.g., pants, shorts): Detail the material, fit, and natural creasing/wrinkles at the knees and ankles.\n   - Footwear (e.g., sneakers): Describe them as clean and modern, highlighting visible details like soles and laces.\n5. Structural Flow: Organize the final paragraph in a logical order: Camera shot/Composition -> Minimalist environment -> Character basic identity (age/gender) -> Upper body clothing -> Lower body clothing -> Footwear.\n\n[Output Format]\nOutput ONLY the final, expanded English natural language prompt. Do not include any introductory text, explanations, or quotes.\n\n[User Input]\n"
     },
     "class_type": "CR Prompt Text",
     "_meta": {
@@ -211,10 +211,10 @@
         "1059",
         0
       ],
-      "max_tokens": 500,
+      "max_tokens": 150,
       "keep_model_loaded": true,
-      "seed": 347234685266211,
-      "keep_last_prompt": "auto",
+      "seed": 1205824812,
+      "keep_last_prompt": false,
       "stream_tokens_to_terminal": false,
       "enable_thinking": false,
       "hf_token": ""
@@ -234,7 +234,7 @@
         "1065",
         0
       ],
-      "guidance": 2.5,
+      "guidance": 3.5,
       "clip": [
         "1068",
         0
@@ -243,19 +243,6 @@
     "class_type": "CLIPTextEncodeFlux",
     "_meta": {
       "title": "Portraut_CLIPTextEncodeFlux"
-    }
-  },
-  "1067": {
-    "inputs": {
-      "text": "3d render, cartoon, anime,  plastic skin,  chibi, stylized, unnatural",
-      "clip": [
-        "1068",
-        0
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "Portraut_CLIP Text Encode (Prompt) -Negative"
     }
   },
   "1068": {
@@ -272,8 +259,14 @@
   },
   "1069": {
     "inputs": {
-      "width": 1024,
-      "height": 1024,
+      "width": [
+        "1070",
+        0
+      ],
+      "height": [
+        "1070",
+        1
+      ],
       "batch_size": 1
     },
     "class_type": "EmptySD3LatentImage",
@@ -310,61 +303,9 @@
       "title": "Apply DreamO"
     }
   },
-  "1223": {
-    "inputs": {
-      "model_name": "RealESRGAN_x2plus.pth"
-    },
-    "class_type": "UpscaleModelLoader",
-    "_meta": {
-      "title": "Load Upscale Model"
-    }
-  },
-  "1224": {
-    "inputs": {
-      "upscale_model": [
-        "1223",
-        0
-      ],
-      "image": [
-        "1049",
-        0
-      ]
-    },
-    "class_type": "ImageUpscaleWithModel",
-    "_meta": {
-      "title": "Upscale Image (using Model)"
-    }
-  },
-  "1225": {
-    "inputs": {
-      "upscale_method": "lanczos",
-      "scale_by": 1,
-      "image": [
-        "1224",
-        0
-      ]
-    },
-    "class_type": "ImageScaleBy",
-    "_meta": {
-      "title": "Upscale Image By"
-    }
-  },
-  "1226": {
-    "inputs": {
-      "filename_prefix": "pl-dreamo",
-      "images": [
-        "1225",
-        0
-      ]
-    },
-    "class_type": "SaveImage",
-    "_meta": {
-      "title": "Save Image"
-    }
-  },
   "1238": {
     "inputs": {
-      "text": ""
+      "text": "9 years old, boy, White T-shirt, black pants, sneakers, realistic "
     },
     "class_type": "ttN text",
     "_meta": {
@@ -373,13 +314,51 @@
   },
   "1239": {
     "inputs": {
-      "image": "",
+      "image": "TempImageFromUrl_00001_ (1).png",
       "keep_alpha_channel": false,
       "output_mode": false
     },
     "class_type": "LoadImageFromUrl",
     "_meta": {
       "title": "Load Image From URL"
+    }
+  },
+  "1243": {
+    "inputs": {
+      "images": [
+        "1055",
+        1
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "1244": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "1049",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "1245": {
+    "inputs": {
+      "text": "cartoon, anime, 3d render, doll-like face, plastic skin, waxy skin, over-smoothed skin, artificial skin texture, low detail, blurry, soft focus, distorted body, unnatural proportions, bad hands, deformed fingers, oversized head, stiff pose",
+      "clip": [
+        "1068",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
     }
   }
 }
