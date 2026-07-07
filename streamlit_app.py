@@ -392,12 +392,12 @@ def build_scene_ui_config():
             "selected_shot_data": storyboard_input["selected_shot_data"],
             "reference_images": {
                 "image_1_boy_body": {
-                    "label": "Image 1 - Boy Body Reference",
+                    "label": "Image 1 - Boy Character Reference",
                     "image": boy_body_image,
                     "filename": boy_body_filename,
                 },
                 "image_2_girl_body": {
-                    "label": "Image 2 - Girl Body Reference",
+                    "label": "Image 2 - Gril Character Reference",
                     "image": girl_body_image,
                     "filename": girl_body_filename,
                 },
@@ -1020,33 +1020,36 @@ with tab3:
 
         st.divider()
         st.markdown("### Character Reference Inputs")
-
-        st.markdown("##### Image 1 - Boy Body Reference")
-
-        if boy_body_image:
-            st.image(
-                boy_body_image,
-                caption="Image 1 - Boy Body Reference",
-                width=240,
-            )
-            if boy_body_filename:
-                st.caption(f"Filename: {boy_body_filename}")
-        else:
-            st.warning("Step 2에서 Image 1 - Boy body reference를 먼저 생성해야 합니다.")
-
-        st.divider()
-        st.markdown("##### Image 2 - Girl Body Reference")
-
-        if girl_body_image:
-            st.image(
-                girl_body_image,
-                caption="Image 2 - Girl Body Reference",
-                width=240,
-            )
-            if girl_body_filename:
-                st.caption(f"Filename: {girl_body_filename}")
-        else:
-            st.warning("Step 2에서 Image 2 - Girl body reference를 먼저 생성해야 합니다.")
+        
+        ref_col1, ref_col2 = st.columns(2, gap="medium")
+        
+        with ref_col1:
+            st.markdown("##### Image 1 - Boy Character Reference")
+        
+            if boy_body_image:
+                st.image(
+                    boy_body_image,
+                    caption="Image 1 - Boy Character Reference",
+                    width=240,
+                )
+                if boy_body_filename:
+                    st.caption(f"Filename: {boy_body_filename}")
+            else:
+                st.warning("Step 2에서 Image 1 character reference를 먼저 생성해야 합니다.")
+        
+        with ref_col2:
+            st.markdown("##### Image 2 - Gril Character Reference")
+        
+            if girl_body_image:
+                st.image(
+                    girl_body_image,
+                    caption="Image 2 - Gril Character Reference",
+                    width=240,
+                )
+                if girl_body_filename:
+                    st.caption(f"Filename: {girl_body_filename}")
+            else:
+                st.warning("Step 2에서 Image 2 character reference를 먼저 생성해야 합니다.")
 
         st.divider()
 
