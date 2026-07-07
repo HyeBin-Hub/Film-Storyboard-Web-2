@@ -999,35 +999,36 @@ with tab3:
 
     # ================= RIGHT: Scene Control + References + Button =================
     with settings_col:
-        st.subheader("Scene Generation Control")
-
-        st.markdown("###### Selected Storyboard Context")
-
-        if storyboard_input["selected_shot_count"] == 0:
-            st.warning("표시할 scene 정보가 없습니다. Step 1에서 CSV와 shot 선택을 확인하세요.")
-        else:
-            if storyboard_input["shot_filter"] == "ALL":
-                st.caption(f"Shot Filter: ALL / {storyboard_input['selected_shot_count']} scene(s)")
-            elif storyboard_input["custom_shot_ids"]:
-                st.caption(f"Shot Filter: CUSTOM / {storyboard_input['custom_shot_ids']}")
+        with st.container(border=True):
+            st.subheader("Scene Generation Control")
+    
+            st.markdown("###### Selected Storyboard Context")
+    
+            if storyboard_input["selected_shot_count"] == 0:
+                st.warning("표시할 scene 정보가 없습니다. Step 1에서 CSV와 shot 선택을 확인하세요.")
             else:
-                st.caption("Shot Filter: CUSTOM / No shot selected")
-
-            st.dataframe(
-                pd.DataFrame(storyboard_input["selected_shot_data"]),
-                use_container_width=True,
-                hide_index=True,
-            )
-
+                if storyboard_input["shot_filter"] == "ALL":
+                    st.caption(f"Shot Filter: ALL / {storyboard_input['selected_shot_count']} scene(s)")
+                elif storyboard_input["custom_shot_ids"]:
+                    st.caption(f"Shot Filter: CUSTOM / {storyboard_input['custom_shot_ids']}")
+                else:
+                    st.caption("Shot Filter: CUSTOM / No shot selected")
+    
+                st.dataframe(
+                    pd.DataFrame(storyboard_input["selected_shot_data"]),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+    
         st.divider()
-
+    
         st.subheader("Character Reference Inputs")
-
+    
         ref_col1, ref_col2 = st.columns(2, gap="medium")
-
+    
         with ref_col1:
             st.markdown("##### Image 1 Reference")
-
+    
             if boy_body_image:
                 st.image(
                     boy_body_image,
@@ -1038,10 +1039,10 @@ with tab3:
                     st.caption(f"Filename: {boy_body_filename}")
             else:
                 st.warning("Step 2에서 Image 1 character reference를 먼저 생성해야 합니다.")
-
+    
         with ref_col2:
             st.markdown("##### Image 2 Reference")
-
+    
             if girl_body_image:
                 st.image(
                     girl_body_image,
@@ -1052,9 +1053,9 @@ with tab3:
                     st.caption(f"Filename: {girl_body_filename}")
             else:
                 st.warning("Step 2에서 Image 2 character reference를 먼저 생성해야 합니다.")
-
+    
         st.divider()
-
+    
         generate_scene_clicked = st.button(
             "Generate Storyboard Scene",
             type="primary",
