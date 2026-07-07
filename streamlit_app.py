@@ -975,7 +975,7 @@ with tab3:
     girl_body_image = st.session_state.get("body_result_image_c2")
     girl_body_filename = st.session_state.get("body_result_filename_c2", "")
 
-    preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
+    preview_col, settings_col = st.columns([1.35, 1.35], gap="large")
 
     with preview_col:
         st.subheader("Generated Storyboard Preview")
