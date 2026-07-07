@@ -806,17 +806,33 @@ with tab2:
 
             with body_preview_col1:
                 st.markdown("##### Image 1 - Boy")
-                if "body_result_image_c1" in st.session_state:
-                    st.image(st.session_state["body_result_image_c1"], caption="Image 1 - Boy Body Reference", width=240)
+            
+                if st.session_state.get("body_result_image_c1") is not None:
+                    render_image_preview_box(
+                        st.session_state["body_result_image_c1"],
+                        caption="Image 1 - Boy Full-Body Reference",
+                        height=400,
+                    )
                 else:
-                    render_empty_preview_box("Image 1 - Boy body reference will appear here.", 400)
-
+                    render_empty_preview_box(
+                        "Image 1 - Boy full-body reference will appear here.",
+                        400,
+                    )
+            
             with body_preview_col2:
                 st.markdown("##### Image 2 - Girl")
-                if "body_result_image_c2" in st.session_state:
-                    st.image(st.session_state["body_result_image_c2"], caption="Image 2 - Girl Body Reference", width=240)
+            
+                if st.session_state.get("body_result_image_c2") is not None:
+                    render_image_preview_box(
+                        st.session_state["body_result_image_c2"],
+                        caption="Image 2 - Girl Full-Body Reference",
+                        height=400,
+                    )
                 else:
-                    render_empty_preview_box("Image 2 - Girl body reference will appear here.", 400)
+                    render_empty_preview_box(
+                        "Image 2 - Girl full-body reference will appear here.",
+                        400,
+                    )
 
         with settings_col:
             st.subheader("Reference Generation Control")
