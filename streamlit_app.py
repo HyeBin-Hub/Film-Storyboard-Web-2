@@ -499,6 +499,35 @@ def render_empty_preview_box(message, height=520):
         unsafe_allow_html=True,
     )
 
+def render_image_preview_box(image_url, caption="", height=400):
+    max_img_height = height - 55
+
+    html = (
+        f'<div style="'
+        f'border: 1px dashed #999;'
+        f'border-radius: 12px;'
+        f'height: {height}px;'
+        f'display: flex;'
+        f'flex-direction: column;'
+        f'align-items: center;'
+        f'justify-content: center;'
+        f'color: #777;'
+        f'font-size: 14px;'
+        f'text-align: center;'
+        f'padding: 12px;'
+        f'">'
+        f'<img src="{image_url}" style="'
+        f'max-width: 100%;'
+        f'max-height: {max_img_height}px;'
+        f'object-fit: contain;'
+        f'border-radius: 8px;'
+        f'">'
+        f'<div style="margin-top: 8px;">{caption}</div>'
+        f'</div>'
+    )
+
+    st.markdown(html, unsafe_allow_html=True)
+
 
 # =========================
 # Page Config
@@ -608,36 +637,34 @@ with tab2:
             face_preview_col1, face_preview_col2 = st.columns(2, gap="medium")
         
             with face_preview_col1:
-                with st.container(border=True):
-                    st.markdown("##### Image 1 - Boy")
+                st.markdown("##### Image 1 - Boy")
             
-                    if st.session_state.get("face_result_image_c1") is not None:
-                        st.image(
-                            st.session_state["face_result_image_c1"],
-                            caption="Image 1 - Boy Face Reference",
-                            width=240,
-                        )
-                    else:
-                        render_empty_preview_box(
-                            "Image 1 - Boy face reference will appear here.",
-                            400,
-                        )
+                if st.session_state.get("face_result_image_c1") is not None:
+                    render_image_preview_box(
+                        st.session_state["face_result_image_c1"],
+                        caption="Image 1 - Boy Face Reference",
+                        height=400,
+                    )
+                else:
+                    render_empty_preview_box(
+                        "Image 1 - Boy face reference will appear here.",
+                        400,
+                    )
         
-                with face_preview_col2:
-                    with st.container(border=True):
-                        st.markdown("##### Image 2 - Girl")
-                
-                        if st.session_state.get("face_result_image_c2") is not None:
-                            st.image(
-                                st.session_state["face_result_image_c2"],
-                                caption="Image 2 - Girl Face Reference",
-                                width=240,
-                            )
-                        else:
-                            render_empty_preview_box(
-                                "Image 2 - Girl face reference will appear here.",
-                                400,
-                            )
+            with face_preview_col2:
+                st.markdown("##### Image 2 - Girl")
+            
+                if st.session_state.get("face_result_image_c2") is not None:
+                    render_image_preview_box(
+                        st.session_state["face_result_image_c2"],
+                        caption="Image 2 - Girl Face Reference",
+                        height=400,
+                    )
+                else:
+                    render_empty_preview_box(
+                        "Image 2 - Girl face reference will appear here.",
+                        400,
+                    )
 
             
         with settings_col:
