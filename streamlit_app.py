@@ -117,6 +117,9 @@ HAIR_COLOR_OPTIONS = [
 # =========================
 # Helper Functions
 # =========================
+
+# ----------------------------- 업로드 파일 텍스트 변환 함수 -----------------------------
+# 업로드된 파일의 바이너리 데이터를 여러 인코딩 방식으로 시도해 문자열 텍스트로 안전하게 디코딩하는 함수
 def decode_uploaded_file(uploaded_file):
     raw = uploaded_file.getvalue()
     for encoding in ["utf-8-sig", "utf-8", "cp949"]:
@@ -126,7 +129,8 @@ def decode_uploaded_file(uploaded_file):
             pass
     return raw.decode("utf-8", errors="ignore")
 
-
+# ----------------------------- CSV 샷 ID 추출 함수 -----------------------------
+# CSV 텍스트의 첫 번째 열에서 중복 없이 샷 ID 목록을 추출하는 함수입니다.
 def extract_shot_ids_from_csv(csv_text):
     if not csv_text.strip():
         return []
@@ -150,7 +154,8 @@ def extract_shot_ids_from_csv(csv_text):
 
     return shot_ids
 
-
+# ----------------------------- CSV 데이터프레임 변환 함수 -----------------------------
+# CSV 텍스트를 pandas DataFrame으로 변환하고, 실패하거나 비어 있으면 빈 DataFrame을 반환하는 함수
 def read_csv_as_dataframe(csv_text):
     if not csv_text.strip():
         return pd.DataFrame()
@@ -159,7 +164,8 @@ def read_csv_as_dataframe(csv_text):
     except Exception:
         return pd.DataFrame()
 
-
+# ----------------------------- 샷 ID 컬럼 탐색 함수 -----------------------------
+# DataFrame에서 샷 ID로 보이는 컬럼을 찾고, 없으면 첫 번째 컬럼을 반환하는 함수
 def get_shot_id_column(df):
     if df.empty:
         return None
@@ -170,7 +176,9 @@ def get_shot_id_column(df):
             return col
     return df.columns[0]
 
-
+# ----------------------------- 선택 샷 DataFrame 추출 함수 -----------------------------
+# Streamlit 세션의 CSV 데이터에서 현재 선택된 샷 필터에 해당하는 행만 추출해 DataFrame으로 반환하는 함수
+# CSV를 DataFrame으로 읽은 뒤, ALL이면 전체를 반환하고 CUSTOM이면 선택된 샷 ID만 필터링함
 def get_selected_shot_dataframe():
     csv_text = st.session_state.get("csv_text", "")
     df = read_csv_as_dataframe(csv_text)
@@ -192,7 +200,8 @@ def get_selected_shot_dataframe():
 
     return df[df[shot_col].astype(str).isin([str(x) for x in custom_shots])]
 
-
+# ----------------------------- 스토리보드 입력 설정 구성 함수 -----------------------------
+# Streamlit 세션의 CSV와 샷 선택 정보를 모아 RunComfy 요청용 storyboard_input 설정 딕셔너리로 구성하는 함수
 def build_storyboard_input_config():
     csv_text = st.session_state.get("csv_text", "")
     shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
@@ -216,87 +225,35 @@ def build_storyboard_input_config():
         }
     }
 
-
+# ------------------------- 캐릭터 라벨 변환 함수 ----------------------------- 
+# 선택된 캐릭터 라벨을 RunComfy 워크플로우에서 사용하는 C1, C2 값으로 변환하는 함수
+# 라벨이 Image 1 - Boy이면 C1, Image 2 - Girl이면 C2를 반환하고 기본값은 함수별로 다르게 설정
 def character_label_to_value(label):
     return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, "C2")
 
-
+# ------------------------- 전신 프롬프트 초기화 함수 -------------------------
+# 전신 생성에서 선택된 캐릭터 라벨을 워크플로우용 C1, C2 값으로 변환하는 함수
+# 라벨이 Image 1 - Boy이면 C1, Image 2 - Girl이면 C2를 반환하고, 알 수 없는 라벨이면 기본값으로 C1을 반환
 def body_character_label_to_value(label):
     return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, "C1")
 
-
+# ------------------------- 전신 프롬프트 초기화 함수 -------------------------
+# 전신 생성용 캐릭터별 프롬프트 값을 Streamlit 세션에 기본값으로 만들어두는 함수
+# body_prompt_c1, body_prompt_c2가 없으면 각각 빈 문자열로 초기화
 def initialize_body_prompts():
     st.session_state.setdefault("body_prompt_c1", "")
     st.session_state.setdefault("body_prompt_c2", "")
 
-
+# ------------------------- 장면 샷 필터 설정 조회 함수 -------------------------
+# 장면 생성에 사용할 현재 샷 필터 값과 커스텀 샷 ID 값을 가져오는 함수
+# build_storyboard_input_config()에서 storyboard_input을 만들고, 그 안의 shot_filter와 custom_shot_ids를 반환
 def get_scene_shot_filter_config():
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
     return storyboard_input["shot_filter"], storyboard_input["custom_shot_ids"]
 
-
-def get_body_reference_candidates(character_code):
-    candidates_key = f"body_candidates_{character_code}"
-    candidates = st.session_state.get(candidates_key, [])
-    normalized = []
-
-    for i, item in enumerate(candidates, start=1):
-        if not isinstance(item, dict):
-            continue
-        normalized.append(
-            {
-                "label": item.get("label", f"{'Boy' if character_code == 'c1' else 'Girl'} Body {i}"),
-                "image": item.get("image"),
-                "filename": item.get("filename", ""),
-            }
-        )
-
-    fallback_image = st.session_state.get(f"body_result_image_{character_code}")
-    fallback_filename = st.session_state.get(f"body_result_filename_{character_code}", "")
-
-    if not normalized and fallback_image is not None:
-        normalized.append(
-            {
-                "label": f"{'Boy' if character_code == 'c1' else 'Girl'} Body 1",
-                "image": fallback_image,
-                "filename": fallback_filename,
-            }
-        )
-
-    return normalized
-
-
-def get_face_reference_candidates(character_code):
-    candidates_key = f"face_candidates_{character_code}"
-    candidates = st.session_state.get(candidates_key, [])
-    normalized = []
-
-    for i, item in enumerate(candidates, start=1):
-        if not isinstance(item, dict):
-            continue
-        normalized.append(
-            {
-                "label": item.get("label", f"{'Boy' if character_code == 'c1' else 'Girl'} Face {i}"),
-                "image": item.get("image"),
-                "filename": item.get("filename", ""),
-            }
-        )
-
-    fallback_image = st.session_state.get(f"face_result_image_{character_code}")
-    fallback_filename = st.session_state.get(f"face_result_filename_{character_code}", "")
-
-    if not normalized and fallback_image is not None:
-        normalized.append(
-            {
-                "label": f"{'Boy' if character_code == 'c1' else 'Girl'} Face 1",
-                "image": fallback_image,
-                "filename": fallback_filename,
-            }
-        )
-
-    return normalized
-
-
+# ------------------------- 선택 후보 조회 함수 -------------------------
+# 후보 목록에서 선택된 라벨과 일치하는 항목을 찾아 반환하는 함수
+# candidates를 순회하며 label이 selected_label과 같은 항목을 반환하고, 없으면 None을 반환
 def get_selected_candidate(candidates, selected_label):
     for item in candidates:
         if item["label"] == selected_label:
@@ -304,106 +261,9 @@ def get_selected_candidate(candidates, selected_label):
     return None
 
 
-def append_face_reference_order(character_code):
-    selected_order = list(st.session_state.get("selected_face_reference_order", []))
-    selected_order = [code for code in selected_order if code in {"c1", "c2"}]
-
-    if character_code not in selected_order:
-        selected_order.append(character_code)
-
-    st.session_state["selected_face_reference_order"] = selected_order
-
-
-def ensure_face_selection_state():
-    """
-    기존 session_state에 이미지 URL은 있는데 selected label/order가 비어 있는 경우를 보정합니다.
-    디버그 결과처럼 face_result_image_c2는 있는데 selected_face_reference_order가 ['c1']로만 남는 상태를 방지합니다.
-    """
-    for character_code in ["c1", "c2"]:
-        candidates = get_face_reference_candidates(character_code)
-        if not candidates:
-            continue
-
-        label_key = f"face_selected_label_{character_code}"
-        result_image_key = f"face_result_image_{character_code}"
-        result_filename_key = f"face_result_filename_{character_code}"
-
-        labels = [item["label"] for item in candidates]
-        current_label = st.session_state.get(label_key)
-
-        if current_label not in labels:
-            st.session_state[label_key] = labels[0]
-            current_label = labels[0]
-
-        selected_candidate = get_selected_candidate(candidates, current_label) or candidates[0]
-
-        if selected_candidate.get("image") is not None:
-            st.session_state[result_image_key] = selected_candidate["image"]
-            st.session_state[result_filename_key] = selected_candidate.get("filename", "")
-            append_face_reference_order(character_code)
-
-
-def apply_selected_face_result(character_code):
-    candidates = get_face_reference_candidates(character_code)
-    if not candidates:
-        return None
-
-    selected_label_key = f"face_selected_label_{character_code}"
-    selected_label = st.session_state.get(selected_label_key)
-
-    labels = [item["label"] for item in candidates]
-    if selected_label not in labels:
-        selected_label = labels[0]
-        st.session_state[selected_label_key] = selected_label
-
-    selected_candidate = get_selected_candidate(candidates, selected_label)
-
-    if selected_candidate and selected_candidate.get("image") is not None:
-        st.session_state[f"face_result_image_{character_code}"] = selected_candidate["image"]
-        st.session_state[f"face_result_filename_{character_code}"] = selected_candidate.get("filename", "")
-        append_face_reference_order(character_code)
-
-    return selected_candidate
-
-
-def get_selected_face_reference_entries():
-    ensure_face_selection_state()
-
-    selected_order = st.session_state.get("selected_face_reference_order", [])
-    character_codes = ["c1", "c2"]
-    display_order = [code for code in selected_order if code in character_codes]
-
-    for code in character_codes:
-        if code not in display_order and st.session_state.get(f"face_result_image_{code}") is not None:
-            display_order.append(code)
-
-    entries = []
-
-    for code in display_order:
-        image = st.session_state.get(f"face_result_image_{code}")
-        if image is None:
-            continue
-
-        if code == "c1":
-            label = "Image 1 - Boy"
-            display_label = "Selected Boy"
-        else:
-            label = "Image 2 - Girl"
-            display_label = "Selected Girl"
-
-        entries.append(
-            {
-                "code": code,
-                "label": label,
-                "display_label": display_label,
-                "image": image,
-                "filename": st.session_state.get(f"face_result_filename_{code}", ""),
-            }
-        )
-
-    return entries
-
-
+# ------------------------- 장면 레퍼런스 선택 동기화 함수 -------------------------
+# 장면 생성용 레퍼런스 선택값이 후보 목록과 일치하도록 세션 상태를 보정하는 함수
+# 후보 라벨이 없으면 선택값을 비우고, 현재 선택값이 후보에 없으면 첫 번째 후보 라벨로 자동 설정
 def sync_scene_reference_selection(session_key, candidates):
     labels = [item["label"] for item in candidates]
 
@@ -414,7 +274,9 @@ def sync_scene_reference_selection(session_key, candidates):
     if st.session_state.get(session_key) not in labels:
         st.session_state[session_key] = labels[0]
 
-
+# ------------------------- 얼굴 생성 UI 설정 구성 함수 -------------------------
+# Streamlit에서 선택한 스토리보드·캐릭터·외형 설정을 얼굴 생성 워크플로우용 설정 딕셔너리로 구성하는 함수
+# 세션 상태에서 CSV, 샷 필터, 캐릭터 정보, 얼굴 외형 옵션, 피부 디테일 값을 가져와 RunComfy 요청에 맞는 노드별 입력값으로 정리
 def build_face_ui_config():
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
@@ -477,7 +339,9 @@ def build_face_ui_config():
         },
     }
 
-
+# ------------------------- 전신 생성 UI 설정 구성 함수 -------------------------
+# Streamlit에서 선택한 캐릭터의 전신 생성 프롬프트와 얼굴 레퍼런스를 전신 생성용 설정 딕셔너리로 구성하는 함수
+# 선택 라벨을 C1/C2로 변환한 뒤, 해당 캐릭터의 전신 프롬프트·얼굴 이미지 URL·파일명을 세션에서 가져와 반환
 def build_body_ui_config():
     character_filter_label = st.session_state.get(
         "body_character_filter_label",
@@ -506,8 +370,10 @@ def build_body_ui_config():
             "face_filename": face_filename,
         }
     }
-
-
+ 
+# ------------------------- 장면 생성 UI 설정 구성 함수 -------------------------
+# 스토리보드 선택 정보와 남자/여자 전신 레퍼런스를 장면 생성용 설정 딕셔너리로 구성하는 함수
+# 스토리보드 입력값을 만든 뒤, 선택된 c1 남자 전신 후보와 c2 여자 전신 후보의 라벨·이미지·파일명을 reference_images에 넣어 반환
 def build_scene_ui_config():
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
@@ -545,7 +411,9 @@ def build_scene_ui_config():
         },
     }
 
-
+# ------------------------- 장면 결과 후보 조회 함수 -------------------------
+# 장면 생성 결과 이미지 후보 목록을 Streamlit 세션에서 가져와 화면 표시용으로 정리하는 함수
+# scene_candidates를 label, image, filename 형태로 정리하고, 후보가 없으면 기존 단일 장면 결과 이미지를 fallback으로 추가
 def get_scene_result_candidates():
     candidates = st.session_state.get("scene_candidates", [])
     normalized = []
@@ -569,7 +437,9 @@ def get_scene_result_candidates():
 
     return normalized
 
-
+# ------------------------- 카메라 보정 UI 설정 구성 함수 -------------------------
+# 선택된 장면 이미지와 카메라 조정값을 카메라 앵글 보정 워크플로우용 설정 딕셔너리로 구성하는 함수
+# 스토리보드 입력값과 선택된 장면 후보를 가져온 뒤, 수평/수직 앵글·줌·프롬프트 소스 설정을 정리해 반환
 def build_camera_refinement_ui_config():
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
@@ -611,7 +481,9 @@ def build_camera_refinement_ui_config():
         },
     }
 
-
+# ------------------------- 빈 미리보기 박스 렌더링 함수 -------------------------
+# 이미지가 없을 때 안내 메시지를 담은 빈 미리보기 박스를 Streamlit 화면에 표시하는 함수
+# 전달받은 message와 height 값을 HTML 스타일에 넣고 st.markdown()으로 렌더링
 def render_empty_preview_box(message, height=520):
     st.markdown(
         f"""
@@ -644,12 +516,8 @@ st.set_page_config(
 )
 
 st.title("🎬 AI Storyboard Generation Pipeline")
-st.caption(
-    "A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement"
-)
+st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
 
-# 기존 session_state 보정
-ensure_face_selection_state()
 
 # =========================
 # Tabs
@@ -664,16 +532,17 @@ tab1, tab2, tab3, tab4 = st.tabs(
 )
 
 
-# =========================
+# =================================
 # Step 1. Storyboard Data Parsing
-# =========================
+# =================================
 with tab1:
     st.header("Step 1. Storyboard Data Parsing")
 
+    # Streamlit 화면에 파일 업로드 버튼/영역을 만드는 함수
+    # 사용자가 CSV 같은 파일을 선택하면, 그 파일을 코드에서 읽을 수 있는 uploaded_file 객체로 반환
     uploaded_csv = st.file_uploader(
         "Upload Storyboard CSV",
         type=["csv"],
-        help="CSV 파일을 업로드하면 내부적으로 텍스트로 읽어서 workflow에 전달합니다.",
     )
 
     if uploaded_csv is not None:
@@ -714,95 +583,26 @@ with tab1:
                         options=shot_ids,
                         default=[],
                         key="custom_shots",
-                        help="CUSTOM일 때만 shot을 선택합니다.",
+                        # help="CUSTOM일 때만 shot을 선택합니다.",
                     )
                 else:
                     st.warning("CSV에서 추출된 shot id가 없습니다.")
 
-            st.divider()
-            st.subheader("RunComfy CSV Parser Test")
-            st.caption("Step 1에서 업로드한 CSV가 RunComfy의 CSVStoryboardParser까지 정상적으로 전달되는지 먼저 확인합니다.")
-
-            csv_parser_test_disabled = not bool(st.session_state.get("csv_text", "").strip())
-
-            if st.button("Test CSV Parser on RunComfy", type="secondary", disabled=csv_parser_test_disabled):
-                try:
-                    api_key = st.secrets["RUNCOMFY_API_KEY"]
-                    deployment_id = st.secrets["DEPLOYMENT_ID"]
-                    storyboard_input_config = build_storyboard_input_config()
-
-                    with st.spinner("RunComfy에서 CSVStoryboardParser 테스트를 실행하는 중입니다..."):
-                        result = run_csv_parser_test(
-                            api_key=api_key,
-                            deployment_id=deployment_id,
-                            storyboard_input_config=storyboard_input_config,
-                            poll_interval=5,
-                            timeout_seconds=900,
-                        )
-
-                    st.session_state["csv_parser_test_result"] = result
-                    st.session_state["csv_parser_test_images"] = result.get("images", [])
-
-                    images = result.get("images", [])
-                    if images:
-                        st.success("CSV Parser Test 성공: RunComfy에서 output image가 반환되었습니다.")
-                    else:
-                        st.success(
-                            "CSV Parser Test 완료: RunComfy에서 workflow가 정상 실행되었습니다. "
-                            "현재 테스트 workflow에는 SaveImage가 없으므로 image output이 비어 있는 것은 정상입니다."
-                        )
-                    st.rerun()
-
-                except KeyError:
-                    st.error("RunComfy secret 설정이 없습니다.")
-                    st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
-                except Exception as e:
-                    st.error("RunComfy CSV Parser Test 실행 중 오류가 발생했습니다.")
-                    st.exception(e)
-                    with st.expander("Debug: Storyboard Input Config", expanded=False):
-                        st.json(build_storyboard_input_config())
-
-            csv_parser_test_result = st.session_state.get("csv_parser_test_result")
-            csv_parser_test_images = st.session_state.get("csv_parser_test_images", [])
-
-            if csv_parser_test_result:
-                st.markdown("#### CSV Parser Test Result")
-                if csv_parser_test_images:
-                    cols = st.columns(min(len(csv_parser_test_images), 3))
-                    for idx, image_item in enumerate(csv_parser_test_images):
-                        with cols[idx % len(cols)]:
-                            st.image(
-                                image_item.get("url", ""),
-                                caption=image_item.get("filename", f"CSV Parser Test Output {idx + 1}"),
-                                use_container_width=True,
-                            )
-                else:
-                    st.info("CSV Parser Test workflow는 텍스트/JSON 출력 검증용이며 SaveImage가 없기 때문에 image output은 표시되지 않습니다.")
-
-                with st.expander("Debug: RunComfy Request", expanded=False):
-                    st.json(csv_parser_test_result.get("request", {}))
-                with st.expander("Debug: RunComfy Result", expanded=False):
-                    st.json(csv_parser_test_result.get("result", {}))
-                with st.expander("Debug: Patched workflow_api_json", expanded=False):
-                    st.json(csv_parser_test_result.get("workflow_api_json", {}))
+            # st.divider()
+    
     else:
         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
 
 
-# =========================
+# ========================================
 # Step 2. Character Reference Generation
-# =========================
+# ========================================
 with tab2:
-    ensure_face_selection_state()
 
     st.header("Step 2. Character Reference Generation")
     st.caption("Generate face identity references first, then convert them into full-body references for scene generation.")
 
-    with st.container(border=True):
-        st.markdown("#### Character Reference Pipeline")
-        st.markdown("**Face Identity** → **Full-Body Reference** → **Scene Input**")
-        st.caption("2A defines each character's visual identity, and 2B converts that identity into full-body references used by Scene Generation.")
-
+    # ------------------- 2A. Character Identity Generation ------------------- 
     with st.container(border=True):
         st.markdown("### 2A. Character Identity Generation")
 
@@ -843,7 +643,6 @@ with tab2:
                         400,
                     )
 
-
             
         with settings_col:
             st.subheader("Target Character Control")
@@ -854,7 +653,6 @@ with tab2:
                 index=1,
                 horizontal=True,
                 key="character_filter_label",
-                help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
             )
 
             with st.expander("Identity Attribute Controls", expanded=True):
@@ -933,7 +731,7 @@ with tab2:
                         api_key = st.secrets["RUNCOMFY_API_KEY"]
                         deployment_id = st.secrets["DEPLOYMENT_ID"]
 
-                        with st.spinner("RunComfy에서 Character Identity를 생성하는 중입니다..."):
+                        with st.spinner("Character Identity를 생성하는 중입니다..."):
                             result = run_face_generation(
                                 api_key=api_key,
                                 deployment_id=deployment_id,
@@ -951,16 +749,11 @@ with tab2:
                             with st.expander("Collected Character Identity Config", expanded=False):
                                 st.json(config)
                         else:
-                            st.session_state[f"face_candidates_{character_code}"] = images
-
                             first_image = images[0]
+                            
                             st.session_state[f"face_result_image_{character_code}"] = first_image["image"]
                             st.session_state[f"face_result_filename_{character_code}"] = first_image.get("filename", "")
-                            st.session_state[f"face_selected_label_{character_code}"] = first_image["label"]
-
-                            append_face_reference_order(character_code)
-                            ensure_face_selection_state()
-
+       
                             st.success("Character Identity 생성이 완료되었습니다.")
                             st.rerun()
 
@@ -975,9 +768,9 @@ with tab2:
                         st.exception(e)
                         with st.expander("Collected Character Identity Config", expanded=False):
                             st.json(config)
-
     # st.divider()
 
+    # ------------------- 2B. Full-Body Reference Generation ------------------- 
     with st.container(border=True):
         st.markdown("### 2B. Full-Body Reference Generation")
         initialize_body_prompts()
@@ -1042,7 +835,6 @@ with tab2:
                 index=0,
                 horizontal=True,
                 key="body_character_filter_label",
-                help="UI에서는 Image 1 / Image 2로 표시하고, workflow에는 C1 / C2로 전달합니다.",
             )
 
             # st.divider()
@@ -1055,7 +847,6 @@ with tab2:
                     key="body_prompt_c1",
                     height=260,
                     placeholder=BODY_PROMPT_PLACEHOLDER,
-                    help="Image 1 - Boy의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
                 )
             else:
                 st.text_area(
@@ -1063,7 +854,6 @@ with tab2:
                     key="body_prompt_c2",
                     height=260,
                     placeholder=BODY_PROMPT_PLACEHOLDER,
-                    help="Image 2 - Girl의 전신 reference 생성을 위한 프롬프트입니다. 사용자가 직접 수정할 수 있습니다.",
                 )
 
             with st.expander("Reference Prompt Guidelines", expanded=False):
@@ -1148,15 +938,18 @@ with tab2:
                                     if item.get("url")
                                 ]
             
+                            if not images:
+                                st.error("RunComfy 실행은 완료되었지만 결과 이미지가 없습니다.")
+                                with st.expander("RunComfy Raw Result", expanded=False):
+                                    st.json(result)
+                                with st.expander("Collected Full-Body Reference Config", expanded=False):
+                                    st.json(body_config)
                             else:
-                                st.session_state[f"body_candidates_{character_code}"] = images
-            
                                 first_image = images[0]
-            
+                            
                                 st.session_state[f"body_result_image_{character_code}"] = first_image["image"]
                                 st.session_state[f"body_result_filename_{character_code}"] = first_image.get("filename", "")
-                                st.session_state[f"body_selected_label_{character_code}"] = first_image["label"]
-            
+                            
                                 st.success("Full-Body Reference 생성이 완료되었습니다.")
                                 st.rerun()
             
@@ -1176,9 +969,9 @@ with tab2:
                                 st.json(body_config)
 
 
-# =========================
+# ===========================================
 # Step 3. Reference-Guided Scene Generation
-# =========================
+# ===========================================
 with tab3:
     st.header("Step 3. Reference-Guided Scene Generation")
 
