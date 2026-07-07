@@ -1064,7 +1064,54 @@ with tab3:
                     use_container_width=True,
                     hide_index=True,
                 )
-    
+
+                st.divider()
+
+                st.subheader("Manual Full-Body Reference Input")
+        
+                manual_body_col1, manual_body_col2 = st.columns(2, gap="medium")
+        
+                with manual_body_col1:
+                    manual_boy_body_url = st.text_input(
+                        "Manual Image 1 - Boy Full-Body Reference URL",
+                        value="",
+                        key="manual_boy_body_reference_url",
+                        placeholder="Paste Image 1 - Boy full-body image URL here",
+                        help="Step 2B를 다시 실행하지 않고, 기존 boy full-body reference URL을 Step 3 입력으로 사용합니다.",
+                    )
+        
+                with manual_body_col2:
+                    manual_girl_body_url = st.text_input(
+                        "Manual Image 2 - Girl Full-Body Reference URL",
+                        value="",
+                        key="manual_girl_body_reference_url",
+                        placeholder="Paste Image 2 - Girl full-body image URL here",
+                        help="Step 2B를 다시 실행하지 않고, 기존 girl full-body reference URL을 Step 3 입력으로 사용합니다.",
+                    )
+        
+                if st.button(
+                    "Use these URLs as Full-Body References",
+                    type="secondary",
+                    use_container_width=True,
+                ):
+                    updated = False
+        
+                    if manual_boy_body_url.strip():
+                        st.session_state["body_result_image_c1"] = manual_boy_body_url.strip()
+                        st.session_state["body_result_filename_c1"] = "manual_boy_body_reference.png"
+                        updated = True
+        
+                    if manual_girl_body_url.strip():
+                        st.session_state["body_result_image_c2"] = manual_girl_body_url.strip()
+                        st.session_state["body_result_filename_c2"] = "manual_girl_body_reference.png"
+                        updated = True
+        
+                    if updated:
+                        st.success("Manual full-body reference URL이 Step 3 입력으로 설정되었습니다.")
+                        st.rerun()
+                    else:
+                        st.error("최소 1개 이상의 full-body reference URL을 입력하세요.")
+        
         st.divider()
     
         st.subheader("Character Reference Inputs")
