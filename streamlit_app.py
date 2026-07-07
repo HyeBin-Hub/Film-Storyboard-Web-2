@@ -961,7 +961,7 @@ with tab2:
                             if not images:
                                 raw_result = result.get("result", result)
                                 outputs = raw_result.get("outputs", {})
-                                save_output = outputs.get("1226", {})
+                                save_output = outputs.get("1244", {})
                                 raw_images = save_output.get("images", [])
                             
                                 images = [
@@ -970,7 +970,7 @@ with tab2:
                                         "image": item.get("url", ""),
                                         "url": item.get("url", ""),
                                         "filename": item.get("filename", ""),
-                                        "node_id": "1226",
+                                        "node_id": "1244",
                                         "raw": item,
                                     }
                                     for idx, item in enumerate(raw_images)
