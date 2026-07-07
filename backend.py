@@ -737,39 +737,39 @@ def patch_scene_workflow(workflow: dict, config: dict) -> dict:
     seed = random.randint(1, 4_294_967_295)
     filename_prefix = f"scene_{seed}"
 
-    # 26: CSVStoryboardParser
-    workflow["26"]["inputs"]["csv_file"] = "CUSTOM"
-    workflow["26"]["inputs"]["csv_text"] = csv_text
-    workflow["26"]["inputs"]["shot_filter"] = shot_filter
-    workflow["26"]["inputs"]["custom_shot_ids"] = custom_shot_ids
-
-    # 27: Load Image From URL - boy
-    workflow["27"]["inputs"]["image"] = boy_body_image_url
-    workflow["27"]["inputs"]["keep_alpha_channel"] = False
-    workflow["27"]["inputs"]["output_mode"] = False
-
-    # 28: Load Image From URL - girl
-    workflow["28"]["inputs"]["image"] = girl_body_image_url
-    workflow["28"]["inputs"]["keep_alpha_channel"] = False
-    workflow["28"]["inputs"]["output_mode"] = False
-
-    # 23: ThinkingLLM / AILab_QwenVL
-    if "23" in workflow:
-        inputs = workflow["23"].get("inputs", {})
+    # 57: CSVStoryboardParser
+    workflow["57"]["inputs"]["input_mode"] = "text"
+    workflow["57"]["inputs"]["csv_file"] = "CUSTOM"
+    workflow["57"]["inputs"]["csv_text"] = csv_text
+    workflow["57"]["inputs"]["shot_filter"] = shot_filter
+    workflow["57"]["inputs"]["custom_shot_ids"] = custom_shot_ids
+    
+    # 50: Load Image From URL - boy
+    workflow["50"]["inputs"]["image"] = boy_body_image_url
+    workflow["50"]["inputs"]["keep_alpha_channel"] = False
+    workflow["50"]["inputs"]["output_mode"] = False
+    
+    # 51: Load Image From URL - girl
+    workflow["51"]["inputs"]["image"] = girl_body_image_url
+    workflow["51"]["inputs"]["keep_alpha_channel"] = False
+    workflow["51"]["inputs"]["output_mode"] = False
+    
+    # 58: ThinkingLLM / AILab_QwenVL
+    if "58" in workflow:
+        inputs = workflow["58"].get("inputs", {})
     
         if "seed" in inputs:
             inputs["seed"] = seed
     
-        # 현재 RunComfy QwenVL 노드의 허용값:
-        # auto, sage, flash_attention_2, sdpa
         if "attention_mode" in inputs:
-            inputs["attention_mode"] = "sdpa"
-
-    # 10: KSampler
-    workflow["10"]["inputs"]["seed"] = seed
-
-    # 11: SaveImage
-    workflow["11"]["inputs"]["filename_prefix"] = filename_prefix
+            inputs["attention_mode"] = "auto"
+    
+    # 68: RandomNoise
+    if "68" in workflow and "noise_seed" in workflow["68"]["inputs"]:
+        workflow["68"]["inputs"]["noise_seed"] = seed
+    
+    # 52: SaveImage
+    workflow["52"]["inputs"]["filename_prefix"] = filename_prefix
 
     return workflow
 
@@ -813,11 +813,10 @@ def run_scene_generation(
 
     raw_images = extract_output_images(result_data)
     
-    # Step 3에서는 최종 SaveImage 노드인 11번 결과만 사용
-    # 27, 28은 입력 reference 이미지이므로 제외
+    # Step 3에서는 최종 SaveImage 노드인 52번 결과만 사용
     raw_images = [
         item for item in raw_images
-        if str(item.get("node_id", "")) == "11"
+        if str(item.get("node_id", "")) == "52"
         and item.get("raw", {}).get("type") == "output"
     ]
     
