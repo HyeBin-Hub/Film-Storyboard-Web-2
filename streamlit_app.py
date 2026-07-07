@@ -1000,7 +1000,7 @@ with tab3:
     # ================= RIGHT: Scene Control + References + Button =================
     with settings_col:
         with st.container(border=True):
-            st.subheader("Scene Generation Control")
+            # st.subheader("Scene Generation Control")
     
             st.markdown("###### Selected Storyboard Context")
     
