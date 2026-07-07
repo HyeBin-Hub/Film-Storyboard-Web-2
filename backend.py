@@ -551,7 +551,7 @@ def patch_body_workflow(workflow: dict, config: dict) -> dict:
     - 1238: body/outfit prompt text
     - 1065: ThinkingLLM
     - 1048: KSampler
-    - 1226: SaveImage
+    - 1244: SaveImage
     """
     workflow = deepcopy(workflow)
 
@@ -597,8 +597,8 @@ def patch_body_workflow(workflow: dict, config: dict) -> dict:
     # 1048: KSampler
     workflow["1048"]["inputs"]["seed"] = seed
 
-    # 1226: SaveImage
-    workflow["1226"]["inputs"]["filename_prefix"] = filename_prefix
+    # 1244: SaveImage
+    workflow["1244"]["inputs"]["filename_prefix"] = filename_prefix
 
     return workflow
 
@@ -642,11 +642,11 @@ def run_body_generation(
 
     raw_images = extract_output_images(result_data)
 
-    # Step 2B에서는 최종 SaveImage 노드인 1226 결과만 사용해야 함.
+    # Step 2B에서는 최종 SaveImage 노드인 1244 결과만 사용해야 함.
     # 1239는 LoadImageFromUrl 입력 face reference라서 제외해야 함.
     raw_images = [
         item for item in raw_images
-        if str(item.get("node_id", "")) == "1226"
+        if str(item.get("node_id", "")) == "1244"
         and item.get("raw", {}).get("type") == "output"
     ]
 
