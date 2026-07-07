@@ -1,19 +1,5 @@
 {
-  "1": {
-    "inputs": {
-      "lora_name": "bfs_head_v1_flux-klein_9b_step3500_rank128.safetensors",
-      "strength_model": 0.5,
-      "model": [
-        "16",
-        0
-      ]
-    },
-    "class_type": "LoraLoaderModelOnly",
-    "_meta": {
-      "title": "Load LoRA"
-    }
-  },
-  "2": {
+  "33": {
     "inputs": {
       "aspect_ratio": "original",
       "proportional_width": 1,
@@ -23,12 +9,12 @@
       "round_to_multiple": "8",
       "scale_to_side": "longest",
       "scale_to_length": [
-        "3",
+        "36",
         0
       ],
       "background_color": "#ffffff",
       "image": [
-        "27",
+        "50",
         0
       ]
     },
@@ -37,7 +23,40 @@
       "title": "LayerUtility: ImageScaleByAspectRatio V2"
     }
   },
-  "3": {
+  "34": {
+    "inputs": {
+      "aspect_ratio": "original",
+      "proportional_width": 1,
+      "proportional_height": 1,
+      "fit": "letterbox",
+      "method": "lanczos",
+      "round_to_multiple": "8",
+      "scale_to_side": "longest",
+      "scale_to_length": [
+        "36",
+        0
+      ],
+      "background_color": "#ffffff",
+      "image": [
+        "51",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "_meta": {
+      "title": "LayerUtility: ImageScaleByAspectRatio V2"
+    }
+  },
+  "35": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "36": {
     "inputs": {
       "Number": 2048
     },
@@ -46,34 +65,114 @@
       "title": "Int"
     }
   },
-  "4": {
+  "37": {
     "inputs": {
-      "aspect_ratio": "original",
-      "proportional_width": 1,
-      "proportional_height": 1,
-      "fit": "letterbox",
-      "method": "lanczos",
-      "round_to_multiple": "8",
-      "scale_to_side": "longest",
-      "scale_to_length": [
-        "3",
+      "width": [
+        "38",
         0
       ],
-      "background_color": "#ffffff",
-      "image": [
-        "28",
+      "height": [
+        "38",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "Empty Flux 2 Latent"
+    }
+  },
+  "38": {
+    "inputs": {
+      "megapixel": "1.0",
+      "aspect_ratio": "16:9 (Panorama)",
+      "divisible_by": "64",
+      "custom_ratio": false,
+      "custom_aspect_ratio": "1:1"
+    },
+    "class_type": "FluxResolutionNode",
+    "_meta": {
+      "title": "Flux Resolution Calc"
+    }
+  },
+  "40": {
+    "inputs": {
+      "lora_name": "bfs_head_v1_flux-klein_9b_step3500_rank128.safetensors",
+      "strength_model": 0.5,
+      "model": [
+        "42",
         0
       ]
     },
-    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
+    "class_type": "LoraLoaderModelOnly",
     "_meta": {
-      "title": "LayerUtility: ImageScaleByAspectRatio V2"
+      "title": "Load LoRA"
     }
   },
-  "5": {
+  "41": {
+    "inputs": {
+      "clip_name": "qwen_3_8b.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "42": {
+    "inputs": {
+      "unet_name": "flux-2-klein-9b.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "43": {
+    "inputs": {
+      "text": "You are an expert cinematic prompt engineer for Qwen-VL 3.4B and Flux.2-klein movie storyboard generation.\n\nYou will receive:\n1. two reference images\n2. a JSON object named \"structured_shot_data\"\n\nYour task is to generate one independent Flux.2-klein scene prompt for each shot.\n\nCharacter identity, face, hairstyle, body shape, and outfit must rely only on the visual information in the reference images.\n\n[CORE GENERATION RULE — STRICT]\n- The \"description\" field is the primary source for writing each prompt.\n- Expand the description slightly into a compact cinematic scene prompt.\n- Use the other structured fields only to support, refine, and constrain the description.\n- Do not replace the description with a completely different sentence.\n- Do not invent new characters, props, outfits, actions, locations, or story events.\n\n[INPUT INTERPRETATION — STRICT]\n- Read each shot from structured_shot_data.shots.\n- For each shot, use:\n  - description as the main sentence basis\n  - characters for subject identity, position, and action checking\n  - environment for place refinement\n  - atmosphere for mood refinement\n  - camera fields for shot size, framing, and composition wording\n- The field \"flux_multi_angle_prompt\" is for a separate Multi-Angle branch only.\n- Do not include \"flux_multi_angle_prompt\" or \"<sks>\" in the final output.\n\n[OUTPUT FORMAT — STRICT]\n- Output exactly one single-line prompt for each shot.\n- Each line must follow this structure:\nNext scene: [shot number]) [shot size / framing] :: [description-based core scene description] :: [mood, color, style]\n- Do not insert a newline after \"Next scene:\".\n- Keep each prompt short, clear, and compact.\n- Do not combine multiple shots.\n- Do not include explanations, bullets, JSON, or quotes.\n- Output only the final prompts.\n\n[REFERENCE IMAGE MAPPING — STRICT]\n- Image 1 = the boy. Always call him \"the boy from Image 1\".\n- Image 2 = the girl. Always call her \"the girl from Image 2\".\n- Never use C1 or C2 in the output.\n- Preserve character identity only from the reference images.\n- Do not invent unseen facial details, hairstyle details, body details, or outfit details.\n\n[DESCRIPTION EXPANSION RULE]\n- Rewrite the description into natural cinematic English.\n- Keep the original action and direction intact.\n- Slightly enrich the sentence using only the provided structured data.\n- Keep the prompt visually clear and generation-friendly for Flux.2-klein.\n- Do not over-write or over-embellish the description.\n\n[CAMERA RULE]\n- Reflect shot_size and framing explicitly in the first segment.\n- Reflect composition, camera angle, and camera position naturally in the core scene description only when helpful.\n- Keep camera wording concise.\n\n[STYLE RULE]\n- Even if the shot data includes \"Vintage\", do not create a retro or old-film look.\n- Use a short modern style description.\n- Preferred style wording:\n\"modern digital cinema, sharp focus, clean color grading, balanced natural lighting.\"\n\n[WRITING RULE]\nFocus only on:\n1. shot size and framing\n2. description-based action and subject placement\n3. environment\n4. short mood/style\n\nIf shot_count is 1, output only one line.\nUse the reference image names only as identity labels. Do not visually analyze the images.\n\n"
+    },
+    "class_type": "Text Multiline",
+    "_meta": {
+      "title": "Text Multiline"
+    }
+  },
+  "44": {
+    "inputs": {
+      "storyboard_json": [
+        "57",
+        0
+      ],
+      "description_source": "english",
+      "include_technical_settings": "false"
+    },
+    "class_type": "ScenePromptBuilder",
+    "_meta": {
+      "title": "Scene Prompt Builder"
+    }
+  },
+  "45": {
+    "inputs": {
+      "a": [
+        "43",
+        0
+      ],
+      "b": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "JWStringConcat",
+    "_meta": {
+      "title": "String Concatenate"
+    }
+  },
+  "46": {
     "inputs": {
       "prompt": [
-        "23",
+        "58",
         0
       ],
       "start_index": 0,
@@ -85,39 +184,10 @@
       "title": "PromptLine"
     }
   },
-  "7": {
-    "inputs": {
-      "prompt": [
-        "5",
-        0
-      ],
-      "ref_longest_edge": 1536,
-      "clip": [
-        "15",
-        0
-      ],
-      "vae": [
-        "14",
-        0
-      ],
-      "image1": [
-        "20",
-        0
-      ],
-      "image2": [
-        "21",
-        0
-      ]
-    },
-    "class_type": "Flux2KleinEditTextEncode_EditUtils",
-    "_meta": {
-      "title": "EditUtils: Flux2Klein Edit Text Encode lrzjason"
-    }
-  },
-  "8": {
+  "47": {
     "inputs": {
       "conditioning": [
-        "7",
+        "59",
         0
       ]
     },
@@ -126,74 +196,14 @@
       "title": "ConditioningZeroOut"
     }
   },
-  "9": {
-    "inputs": {
-      "width": [
-        "2",
-        3
-      ],
-      "height": [
-        "2",
-        4
-      ],
-      "batch_size": 1
-    },
-    "class_type": "EmptyFlux2LatentImage",
-    "_meta": {
-      "title": "Empty Flux 2 Latent"
-    }
-  },
-  "10": {
-    "inputs": {
-      "seed": 849810659015585,
-      "steps": 4,
-      "cfg": 1,
-      "sampler_name": "euler",
-      "scheduler": "simple",
-      "denoise": 1,
-      "model": [
-        "1",
-        0
-      ],
-      "positive": [
-        "7",
-        0
-      ],
-      "negative": [
-        "8",
-        0
-      ],
-      "latent_image": [
-        "9",
-        0
-      ]
-    },
-    "class_type": "KSampler",
-    "_meta": {
-      "title": "KSampler"
-    }
-  },
-  "11": {
-    "inputs": {
-      "filename_prefix": "ComfyUI",
-      "images": [
-        "13",
-        0
-      ]
-    },
-    "class_type": "SaveImage",
-    "_meta": {
-      "title": "Save Image"
-    }
-  },
-  "13": {
+  "48": {
     "inputs": {
       "samples": [
-        "10",
+        "67",
         0
       ],
       "vae": [
-        "14",
+        "35",
         0
       ]
     },
@@ -202,53 +212,42 @@
       "title": "VAE Decode"
     }
   },
-  "14": {
+  "50": {
     "inputs": {
-      "vae_name": "flux2-vae.safetensors"
+      "image": "body_boy_631934065_00001__boy.png",
+      "keep_alpha_channel": false,
+      "output_mode": false
     },
-    "class_type": "VAELoader",
+    "class_type": "LoadImageFromUrl",
     "_meta": {
-      "title": "Load VAE"
+      "title": "Load Image From URL - boy"
     }
   },
-  "15": {
+  "51": {
     "inputs": {
-      "clip_name": "qwen_3_8b.safetensors",
-      "type": "flux2",
-      "device": "default"
+      "image": "body_girl_1650482446_00001_girl.png",
+      "keep_alpha_channel": false,
+      "output_mode": false
     },
-    "class_type": "CLIPLoader",
+    "class_type": "LoadImageFromUrl",
     "_meta": {
-      "title": "Load CLIP"
+      "title": "Load Image From URL - girl"
     }
   },
-  "16": {
+  "52": {
     "inputs": {
-      "unet_name": "flux-2-klein-9b.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
-    }
-  },
-  "19": {
-    "inputs": {
-      "a": [
-        "24",
-        0
-      ],
-      "b": [
-        "25",
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "48",
         0
       ]
     },
-    "class_type": "JWStringConcat",
+    "class_type": "SaveImage",
     "_meta": {
-      "title": "String Concatenate"
+      "title": "Save Image"
     }
   },
-  "20": {
+  "53": {
     "inputs": {
       "model": "RMBG-2.0",
       "sensitivity": 1,
@@ -260,7 +259,7 @@
       "background": "Color",
       "background_color": "#ffffff",
       "image": [
-        "2",
+        "33",
         0
       ]
     },
@@ -269,7 +268,7 @@
       "title": "Remove Background (RMBG)"
     }
   },
-  "21": {
+  "54": {
     "inputs": {
       "model": "RMBG-2.0",
       "sensitivity": 1,
@@ -281,7 +280,7 @@
       "background": "Color",
       "background_color": "#ffffff",
       "image": [
-        "4",
+        "34",
         0
       ]
     },
@@ -290,18 +289,31 @@
       "title": "Remove Background (RMBG)"
     }
   },
-  "23": {
+  "57": {
+    "inputs": {
+      "input_mode": "file",
+      "csv_file": "Sonagi_S07_Shot_1-4.csv",
+      "csv_text": "",
+      "shot_filter": "7-2",
+      "custom_shot_ids": ""
+    },
+    "class_type": "CSVStoryboardParser",
+    "_meta": {
+      "title": "CSV Storyboard Parser"
+    }
+  },
+  "58": {
     "inputs": {
       "model_name": "Qwen3-VL-8B-Instruct-Abliterated [DL: 15GB, VRAM: 12.0GB]",
       "attention_mode": "auto",
       "preset_prompt": "🚫 No preset (image-only)",
       "custom_prompt": [
-        "24",
+        "45",
         0
       ],
-      "max_tokens": 500,
-      "keep_model_loaded": false,
-      "seed": 858237465998788,
+      "max_tokens": 1000,
+      "keep_model_loaded": true,
+      "seed": 4068698443,
       "keep_last_prompt": false,
       "stream_tokens_to_terminal": false,
       "enable_thinking": false,
@@ -312,62 +324,213 @@
       "title": "ThinkingLLM"
     }
   },
-  "24": {
+  "59": {
     "inputs": {
-      "text": "You are an expert cinematic prompt engineer for Qwen-VL 3.4B and Flux.2-klein movie storyboard generation.\n\nYou will receive:\n1. two reference images\n2. a JSON object named \"structured_shot_data\"\n\nYour task is to generate one independent Flux.2-klein scene prompt for each shot.\n\nCharacter identity, face, hairstyle, body shape, and outfit must rely only on the visual information in the reference images.\n\n[CORE GENERATION RULE — STRICT]\n- The \"description\" field is the primary source for writing each prompt.\n- Expand the description slightly into a compact cinematic scene prompt.\n- Use the other structured fields only to support, refine, and constrain the description.\n- Do not replace the description with a completely different sentence.\n- Do not invent new characters, props, outfits, actions, locations, or story events.\n\n[INPUT INTERPRETATION — STRICT]\n- Read each shot from structured_shot_data.shots.\n- For each shot, use:\n  - description as the main sentence basis\n  - characters for subject identity, position, and action checking\n  - environment for place refinement\n  - atmosphere for mood refinement\n  - camera fields for shot size, framing, and composition wording\n- The field \"flux_multi_angle_prompt\" is for a separate Multi-Angle branch only.\n- Do not include \"flux_multi_angle_prompt\" or \"<sks>\" in the final output.\n\n[OUTPUT FORMAT — STRICT]\n- Output exactly one single-line prompt for each shot.\n- Each line must follow this structure:\nNext scene: [shot number]) [shot size / framing] :: [description-based core scene description] :: [mood, color, style]\n- Do not insert a newline after \"Next scene:\".\n- Keep each prompt short, clear, and compact.\n- Do not combine multiple shots.\n- Do not include explanations, bullets, JSON, or quotes.\n- Output only the final prompts.\n\n[REFERENCE IMAGE MAPPING — STRICT]\n- Reference Image 1 = the boy. Always call him \"the boy from Reference Image 1\".\n- Reference Image 2 = the girl. Always call her \"the girl from Reference Image 2\".\n- Never use C1 or C2 in the output.\n- Preserve character identity only from the reference images.\n- Do not invent unseen facial details, hairstyle details, body details, or outfit details.\n\n[DESCRIPTION EXPANSION RULE]\n- Rewrite the description into natural cinematic English.\n- Keep the original action and direction intact.\n- Slightly enrich the sentence using only the provided structured data.\n- Keep the prompt visually clear and generation-friendly for Flux.2-klein.\n- Do not over-write or over-embellish the description.\n\n[CAMERA RULE]\n- Reflect shot_size and framing explicitly in the first segment.\n- Reflect composition, camera angle, and camera position naturally in the core scene description only when helpful.\n- Keep camera wording concise.\n\n[STYLE RULE]\n- Even if the shot data includes \"Vintage\", do not create a retro or old-film look.\n- Use a short modern style description.\n- Preferred style wording:\n\"modern digital cinema, sharp focus, clean color grading, balanced natural lighting.\"\n\n[WRITING RULE]\nWrite concise storyboard prompts, not long descriptive paragraphs.\nFocus only on:\n1. shot size and framing\n2. description-based action and subject placement\n3. environment\n4. short mood/style\n\nIf shot_count is 1, output only one line.\nUse the reference image names only as identity labels. Do not visually analyze the images.\n\n"
-    },
-    "class_type": "Text Multiline",
-    "_meta": {
-      "title": "Text Multiline"
-    }
-  },
-  "25": {
-    "inputs": {
-      "storyboard_json": [
-        "26",
+      "prompt": [
+        "46",
         0
       ],
-      "description_source": "english",
-      "include_technical_settings": "false"
+      "ref_longest_edge": 1536,
+      "clip": [
+        "41",
+        0
+      ],
+      "vae": [
+        "35",
+        0
+      ],
+      "image1": [
+        "53",
+        0
+      ],
+      "image2": [
+        "54",
+        0
+      ]
     },
-    "class_type": "ScenePromptBuilder",
+    "class_type": "Flux2KleinEditTextEncode_EditUtils",
     "_meta": {
-      "title": "Scene Prompt Builder"
+      "title": "EditUtils: Flux2Klein Edit Text Encode lrzjason"
     }
   },
-  "26": {
+  "60": {
     "inputs": {
-      "input_mode": "Sonagi_S07.csv",
-      "csv_file": "CUSTOM",
-      "csv_text": "7-1, 7-2",
-      "shot_filter": "ALL",
-      "custom_shot_ids": ""
+      "conditioning": [
+        "59",
+        0
+      ],
+      "latent": [
+        "61",
+        0
+      ]
     },
-    "class_type": "CSVStoryboardParser",
+    "class_type": "ReferenceLatent",
     "_meta": {
-      "title": "CSV Storyboard Parser"
+      "title": "ReferenceLatent"
     }
   },
-  "27": {
+  "61": {
     "inputs": {
-      "image": "",
-      "keep_alpha_channel": false,
-      "output_mode": false
+      "pixels": [
+        "53",
+        0
+      ],
+      "vae": [
+        "35",
+        0
+      ]
     },
-    "class_type": "LoadImageFromUrl",
+    "class_type": "VAEEncode",
     "_meta": {
-      "title": "Load Image From URL - boy"
+      "title": "VAE Encode"
     }
   },
-  "28": {
+  "62": {
     "inputs": {
-      "image": "",
-      "keep_alpha_channel": false,
-      "output_mode": false
+      "conditioning": [
+        "60",
+        0
+      ],
+      "latent": [
+        "63",
+        0
+      ]
     },
-    "class_type": "LoadImageFromUrl",
+    "class_type": "ReferenceLatent",
     "_meta": {
-      "title": "Load Image From URL - girl"
+      "title": "ReferenceLatent"
+    }
+  },
+  "63": {
+    "inputs": {
+      "pixels": [
+        "54",
+        0
+      ],
+      "vae": [
+        "35",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "64": {
+    "inputs": {
+      "conditioning": [
+        "47",
+        0
+      ],
+      "latent": [
+        "61",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "65": {
+    "inputs": {
+      "conditioning": [
+        "64",
+        0
+      ],
+      "latent": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "67": {
+    "inputs": {
+      "noise": [
+        "68",
+        0
+      ],
+      "guider": [
+        "69",
+        0
+      ],
+      "sampler": [
+        "71",
+        0
+      ],
+      "sigmas": [
+        "72",
+        0
+      ],
+      "latent_image": [
+        "37",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "68": {
+    "inputs": {
+      "noise_seed": 355742293463858
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "69": {
+    "inputs": {
+      "cfg": 1.1,
+      "model": [
+        "40",
+        0
+      ],
+      "positive": [
+        "62",
+        0
+      ],
+      "negative": [
+        "65",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFGGuider"
+    }
+  },
+  "71": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "72": {
+    "inputs": {
+      "steps": 4,
+      "width": [
+        "38",
+        0
+      ],
+      "height": [
+        "38",
+        1
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2Scheduler"
     }
   }
 }
