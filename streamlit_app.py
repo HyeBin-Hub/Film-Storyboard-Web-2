@@ -377,17 +377,11 @@ def build_body_ui_config():
 def build_scene_ui_config():
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
-    boy_candidates = get_body_reference_candidates("c1")
-    girl_candidates = get_body_reference_candidates("c2")
+    boy_body_image = st.session_state.get("body_result_image_c1", "")
+    boy_body_filename = st.session_state.get("body_result_filename_c1", "")
 
-    selected_boy = get_selected_candidate(
-        boy_candidates,
-        st.session_state.get("scene_boy_reference_label", ""),
-    )
-    selected_girl = get_selected_candidate(
-        girl_candidates,
-        st.session_state.get("scene_girl_reference_label", ""),
-    )
+    girl_body_image = st.session_state.get("body_result_image_c2", "")
+    girl_body_filename = st.session_state.get("body_result_filename_c2", "")
 
     return {
         "storyboard_input": storyboard_input,
@@ -398,14 +392,14 @@ def build_scene_ui_config():
             "selected_shot_data": storyboard_input["selected_shot_data"],
             "reference_images": {
                 "image_1_boy_body": {
-                    "label": selected_boy["label"] if selected_boy else "",
-                    "image": selected_boy.get("image", "") if selected_boy else "",
-                    "filename": selected_boy.get("filename", "") if selected_boy else "",
+                    "label": "Image 1 - Boy Body Reference",
+                    "image": boy_body_image,
+                    "filename": boy_body_filename,
                 },
                 "image_2_girl_body": {
-                    "label": selected_girl["label"] if selected_girl else "",
-                    "image": selected_girl.get("image", "") if selected_girl else "",
-                    "filename": selected_girl.get("filename", "") if selected_girl else "",
+                    "label": "Image 2 - Girl Body Reference",
+                    "image": girl_body_image,
+                    "filename": girl_body_filename,
                 },
             },
         },
@@ -975,10 +969,11 @@ with tab2:
 with tab3:
     st.header("Step 3. Reference-Guided Scene Generation")
 
-    boy_candidates = get_body_reference_candidates("c1")
-    girl_candidates = get_body_reference_candidates("c2")
-    sync_scene_reference_selection("scene_boy_reference_label", boy_candidates)
-    sync_scene_reference_selection("scene_girl_reference_label", girl_candidates)
+    boy_body_image = st.session_state.get("body_result_image_c1")
+    boy_body_filename = st.session_state.get("body_result_filename_c1", "")
+
+    girl_body_image = st.session_state.get("body_result_image_c2")
+    girl_body_filename = st.session_state.get("body_result_filename_c2", "")
 
     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
@@ -992,7 +987,11 @@ with tab3:
             st.caption(f"Selected Scene Count: {storyboard_input['selected_shot_count']}")
 
         if "scene_result_image" in st.session_state:
-            st.image(st.session_state["scene_result_image"], caption="Generated Storyboard Scene", use_container_width=True)
+            st.image(
+                st.session_state["scene_result_image"],
+                caption="Generated Storyboard Scene",
+                use_container_width=True,
+            )
         else:
             render_empty_preview_box("Generated storyboard scene will appear here.", 560)
 
@@ -1013,65 +1012,75 @@ with tab3:
                 else:
                     st.caption("Shot Filter: CUSTOM / No shot selected")
 
-                st.dataframe(pd.DataFrame(storyboard_input["selected_shot_data"]), use_container_width=True, hide_index=True)
+                st.dataframe(
+                    pd.DataFrame(storyboard_input["selected_shot_data"]),
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
         st.divider()
         st.markdown("### Character Reference Inputs")
 
         st.markdown("##### Image 1 - Boy Body Reference")
-        if boy_candidates:
-            st.selectbox(
-                "Select Image 1 - Boy Body Reference",
-                options=[item["label"] for item in boy_candidates],
-                key="scene_boy_reference_label",
-                label_visibility="collapsed",
+
+        if boy_body_image:
+            st.image(
+                boy_body_image,
+                caption="Image 1 - Boy Body Reference",
+                width=240,
             )
-            selected_boy = get_selected_candidate(boy_candidates, st.session_state.get("scene_boy_reference_label", ""))
-            if selected_boy and selected_boy.get("image") is not None:
-                st.image(selected_boy["image"], caption=selected_boy["label"], width=240)
-            else:
-                render_empty_preview_box("Selected boy body reference preview is not available.", 220)
+            if boy_body_filename:
+                st.caption(f"Filename: {boy_body_filename}")
         else:
             st.warning("Step 2에서 Image 1 - Boy body reference를 먼저 생성해야 합니다.")
 
         st.divider()
         st.markdown("##### Image 2 - Girl Body Reference")
-        if girl_candidates:
-            st.selectbox(
-                "Select Image 2 - Girl Body Reference",
-                options=[item["label"] for item in girl_candidates],
-                key="scene_girl_reference_label",
-                label_visibility="collapsed",
+
+        if girl_body_image:
+            st.image(
+                girl_body_image,
+                caption="Image 2 - Girl Body Reference",
+                width=240,
             )
-            selected_girl = get_selected_candidate(girl_candidates, st.session_state.get("scene_girl_reference_label", ""))
-            if selected_girl and selected_girl.get("image") is not None:
-                st.image(selected_girl["image"], caption=selected_girl["label"], width=240)
-            else:
-                render_empty_preview_box("Selected girl body reference preview is not available.", 220)
+            if girl_body_filename:
+                st.caption(f"Filename: {girl_body_filename}")
         else:
             st.warning("Step 2에서 Image 2 - Girl body reference를 먼저 생성해야 합니다.")
 
         st.divider()
-        generate_scene_clicked = st.button("Generate Storyboard Scene", type="primary", use_container_width=True)
+
+        generate_scene_clicked = st.button(
+            "Generate Storyboard Scene",
+            type="primary",
+            use_container_width=True,
+        )
 
         if generate_scene_clicked:
             csv_text = st.session_state.get("csv_text", "")
 
             if not csv_text.strip():
                 st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
-            elif st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM" and len(st.session_state.get("custom_shots", [])) == 0:
+
+            elif (
+                st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM"
+                and len(st.session_state.get("custom_shots", [])) == 0
+            ):
                 st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
-            elif not boy_candidates:
-                st.error("Image 1 - Boy body reference 후보가 없습니다. 먼저 Step 2를 진행하세요.")
-            elif not girl_candidates:
-                st.error("Image 2 - Girl body reference 후보가 없습니다. 먼저 Step 2를 진행하세요.")
+
+            elif not boy_body_image:
+                st.error("Image 1 - Boy body reference가 없습니다. 먼저 Step 2를 진행하세요.")
+
+            elif not girl_body_image:
+                st.error("Image 2 - Girl body reference가 없습니다. 먼저 Step 2를 진행하세요.")
+
             else:
                 scene_config = build_scene_ui_config()
-            
+
                 try:
                     api_key = st.secrets["RUNCOMFY_API_KEY"]
                     deployment_id = st.secrets["DEPLOYMENT_ID"]
-            
+
                     with st.spinner("RunComfy에서 Storyboard Scene을 생성하는 중입니다..."):
                         result = run_scene_generation(
                             api_key=api_key,
@@ -1080,53 +1089,41 @@ with tab3:
                             poll_interval=10,
                             timeout_seconds=1800,
                         )
-            
+
                     images = result.get("images", [])
 
-                
-                    # ----------------DEBUG--------------------------
-                    # st.write("DEBUG extracted body images:", images)
-
-                    # with st.expander("DEBUG raw body result", expanded=True):
-                    #     st.json(result)
-                    # -----------------DEBUG-------------------------
-            
                     if not images:
                         st.error("RunComfy 실행은 완료되었지만 scene 결과 이미지가 없습니다.")
-            
+
                         with st.expander("RunComfy Raw Scene Result", expanded=False):
                             st.json(result)
-            
+
                         with st.expander("Collected Scene Generation Config", expanded=False):
                             st.json(scene_config)
-            
+
                     else:
-                        st.session_state["scene_candidates"] = images
-            
                         first_image = images[0]
-            
+
                         st.session_state["scene_result_image"] = first_image["image"]
                         st.session_state["scene_result_filename"] = first_image.get("filename", "")
-                        st.session_state["scene_selected_label"] = first_image["label"]
-            
+
                         st.success("Storyboard Scene 생성이 완료되었습니다.")
                         st.rerun()
-            
+
                 except KeyError as e:
                     st.error("RunComfy secret 설정이 없습니다.")
                     st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
                     st.exception(e)
-            
-                    with st.expander("Collected Scene Generation Config", expanded=False):
-                        st.json(scene_config)
-            
-                except Exception as e:
-                    st.error("RunComfy Storyboard Scene 실행 중 오류가 발생했습니다.")
-                    st.exception(e)
-            
+
                     with st.expander("Collected Scene Generation Config", expanded=False):
                         st.json(scene_config)
 
+                except Exception as e:
+                    st.error("RunComfy Storyboard Scene 실행 중 오류가 발생했습니다.")
+                    st.exception(e)
+
+                    with st.expander("Collected Scene Generation Config", expanded=False):
+                        st.json(scene_config)
 
 # =========================
 # Step 4. Camera Angle Refinement
