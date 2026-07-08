@@ -132,7 +132,11 @@
   "1247": {
     "inputs": {
       "lora_name": "flux-multi-angles-v2-72poses-comfy.safetensors",
-      "strength_model": 1
+      "strength_model": 1,
+      "model": [
+        "1276",
+        0
+      ]
     },
     "class_type": "LoraLoaderModelOnly",
     "_meta": {
@@ -485,6 +489,16 @@
     "class_type": "LoadImageFromUrl",
     "_meta": {
       "title": "Load Image From URL"
+    }
+  },
+  "1276": {
+    "inputs": {
+      "unet_name": "flux-2-klein-9b.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
     }
   }
 }
