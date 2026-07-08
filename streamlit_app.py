@@ -1257,9 +1257,21 @@ with tab4:
     with settings_col:
         st.subheader("Camera Refinement Control")
 
+        # with st.container(border=True):
+        #     st.markdown("###### Source Scene Input")
+
+        #     if scene_candidates:
+        #         st.selectbox("Select Input Scene", options=[item["label"] for item in scene_candidates], key="camera_input_scene_label")
+        #         selected_input_scene = get_selected_candidate(scene_candidates, st.session_state.get("camera_input_scene_label", ""))
+        #         if selected_input_scene:
+        #             filename = selected_input_scene.get("filename", "")
+        #             if filename:
+        #                 st.caption(f"Selected File: {filename}")
+        #     else:
+        #         st.warning("Step 3에서 생성된 scene 이미지가 없습니다. 먼저 Scene Generation을 진행하세요.")
         with st.container(border=True):
             st.markdown("###### Source Scene Input")
-
+        
             if scene_candidates:
                 st.selectbox("Select Input Scene", options=[item["label"] for item in scene_candidates], key="camera_input_scene_label")
                 selected_input_scene = get_selected_candidate(scene_candidates, st.session_state.get("camera_input_scene_label", ""))
