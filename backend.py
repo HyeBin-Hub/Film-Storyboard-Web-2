@@ -853,14 +853,13 @@ def patch_camera_refinement_workflow(workflow: dict, config: dict) -> dict:
     """
     Step 4 Camera Angle Refinement workflow patch.
 
-    camera_refinement_workflow_api.json 기준 주요 노드:
-    - 1275: LoadImageFromUrl
-    - 1269: CSVStoryboardParser
-    - 1253: QwenMultiangleCameraNode
-    - 1270: TwoWaySwitch
-    - 1243: KSampler
-    - 1263: SeedVR2VideoUpscaler
-    - 1274: SaveImage
+    New camera_refinement_workflow_api.json 기준 주요 노드:
+    - 8:  LoadImageFromUrl
+    - 16: CSVStoryboardParser
+    - 19: QwenMultiangleCameraNode
+    - 18: TwoWaySwitch
+    - 13: KSampler
+    - 17: SaveImage
     """
     workflow = deepcopy(workflow)
 
@@ -887,49 +886,66 @@ def patch_camera_refinement_workflow(workflow: dict, config: dict) -> dict:
     if not scene_image_url:
         raise ValueError("scene_image_url is empty. Generate a scene first.")
 
-    horizontal_angle = camera_control.get("horizontal_angle", 0)
-    vertical_angle = camera_control.get("vertical_angle", 0)
-    zoom = camera_control.get("zoom", 5)
-    default_prompts = camera_control.get("default_prompts", True)
-    camera_view = camera_control.get("camera_view", False)
+    horizontal_angle = int(camera_control.get("horizontal_angle", 0))
+    vertical_angle = int(camera_control.get("vertical_angle", 0))
+    zoom = int(camera_control.get("zoom", 5))
+    default_prompts = bool(camera_control.get("default_prompts", True))
+    camera_view = bool(camera_control.get("camera_view", False))
 
-    switch_setting = prompt_source.get("two_way_switch_selection", 2)
+    switch_setting = int(prompt_source.get("two_way_switch_selection", 2))
+
+    if switch_setting not in [1, 2]:
+        switch_setting = 2
 
     seed = random.randint(1, 4_294_967_295)
     filename_prefix = f"camera_refined_{seed}"
 
-    # 1275: Load Image From URL
-    workflow["1275"]["inputs"]["image"] = scene_image_url
-    workflow["1275"]["inputs"]["keep_alpha_channel"] = False
-    workflow["1275"]["inputs"]["output_mode"] = False
+    # -------------------------------------------------
+    # 8: Load Image From URL
+    # -------------------------------------------------
+    workflow["8"]["inputs"]["image"] = scene_image_url
+    workflow["8"]["inputs"]["keep_alpha_channel"] = False
+    workflow["8"]["inputs"]["output_mode"] = False
 
-    # 1269: CSVStoryboardParser
-    workflow["1269"]["inputs"]["csv_file"] = "CUSTOM"
-    workflow["1269"]["inputs"]["csv_text"] = csv_text
-    workflow["1269"]["inputs"]["shot_filter"] = shot_filter
-    workflow["1269"]["inputs"]["custom_shot_ids"] = custom_shot_ids
+    # -------------------------------------------------
+    # 16: CSVStoryboardParser
+    # -------------------------------------------------
+    workflow["16"]["inputs"]["input_mode"] = "text"
+    workflow["16"]["inputs"]["csv_file"] = "CUSTOM"
+    workflow["16"]["inputs"]["csv_text"] = csv_text
+    workflow["16"]["inputs"]["shot_filter"] = shot_filter
+    workflow["16"]["inputs"]["custom_shot_ids"] = custom_shot_ids
 
-    # 1253: Qwen Multiangle Camera
-    workflow["1253"]["inputs"]["horizontal_angle"] = horizontal_angle
-    workflow["1253"]["inputs"]["vertical_angle"] = vertical_angle
-    workflow["1253"]["inputs"]["zoom"] = zoom
-    workflow["1253"]["inputs"]["default_prompts"] = bool(default_prompts)
-    workflow["1253"]["inputs"]["camera_view"] = bool(camera_view)
+    # -------------------------------------------------
+    # 19: Qwen Multiangle Camera
+    # -------------------------------------------------
+    workflow["19"]["inputs"]["horizontal_angle"] = horizontal_angle
+    workflow["19"]["inputs"]["vertical_angle"] = vertical_angle
+    workflow["19"]["inputs"]["zoom"] = zoom
+    workflow["19"]["inputs"]["default_prompts"] = default_prompts
+    workflow["19"]["inputs"]["camera_view"] = camera_view
 
-    # 1270: TwoWaySwitch
+    # -------------------------------------------------
+    # 18: TwoWaySwitch
     # 1 = ScenePromptBuilder prompt
     # 2 = Qwen Multiangle Camera prompt
-    workflow["1270"]["inputs"]["selection_setting"] = switch_setting
+    # -------------------------------------------------
+    workflow["18"]["inputs"]["selection_setting"] = switch_setting
 
-    # 1243: KSampler
-    workflow["1243"]["inputs"]["seed"] = seed
+    # -------------------------------------------------
+    # 13: KSampler
+    # -------------------------------------------------
+    workflow["13"]["inputs"]["seed"] = seed
 
-    # 1263: SeedVR2VideoUpscaler
-    if "1263" in workflow and "seed" in workflow["1263"]["inputs"]:
-        workflow["1263"]["inputs"]["seed"] = seed
+    # 현재 workflow 기본값이 steps=5, cfg=1이라 프롬프트 반영이 약할 수 있음.
+    # 우선 실행 안정성 중심으로 기본값만 보정.
+    workflow["13"]["inputs"]["steps"] = int(camera_control.get("steps", 15))
+    workflow["13"]["inputs"]["cfg"] = float(camera_control.get("cfg", 2.0))
 
-    # 1274: SaveImage
-    workflow["1274"]["inputs"]["filename_prefix"] = filename_prefix
+    # -------------------------------------------------
+    # 17: SaveImage
+    # -------------------------------------------------
+    workflow["17"]["inputs"]["filename_prefix"] = filename_prefix
 
     return workflow
 
@@ -972,6 +988,13 @@ def run_camera_refinement(
     )
 
     raw_images = extract_output_images(result_data)
+
+    # Step 4에서는 최종 SaveImage 노드인 17번 결과만 사용
+    raw_images = [
+        item for item in raw_images
+        if str(item.get("node_id", "")) == "17"
+        and item.get("raw", {}).get("type") == "output"
+    ]
 
     images = []
 
