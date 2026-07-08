@@ -214,7 +214,7 @@
   "1258": {
     "inputs": {
       "upscale_method": "lanczos",
-      "scale_by": 2,
+      "scale_by": 2.0000000000000004,
       "image": [
         "1244",
         0
