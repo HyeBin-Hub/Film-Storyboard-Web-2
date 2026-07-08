@@ -1317,7 +1317,7 @@ with tab4:
         st.divider()
         generate_camera_clicked = st.button("Generate Camera-Refined Scene", type="primary", use_container_width=True)
 
-        if generate_camera_clicked:
+                if generate_camera_clicked:
             storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
             selected_input_scene = get_selected_candidate(
