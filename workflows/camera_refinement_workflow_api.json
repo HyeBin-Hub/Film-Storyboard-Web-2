@@ -415,8 +415,8 @@
   },
   "1269": {
     "inputs": {
-      "input_mode": "Sonagi_S07.csv",
-      "csv_file": "CUSTOM",
+      "input_mode": "text",
+      "csv_file": "Sonagi_S07_Shot_1-4.csv",
       "csv_text": "7-1, 7-2",
       "shot_filter": "ALL",
       "custom_shot_ids": ""
