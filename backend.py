@@ -512,11 +512,20 @@ def run_face_generation(
     )
 
     raw_images = extract_output_images(result_data)
-
-    character_filter = config.get("character_registry_parser", {}).get(
-        "character_filter",
-        "C2",
-    )
+    
+    save_node_images = [
+        item
+        for item in raw_images
+        if str(item.get("node_id", "")) == "1019"
+    ]
+    
+    typed_output_images = [
+        item
+        for item in save_node_images
+        if item.get("raw", {}).get("type") == "output"
+    ]
+    
+    raw_images = typed_output_images or save_node_images
 
     if character_filter == "C1":
         label_prefix = "Boy Face"
@@ -657,12 +666,20 @@ def run_body_generation(
 
     # Step 2B에서는 최종 SaveImage 노드인 1244 결과만 사용해야 함.
     # 1239는 LoadImageFromUrl 입력 face reference라서 제외해야 함.
-    raw_images = [
-        item for item in raw_images
+    save_node_images = [
+        item
+        for item in raw_images
         if str(item.get("node_id", "")) == "1244"
-        and item.get("raw", {}).get("type") == "output"
     ]
-
+    
+    typed_output_images = [
+        item
+        for item in save_node_images
+        if item.get("raw", {}).get("type") == "output"
+    ]
+    
+    raw_images = typed_output_images or save_node_images
+    
     character_filter = config.get("body_generation", {}).get(
         "character_filter",
         "C1",
