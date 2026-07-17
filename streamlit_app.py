@@ -23,6 +23,11 @@ SHOW_REFERENCE_PROMPT_GUIDELINES = False
 ENABLE_MANUAL_FULL_BODY_REFERENCE_INPUT = False
 ENABLE_MANUAL_SCENE_REFERENCE_INPUT = False
 
+ENABLE_CAMERA_SAMPLING_CONTROL = False
+
+FIXED_CAMERA_REFINEMENT_STEPS = 15
+FIXED_CAMERA_REFINEMENT_CFG = 2.0
+
 BODY_PROMPT_PLACEHOLDER = (
     "Example: white shirt, beige shorts, white socks, black shoes, "
     "full-body, standing pose, front view, clean gray background"
@@ -1574,34 +1579,35 @@ with tab4:
         # -------------------------------------------------
         # Sampling Control
         # -------------------------------------------------
-        st.divider()
-
-        with st.container(border=True):
-            st.markdown("###### Sampling Control")
-
-            sample_col1, sample_col2 = st.columns(2)
-
-            with sample_col1:
-                st.slider(
-                    "Camera Refinement Steps",
-                    min_value=5,
-                    max_value=30,
-                    value=15,
-                    step=1,
-                    key="camera_steps",
-                    help="프롬프트 반영력과 디테일을 조정합니다. 기본 workflow의 5 steps보다 12~20 정도가 안정적입니다.",
-                )
-
-            with sample_col2:
-                st.slider(
-                    "Camera Refinement CFG",
-                    min_value=1.0,
-                    max_value=5.0,
-                    value=2.0,
-                    step=0.1,
-                    key="camera_cfg",
-                    help="카메라 프롬프트 반영 강도를 조정합니다.",
-                )
+        if ENABLE_CAMERA_SAMPLING_CONTROL:
+            st.divider()
+    
+            with st.container(border=True):
+                st.markdown("###### Sampling Control")
+    
+                sample_col1, sample_col2 = st.columns(2)
+    
+                with sample_col1:
+                    st.slider(
+                        "Camera Refinement Steps",
+                        min_value=5,
+                        max_value=30,
+                        value=15,
+                        step=1,
+                        key="camera_steps",
+                        help="프롬프트 반영력과 디테일을 조정합니다. 기본 workflow의 5 steps보다 12~20 정도가 안정적입니다.",
+                    )
+    
+                with sample_col2:
+                    st.slider(
+                        "Camera Refinement CFG",
+                        min_value=1.0,
+                        max_value=5.0,
+                        value=2.0,
+                        step=0.1,
+                        key="camera_cfg",
+                        help="카메라 프롬프트 반영 강도를 조정합니다.",
+                    )
 
         # -------------------------------------------------
         # Guide
