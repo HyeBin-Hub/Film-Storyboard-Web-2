@@ -323,18 +323,6 @@
       "title": "Load Image From URL"
     }
   },
-  "1243": {
-    "inputs": {
-      "images": [
-        "1055",
-        1
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
   "1244": {
     "inputs": {
       "filename_prefix": "ComfyUI",
