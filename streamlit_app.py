@@ -1076,7 +1076,7 @@ with tab2:
                             api_key = st.secrets["RUNCOMFY_API_KEY"]
                             deployment_id = st.secrets["DEPLOYMENT_ID"]
             
-                            with st.spinner("RunComfy에서 Full-Body Reference를 생성하는 중입니다..."):
+                            with st.spinner("Full-Body Reference를 생성하는 중입니다..."):
                                 result = run_body_generation(
                                     api_key=api_key,
                                     deployment_id=deployment_id,
@@ -1309,7 +1309,7 @@ with tab3:
                     api_key = st.secrets["RUNCOMFY_API_KEY"]
                     deployment_id = st.secrets["DEPLOYMENT_ID"]
 
-                    with st.spinner("RunComfy에서 Storyboard Scene을 생성하는 중입니다..."):
+                    with st.spinner("Storyboard Scene을 생성하는 중입니다..."):
                         result = run_scene_generation(
                             api_key=api_key,
                             deployment_id=deployment_id,
@@ -1680,7 +1680,7 @@ with tab4:
                     api_key = st.secrets["RUNCOMFY_API_KEY"]
                     deployment_id = st.secrets["DEPLOYMENT_ID"]
 
-                    with st.spinner("RunComfy에서 Camera-Refined Scene을 생성하는 중입니다..."):
+                    with st.spinner("Camera-Refined Scene을 생성하는 중입니다..."):
                         result = run_camera_refinement(
                             api_key=api_key,
                             deployment_id=deployment_id,
