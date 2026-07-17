@@ -527,6 +527,11 @@ def run_face_generation(
     
     raw_images = typed_output_images or save_node_images
 
+    character_filter = config.get("character_registry_parser", {}).get(
+        "character_filter",
+        "C2",
+    )    
+
     if character_filter == "C1":
         label_prefix = "Boy Face"
     elif character_filter == "C2":
