@@ -1,536 +1,3082 @@
 {
-  "33": {
-    "inputs": {
-      "aspect_ratio": "original",
-      "proportional_width": 1,
-      "proportional_height": 1,
-      "fit": "letterbox",
-      "method": "lanczos",
-      "round_to_multiple": "8",
-      "scale_to_side": "longest",
-      "scale_to_length": [
-        "36",
-        0
+  "id": "00000000-0000-0000-0000-000000000000",
+  "revision": 0,
+  "last_node_id": 188,
+  "last_link_id": 320,
+  "nodes": [
+    {
+      "id": 67,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        1880.6368408203125,
+        380.192138671875
       ],
-      "background_color": "#ffffff",
-      "image": [
-        "50",
-        0
+      "size": [
+        212.36386108398438,
+        106
+      ],
+      "flags": {},
+      "order": 33,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "noise",
+          "name": "noise",
+          "type": "NOISE",
+          "link": 81
+        },
+        {
+          "label": "guider",
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 82
+        },
+        {
+          "label": "sampler",
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 83
+        },
+        {
+          "label": "sigmas",
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 84
+        },
+        {
+          "label": "latent_image",
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 85
+        }
+      ],
+      "outputs": [
+        {
+          "label": "output",
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            58
+          ]
+        },
+        {
+          "label": "denoised_output",
+          "name": "denoised_output",
+          "type": "LATENT"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 33,
+      "type": "LayerUtility: ImageScaleByAspectRatio V2",
+      "pos": [
+        -355.1636962890625,
+        1048.37158203125
+      ],
+      "size": [
+        377.2681579589844,
+        330
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 116
+        },
+        {
+          "label": "mask",
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK"
+        },
+        {
+          "label": "aspect_ratio",
+          "name": "aspect_ratio",
+          "type": "COMBO",
+          "widget": {
+            "name": "aspect_ratio"
+          }
+        },
+        {
+          "label": "proportional_width",
+          "name": "proportional_width",
+          "type": "INT",
+          "widget": {
+            "name": "proportional_width"
+          }
+        },
+        {
+          "label": "proportional_height",
+          "name": "proportional_height",
+          "type": "INT",
+          "widget": {
+            "name": "proportional_height"
+          }
+        },
+        {
+          "label": "fit",
+          "name": "fit",
+          "type": "COMBO",
+          "widget": {
+            "name": "fit"
+          }
+        },
+        {
+          "label": "method",
+          "name": "method",
+          "type": "COMBO",
+          "widget": {
+            "name": "method"
+          }
+        },
+        {
+          "label": "round_to_multiple",
+          "name": "round_to_multiple",
+          "type": "COMBO",
+          "widget": {
+            "name": "round_to_multiple"
+          }
+        },
+        {
+          "label": "scale_to_side",
+          "name": "scale_to_side",
+          "type": "COMBO",
+          "widget": {
+            "name": "scale_to_side"
+          }
+        },
+        {
+          "label": "scale_to_length",
+          "name": "scale_to_length",
+          "type": "INT",
+          "widget": {
+            "name": "scale_to_length"
+          },
+          "link": 46
+        },
+        {
+          "label": "background_color",
+          "name": "background_color",
+          "type": "STRING",
+          "widget": {
+            "name": "background_color"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            108,
+            119
+          ]
+        },
+        {
+          "label": "mask",
+          "name": "mask",
+          "type": "MASK"
+        },
+        {
+          "label": "original_size",
+          "name": "original_size",
+          "type": "BOX"
+        },
+        {
+          "label": "width",
+          "name": "width",
+          "type": "INT"
+        },
+        {
+          "label": "height",
+          "name": "height",
+          "type": "INT"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LayerUtility: ImageScaleByAspectRatio V2",
+        "cnr_id": "comfyui_layerstyle",
+        "ver": "1.0.90",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "fit": true,
+          "aspect_ratio": true,
+          "method": true,
+          "background_color": true,
+          "round_to_multiple": true,
+          "scale_to_side": true,
+          "proportional_height": true,
+          "proportional_width": true,
+          "scale_to_length": true
+        }
+      },
+      "widgets_values": [
+        "original",
+        1,
+        1,
+        "letterbox",
+        "lanczos",
+        "8",
+        "longest",
+        1024,
+        "#ffffff"
+      ],
+      "color": "rgba(38, 73, 116, 0.7)"
+    },
+    {
+      "id": 61,
+      "type": "VAEEncode",
+      "pos": [
+        397.41717529296875,
+        1050.472412109375
+      ],
+      "size": [
+        208.24781799316406,
+        46
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "pixels",
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 120
+        },
+        {
+          "label": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 72
+        }
+      ],
+      "outputs": [
+        {
+          "label": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            70,
+            78
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncode",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 64,
+      "type": "ReferenceLatent",
+      "pos": [
+        399.2744140625,
+        1228.2174072265625
+      ],
+      "size": [
+        204.134765625,
+        46
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 77
+        },
+        {
+          "label": "latent",
+          "name": "latent",
+          "shape": 7,
+          "type": "LATENT",
+          "link": 78
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CONDITIONING",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            79
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ReferenceLatent",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 34,
+      "type": "LayerUtility: ImageScaleByAspectRatio V2",
+      "pos": [
+        -353.197021484375,
+        1448.9051513671875
+      ],
+      "size": [
+        377.2681579589844,
+        330
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 117
+        },
+        {
+          "label": "mask",
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK"
+        },
+        {
+          "label": "aspect_ratio",
+          "name": "aspect_ratio",
+          "type": "COMBO",
+          "widget": {
+            "name": "aspect_ratio"
+          }
+        },
+        {
+          "label": "proportional_width",
+          "name": "proportional_width",
+          "type": "INT",
+          "widget": {
+            "name": "proportional_width"
+          }
+        },
+        {
+          "label": "proportional_height",
+          "name": "proportional_height",
+          "type": "INT",
+          "widget": {
+            "name": "proportional_height"
+          }
+        },
+        {
+          "label": "fit",
+          "name": "fit",
+          "type": "COMBO",
+          "widget": {
+            "name": "fit"
+          }
+        },
+        {
+          "label": "method",
+          "name": "method",
+          "type": "COMBO",
+          "widget": {
+            "name": "method"
+          }
+        },
+        {
+          "label": "round_to_multiple",
+          "name": "round_to_multiple",
+          "type": "COMBO",
+          "widget": {
+            "name": "round_to_multiple"
+          }
+        },
+        {
+          "label": "scale_to_side",
+          "name": "scale_to_side",
+          "type": "COMBO",
+          "widget": {
+            "name": "scale_to_side"
+          }
+        },
+        {
+          "label": "scale_to_length",
+          "name": "scale_to_length",
+          "type": "INT",
+          "widget": {
+            "name": "scale_to_length"
+          },
+          "link": 48
+        },
+        {
+          "label": "background_color",
+          "name": "background_color",
+          "type": "STRING",
+          "widget": {
+            "name": "background_color"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            109,
+            118
+          ]
+        },
+        {
+          "label": "mask",
+          "name": "mask",
+          "type": "MASK"
+        },
+        {
+          "label": "original_size",
+          "name": "original_size",
+          "type": "BOX"
+        },
+        {
+          "label": "width",
+          "name": "width",
+          "type": "INT"
+        },
+        {
+          "label": "height",
+          "name": "height",
+          "type": "INT"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LayerUtility: ImageScaleByAspectRatio V2",
+        "cnr_id": "comfyui_layerstyle",
+        "ver": "1.0.90",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "fit": true,
+          "aspect_ratio": true,
+          "method": true,
+          "background_color": true,
+          "round_to_multiple": true,
+          "scale_to_side": true,
+          "proportional_height": true,
+          "proportional_width": true,
+          "scale_to_length": true
+        }
+      },
+      "widgets_values": [
+        "original",
+        1,
+        1,
+        "letterbox",
+        "lanczos",
+        "8",
+        "longest",
+        1024,
+        "#ffffff"
+      ],
+      "color": "rgba(38, 73, 116, 0.7)"
+    },
+    {
+      "id": 81,
+      "type": "RMBG",
+      "pos": [
+        42.13151931762695,
+        1451.909423828125
+      ],
+      "size": [
+        340,
+        302
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 118
+        },
+        {
+          "label": "model",
+          "name": "model",
+          "type": "COMBO",
+          "widget": {
+            "name": "model"
+          }
+        },
+        {
+          "label": "sensitivity",
+          "name": "sensitivity",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "sensitivity"
+          }
+        },
+        {
+          "label": "process_res",
+          "name": "process_res",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "process_res"
+          }
+        },
+        {
+          "label": "mask_blur",
+          "name": "mask_blur",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "mask_blur"
+          }
+        },
+        {
+          "label": "mask_offset",
+          "name": "mask_offset",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "mask_offset"
+          }
+        },
+        {
+          "label": "invert_output",
+          "name": "invert_output",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "invert_output"
+          }
+        },
+        {
+          "label": "refine_foreground",
+          "name": "refine_foreground",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "refine_foreground"
+          }
+        },
+        {
+          "label": "background",
+          "name": "background",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "background"
+          }
+        },
+        {
+          "label": "background_color",
+          "name": "background_color",
+          "shape": 7,
+          "type": "COLORCODE",
+          "widget": {
+            "name": "background_color"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            121
+          ]
+        },
+        {
+          "label": "MASK",
+          "name": "MASK",
+          "type": "MASK"
+        },
+        {
+          "label": "MASK_IMAGE",
+          "name": "MASK_IMAGE",
+          "type": "IMAGE"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RMBG",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "RMBG-2.0",
+        1,
+        1024,
+        0,
+        0,
+        false,
+        false,
+        "Alpha",
+        "#222222"
+      ],
+      "color": "#222e40",
+      "bgcolor": "#364254"
+    },
+    {
+      "id": 63,
+      "type": "VAEEncode",
+      "pos": [
+        399.67315673828125,
+        1452.142578125
+      ],
+      "size": [
+        208.24774169921875,
+        46
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "pixels",
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 121
+        },
+        {
+          "label": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 76
+        }
+      ],
+      "outputs": [
+        {
+          "label": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            74,
+            80
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncode",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 62,
+      "type": "ReferenceLatent",
+      "pos": [
+        399.8739929199219,
+        1544.5814208984375
+      ],
+      "size": [
+        204.134765625,
+        46
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 73
+        },
+        {
+          "label": "latent",
+          "name": "latent",
+          "shape": 7,
+          "type": "LATENT",
+          "link": 74
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CONDITIONING",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            87
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ReferenceLatent",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 65,
+      "type": "ReferenceLatent",
+      "pos": [
+        405.59844970703125,
+        1647.9544677734375
+      ],
+      "size": [
+        204.134765625,
+        46
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 79
+        },
+        {
+          "label": "latent",
+          "name": "latent",
+          "shape": 7,
+          "type": "LATENT",
+          "link": 80
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CONDITIONING",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            88
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ReferenceLatent",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 75,
+      "type": "LoadImage",
+      "pos": [
+        -643.7882080078125,
+        1049.07958984375
+      ],
+      "size": [
+        275.8109130859375,
+        326
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          }
+        },
+        {
+          "label": "upload",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            116
+          ]
+        },
+        {
+          "label": "MASK",
+          "name": "MASK",
+          "type": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "9a8ad3604907b8b12a2a3cdffe4490d7a320f8b53220bf976473cdca90a147f2.png",
+        "image"
       ]
     },
-    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
-    "_meta": {
-      "title": "LayerUtility: ImageScaleByAspectRatio V2"
-    }
-  },
-  "34": {
-    "inputs": {
-      "aspect_ratio": "original",
-      "proportional_width": 1,
-      "proportional_height": 1,
-      "fit": "letterbox",
-      "method": "lanczos",
-      "round_to_multiple": "8",
-      "scale_to_side": "longest",
-      "scale_to_length": [
-        "36",
-        0
+    {
+      "id": 60,
+      "type": "ReferenceLatent",
+      "pos": [
+        398.45330810546875,
+        1140.3641357421875
       ],
-      "background_color": "#ffffff",
-      "image": [
-        "51",
-        0
+      "size": [
+        204.134765625,
+        46
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 113
+        },
+        {
+          "label": "latent",
+          "name": "latent",
+          "shape": 7,
+          "type": "LATENT",
+          "link": 70
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CONDITIONING",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            73
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ReferenceLatent",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 186,
+      "type": "easy promptLine",
+      "pos": [
+        1322.1429443359375,
+        2118.19677734375
+      ],
+      "size": [
+        326.130615234375,
+        443.7271728515625
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 318
+        },
+        {
+          "label": "start_index",
+          "name": "start_index",
+          "type": "INT",
+          "widget": {
+            "name": "start_index"
+          }
+        },
+        {
+          "label": "max_rows",
+          "name": "max_rows",
+          "type": "INT",
+          "widget": {
+            "name": "max_rows"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "STRING",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            319
+          ]
+        },
+        {
+          "label": "COMBO",
+          "name": "COMBO",
+          "shape": 6,
+          "type": "*"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy promptLine",
+        "cnr_id": "comfyui-easy-use",
+        "ver": "e900c2ca9c0d90b0896881910ca7f3f02d88ebd8",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "start_index": true,
+          "max_rows": true,
+          "prompt": true
+        }
+      },
+      "widgets_values": [
+        "text",
+        0,
+        1000,
+        ""
+      ],
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 188,
+      "type": "AILab_QwenVL",
+      "pos": [
+        972.6007690429688,
+        2117.630126953125
+      ],
+      "size": [
+        327.45623779296875,
+        446.3450927734375
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE"
+        },
+        {
+          "label": "video",
+          "name": "video",
+          "shape": 7,
+          "type": "IMAGE"
+        },
+        {
+          "label": "model_name",
+          "name": "model_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "model_name"
+          }
+        },
+        {
+          "label": "quantization",
+          "name": "quantization",
+          "type": "COMBO",
+          "widget": {
+            "name": "quantization"
+          }
+        },
+        {
+          "label": "preset_prompt",
+          "name": "preset_prompt",
+          "type": "COMBO",
+          "widget": {
+            "name": "preset_prompt"
+          }
+        },
+        {
+          "label": "custom_prompt",
+          "name": "custom_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "custom_prompt"
+          },
+          "link": 320
+        },
+        {
+          "label": "max_tokens",
+          "name": "max_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "max_tokens"
+          }
+        },
+        {
+          "label": "keep_model_loaded",
+          "name": "keep_model_loaded",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "keep_model_loaded"
+          }
+        },
+        {
+          "label": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          }
+        },
+        {
+          "label": "attention_mode",
+          "name": "attention_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "attention_mode"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "RESPONSE",
+          "name": "RESPONSE",
+          "type": "STRING",
+          "links": [
+            318
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AILab_QwenVL",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Qwen3-VL-8B-Instruct",
+        "None (FP16)",
+        "🪄 Prompt Refine & Expand",
+        "",
+        512,
+        false,
+        371938549875970,
+        "randomize",
+        "auto"
+      ],
+      "color": "#28403f",
+      "bgcolor": "#374539"
+    },
+    {
+      "id": 187,
+      "type": "easy showAnything",
+      "pos": [
+        1666.3626708984375,
+        2116.758056640625
+      ],
+      "size": [
+        519.4520263671875,
+        799.2996826171875
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "anything",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 319
+        }
+      ],
+      "outputs": [
+        {
+          "label": "output",
+          "name": "output",
+          "type": "*"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy showAnything",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Next Scene; A boy and a girl walk in a straight line toward the right of the screen through a vast sorghum field under cloudy, windy skies. The boy stands on the left, the girl on the right, both captured in long shot with full-body framing. Their appearances strictly match their respective reference images—hair, clothes, posture preserved. Front-facing camera positioned slightly right captures them mid-stride. Cinematic vintage tone with muted tones and soft wind-blown grasses. High definition, detailed skin texture, accurate limb proportionality. Include <sks> front view eye-level shot wide shot  ",
+        "Next Scene; The boy and girl stand still facing forward in the same sorghum field, cloudy sky above. Girl on the right points her index finger directly ahead toward the center of the screen. Both retain identical facial features and attire from their reference images. Medium shot focusing upper bodies, centered framing, eye level. Front camera perspective viewed from viewer's frontal alignment. No motion blur, atmospheric haze matching previous scene. Vintage cinematic warmth. High detail rendering. Include <sks> front view eye-level shot medium shot  ",
+        "Next Scene; Boy kneels low in the foreground pulling a fresh radish from soil, girl appears much farther behind him to the extreme left, gazing intently at the boy’s backside during effortful pull. Environment expands now showing adjacent melon and radish patches blending seamlessly into sorghum rows. Same overcast windswept conditions persist. Side-view camera elevated just enough for balanced profile capture — boy occupies right foreground, girl stretches out left background maintaining deep spatial separation. Composition emphasizes emotional tension via layered positioning. Rich earthy palettes dominate. Realistic fabric folds, textured dirt beneath boots visible. Include <sks> front-right quarter view eye-level shot wide shot  ",
+        "Next Scene; Centered in-frame, boy extends his open palm offering half-eaten radish slice towards girl who leans gently inward receiving it — both eyes locked onto shared object despite slight staggered stances. They occupy equal horizontal plane framed symmetrically against uninterrupted golden-hued sorghum expanse stretching beyond horizons. Cloud cover remains unchanged delivering diffused light casting minimal shadows. Eye-level frontal viewpoint isolates intimate gesture amid rural openness. Full attention paid to anatomical accuracy: fingers curved naturally around food item, subtle smile hinted upon lips without altering expressions seen previously. Cinematic tonal consistency maintained. Ultra-high fidelity material simulation including dew-beaded leaves nearby if applicable. Include <sks> front view eye-level"
       ]
     },
-    "class_type": "LayerUtility: ImageScaleByAspectRatio V2",
-    "_meta": {
-      "title": "LayerUtility: ImageScaleByAspectRatio V2"
-    }
-  },
-  "35": {
-    "inputs": {
-      "vae_name": "flux2-vae.safetensors"
-    },
-    "class_type": "VAELoader",
-    "_meta": {
-      "title": "Load VAE"
-    }
-  },
-  "36": {
-    "inputs": {
-      "Number": 2048
-    },
-    "class_type": "Int",
-    "_meta": {
-      "title": "Int"
-    }
-  },
-  "37": {
-    "inputs": {
-      "width": [
-        "38",
-        0
+    {
+      "id": 76,
+      "type": "LoadImage",
+      "pos": [
+        -645.3002319335938,
+        1450.9368896484375
       ],
-      "height": [
-        "38",
+      "size": [
+        273.303466796875,
+        327.9354248046875
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          }
+        },
+        {
+          "label": "upload",
+          "name": "upload",
+          "type": "IMAGEUPLOAD",
+          "widget": {
+            "name": "upload"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            117
+          ]
+        },
+        {
+          "label": "MASK",
+          "name": "MASK",
+          "type": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "66a85cdc707173bd9013f8960e5e835dc0b9c343e359d8590a560e84122563c6.png",
+        "image"
+      ]
+    },
+    {
+      "id": 185,
+      "type": "Text Multiline",
+      "pos": [
+        593.1238403320312,
+        2115.53759765625
+      ],
+      "size": [
+        360.63446044921875,
+        449.1772766113281
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "text",
+          "name": "text",
+          "type": "STRING",
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            320
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Text Multiline",
+        "cnr_id": "was-node-suite-comfyui",
+        "ver": "ea935d1044ae5a26efa54ebeb18fe9020af49a45",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "text": true
+        }
+      },
+      "widgets_values": [
+        "You are a professional film storyboard prompt designer.\n\nConvert the structured_shot_data JSON appended below into one cinematic image-generation prompt per shot, optimized for FLUX.2 Klein. Follow the original shot order and use only information supported by the JSON and reference images.\n\n[Character Consistency]\n\nUse each reference_image as the sole source of the corresponding character’s visual appearance.\nPreserve identity, face, age, hairstyle, body proportions, clothing, footwear, accessories, and colors exactly as shown in the reference image.\nDo not invent, describe, or modify visual characteristics that are not provided by the reference image.\nCamera angle, body orientation, action, posture, gaze, and expression may change only when required by the shot data.\nPreserve the specified number of characters, roles, screen positions, actions, and spatial relationships.\nDo not duplicate, omit, replace, merge, or exchange characters.\n\n[Scene Continuity]\n\nFor shots sharing the same environment, maintain the same physical location and use consistent descriptions of its terrain, field boundaries, paths, horizon, distant landscape, vegetation, and major landmarks.\nCamera position and framing may change, but the location must remain recognizable as the same physical space.\nDo not introduce unexplained changes to the background or add unrelated locations, structures, vegetation, characters, or objects.\n\nOnly include props specified in the JSON or directly required by an action.\nKeep recurring or narratively important props consistent in type, size, color, shape, condition, and ownership.\nDo not duplicate, replace, transform, remove, or randomly add props.\n\n[Global Visual Lock]\n\nBefore generating the shot prompts, derive one shared Global Visual Lock from the atmosphere and cinematic_tone of the first shot.\nThe Global Visual Lock must define the common weather, time of day, lighting quality, color palette, saturation, contrast, shadows, exposure, and white balance using only information supported by the JSON.\n\nApply the same Global Visual Lock to every shot unless the JSON explicitly identifies a new scene or a deliberate visual transition.\nWrite the Global Visual Lock once internally, then repeat the exact same wording at the end of every generated prompt.\nDo not paraphrase, shorten, omit, or change the Global Visual Lock between shots.\nDo not introduce conflicting weather, lighting, time of day, or color conditions.\n\nFor example, when the JSON specifies “Cloudy, Windy” and “Cinematic, Vintage,” a shared Global Visual Lock may be:\ncloudy and windy weather, soft diffused overcast daylight, muted vintage color palette, restrained saturation, low contrast, soft natural shadows, and consistent exposure and white balance.\n\n[Shot Interpretation]\n\nUse description as the primary narrative instruction.\nAccurately reflect characters, position, action, environment, atmosphere, cinematic_tone, and camera information.\n\nInterpret character position as placement within the image frame:\n“Left” means the left side of the frame.\n“Right” means the right side of the frame.\n“Foreground” means closer to the camera.\n“Background” means farther from the camera.\nPreserve all specified foreground-background relationships and relative distances.\nComposition describes the overall placement of subjects and visual weight within the frame.\n\n[Movement and Orientation]\n\nExplicitly state each moving character’s screen direction, body orientation, face direction, gaze direction, and foot direction.\nDistinguish character orientation from camera position.\n\nWhen a character moves laterally, use the explicit wording “from screen left to screen right” or “from screen right to screen left.”\nThe character’s body, face, and feet must be oriented toward the stated screen direction.\nAlso state that the character is shown in side profile and is not moving toward the camera.\n\nA camera positioned in front of the scene does not mean that a laterally moving character faces the camera.\nFor lateral movement, do not describe the character as front-facing, facing forward, walking toward the viewer, posing frontally, or making direct eye contact.\nOnly use frontal body orientation when the description or action explicitly requires the character to face the camera or the front of the frame.\n\n[Camera and Framing Interpretation]\n\nTreat shot_size, camera_height, framing, composition, camera_angle, and camera_position as explicit camera constraints.\n\nCamera height determines the vertical viewing angle.\nUse “eye-level” when camera_height specifies Eye Level.\nDo not introduce a low-angle, high-angle, elevated, overhead, or ground-level view unless explicitly required by camera_height or another higher-priority shot instruction.\nForeground placement, background placement, subject distance, or a character’s physical action must not be interpreted as camera height.\n\nCamera angle and camera position determine whether the scene is viewed from the front, side, rear, or quarter direction.\nCharacter body orientation must still follow the described action and movement direction.\n\nFraming describes how much of each character is visible and must not be interpreted as an action or posture.\n“Knee shot” means the character is framed approximately from the knees upward.\nIt does not mean that the character is kneeling.\n“Full body” means the entire body is visible.\n“Upper body” means the frame primarily includes the torso and head.\nOnly describe a character as kneeling, crouching, sitting, lying down, or bending when that posture is explicitly stated in description or action.\n\nWhen different characters have different framing instructions, apply each framing instruction to its corresponding character.\nFor example, “boy knee shot, girl full body in distance” means the boy is shown from approximately the knees upward in the foreground while the girl’s full body remains visible in the background.\n\nIf shot fields conflict, resolve them using this priority:\n\n1. Main event and movement in description.\n2. Character identity, position, action, and posture in characters.\n3. Shot size, camera height, framing, composition, camera angle, and camera position in camera.\n\nDo not produce contradictory instructions.\nAdjust only lower-priority camera wording when necessary, while preserving the intended shot size, camera height, framing, composition, action, and screen direction.\n\n[Camera Tag Exclusion]\n\nIgnore flux_multi_angle_prompt if it exists in the JSON.\nDo not include `<sks>` or any other LoRA trigger, camera-control tag, or tag-form camera syntax in the generated prompts.\nExpress all camera information in clear natural language only.\n\n[FLUX.2 Klein Prompt Requirements]\n\nWrite each prompt as a direct visual description rather than an explanation.\nDescribe information in this order:\n\n1. Main characters and action.\n2. Screen positions, spatial relationships, and movement direction.\n3. Body orientation, face direction, gaze, and posture.\n4. Shot size, camera height, framing, composition, and camera viewpoint.\n5. Environment, foreground, middle ground, and background.\n6. The exact shared Global Visual Lock.\n\nUse clear and concrete visual language.\nInclude high-definition cinematic image quality, realistic materials and textures, natural anatomy, and natural body proportions.\nAvoid duplicated characters, malformed limbs, merged bodies, incorrect screen direction, unintended postures, inconsistent props, and changes to character appearance.\n\n[Output Validation]\n\nBefore outputting, silently verify that:\n\n1. The number and order of prompts match the JSON shots.\n2. No `<sks>` tag or flux_multi_angle_prompt text is included.\n3. Every lateral movement includes an explicit screen direction, side-profile orientation, and “not toward the camera.”\n4. Camera height matches camera_height exactly.\n5. Framing terms are not interpreted as character actions or postures.\n6. Every prompt ends with exactly the same Global Visual Lock wording.\n7. There are no blank lines between prompts.\n\n[Output Format]\n\nGenerate exactly one prompt for each shot in the JSON, following the original order.\nEach prompt must begin exactly with “Next Scene;” and the prompt content must follow immediately.\nWrite each shot as one continuous paragraph on a single line.\nDo not insert blank lines between prompts.\nPlace each new prompt on the immediately following line.\nDo not output Markdown, headings, numbering, JSON, analysis, quotation marks, or additional explanations.\nEach prompt should be approximately 100–130 words.\nOutput only the generated prompts in this format:\nNext Scene;prompt\nNext Scene;prompt\n\n[STRUCTURED_SHOT_DATA_JSON]\n\n{\n  \"structured_shot_data\": {\n    \"shot_count\": 3,\n    \"shots\": [\n      {\n        \"shot_id\": \"7-1\",\n        \"description\": \"From the empty field head, a girl and a boy are walking in a line toward the right of the screen.\",\n        \"characters\": [\n          {\n            \"reference_image\": \"image 1\",\n            \"original_character_id\": \"C1\",\n            \"role\": \"Boy\",\n            \"position\": \"Left\",\n            \"action\": \"Walking\"\n          },\n          {\n            \"reference_image\": \"image 2\",\n            \"original_character_id\": \"C2\",\n            \"role\": \"Girl\",\n            \"position\": \"Right\",\n            \"action\": \"Walking\"\n          }\n        ],\n        \"environment\": \"empty field edge\",\n        \"atmosphere\": \"Cloudy, Windy\",\n        \"cinematic_tone\": \"Cinematic, Vintage\",\n        \"camera\": {\n          \"shot_size\": \"Long Shot\",\n          \"camera_height\": \"Eye Level\",\n          \"framing\": \"Full Body\",\n          \"composition\": \"Right Framing\",\n          \"camera_angle\": \"Front\",\n          \"camera_position\": \"Right\"\n        },\n        \"flux_multi_angle_prompt\": \"<sks> front view eye-level shot wide shot\"\n      },\n      {\n        \"shot_id\": \"7-2\",\n        \"description\": \"The boy and the girl are standing facing the front, and the girl on the right of the boy is pointing her finger at the center of the screen.\",\n        \"characters\": [\n          {\n            \"reference_image\": \"image 1\",\n            \"original_character_id\": \"C1\",\n            \"role\": \"Boy\",\n            \"position\": \"Left\",\n            \"action\": \"Standing\"\n          },\n          {\n            \"reference_image\": \"image 2\",\n            \"original_character_id\": \"C2\",\n            \"role\": \"Girl\",\n            \"position\": \"Right\",\n            \"action\": \"Right hand pointing forward\"\n          }\n        ],\n        \"environment\": \"empty field edge\",\n        \"atmosphere\": \"Cloudy, Windy\",\n        \"cinematic_tone\": \"Cinematic, Vintage\",\n        \"camera\": {\n          \"shot_size\": \"Medium Shot\",\n          \"camera_height\": \"Eye Level\",\n          \"framing\": \"Upper Body\",\n          \"composition\": \"Center Framing\",\n          \"camera_angle\": \"Front\",\n          \"camera_position\": \"View\"\n        },\n        \"flux_multi_angle_prompt\": \"<sks> front view eye-level shot medium shot\"\n      },\n      {\n        \"shot_id\": \"7-3\",\n        \"description\": \"Behind the boy pulling a radish in his hand, a girl located far to the left of the boy is looking at the boy.\",\n        \"characters\": [\n          {\n            \"reference_image\": \"image 1\",\n            \"original_character_id\": \"C1\",\n            \"role\": \"Boy\",\n            \"position\": \"Right foreground\",\n            \"action\": \"Pulling a radish\"\n          },\n          {\n            \"reference_image\": \"image 2\",\n            \"original_character_id\": \"C2\",\n            \"role\": \"Girl\",\n            \"position\": \"Left background\",\n            \"action\": \"Looking at the boy\"\n          }\n        ],\n        \"environment\": \"empty field edge\",\n        \"atmosphere\": \"Cloudy, Windy\",\n        \"cinematic_tone\": \"Cinematic, Vintage\",\n        \"camera\": {\n          \"shot_size\": \"Full Shot / Wide Shot\",\n          \"camera_height\": \"Eye Level\",\n          \"framing\": \"Boy knee shot, girl full body in distance\",\n          \"composition\": \"Boy foreground, girl background\",\n          \"camera_angle\": \"Side\",\n          \"camera_position\": \"Side\"\n        },\n        \"flux_multi_angle_prompt\": \"<sks> front-right quarter view eye-level shot wide shot\"\n      }\n    ]\n  }\n}"
+      ]
+    },
+    {
+      "id": 80,
+      "type": "RMBG",
+      "pos": [
+        41.07378005981445,
+        1050.929931640625
+      ],
+      "size": [
+        340,
+        302
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 119
+        },
+        {
+          "label": "model",
+          "name": "model",
+          "type": "COMBO",
+          "widget": {
+            "name": "model"
+          }
+        },
+        {
+          "label": "sensitivity",
+          "name": "sensitivity",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "sensitivity"
+          }
+        },
+        {
+          "label": "process_res",
+          "name": "process_res",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "process_res"
+          }
+        },
+        {
+          "label": "mask_blur",
+          "name": "mask_blur",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "mask_blur"
+          }
+        },
+        {
+          "label": "mask_offset",
+          "name": "mask_offset",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "mask_offset"
+          }
+        },
+        {
+          "label": "invert_output",
+          "name": "invert_output",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "invert_output"
+          }
+        },
+        {
+          "label": "refine_foreground",
+          "name": "refine_foreground",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "refine_foreground"
+          }
+        },
+        {
+          "label": "background",
+          "name": "background",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "background"
+          }
+        },
+        {
+          "label": "background_color",
+          "name": "background_color",
+          "shape": 7,
+          "type": "COLORCODE",
+          "widget": {
+            "name": "background_color"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            120
+          ]
+        },
+        {
+          "label": "MASK",
+          "name": "MASK",
+          "type": "MASK"
+        },
+        {
+          "label": "MASK_IMAGE",
+          "name": "MASK_IMAGE",
+          "type": "IMAGE"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RMBG",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "RMBG-2.0",
+        1,
+        1024,
+        0,
+        0,
+        false,
+        false,
+        "Alpha",
+        "#222222"
+      ],
+      "color": "#222e40",
+      "bgcolor": "#364254"
+    },
+    {
+      "id": 48,
+      "type": "VAEDecode",
+      "pos": [
+        1883.287841796875,
+        540.9237670898438
+      ],
+      "size": [
+        212.2853546142578,
+        46
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "samples",
+          "name": "samples",
+          "type": "LATENT",
+          "link": 58
+        },
+        {
+          "label": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 59
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            60
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 40,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        -645.9246215820312,
+        513.0363159179688
+      ],
+      "size": [
+        302.4617614746094,
+        82
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 126
+        },
+        {
+          "label": "lora_name",
+          "name": "lora_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "lora_name"
+          }
+        },
+        {
+          "label": "strength_model",
+          "name": "strength_model",
+          "type": "FLOAT",
+          "widget": {
+            "name": "strength_model"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            127
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoraLoaderModelOnly",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "lora_name": true,
+          "strength_model": true
+        }
+      },
+      "widgets_values": [
+        "bfs_head_v1_flux-klein_9b_step3500_rank128.safetensors",
+        0.5
+      ]
+    },
+    {
+      "id": 82,
+      "type": "UNETLoader",
+      "pos": [
+        -644.7540893554688,
+        376.36761474609375
+      ],
+      "size": [
+        302.4617614746094,
+        82
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          }
+        },
+        {
+          "label": "weight_dtype",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            126
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "weight_dtype": true,
+          "unet_name": true
+        }
+      },
+      "widgets_values": [
+        "flux-2-klein-9b.safetensors",
+        "default"
+      ]
+    },
+    {
+      "id": 41,
+      "type": "CLIPLoader",
+      "pos": [
+        -645.7796020507812,
+        647.087890625
+      ],
+      "size": [
+        302.4617919921875,
+        106
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          }
+        },
+        {
+          "label": "type",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          }
+        },
+        {
+          "label": "device",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            114
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "clip_name": true,
+          "type": true,
+          "device": true
+        }
+      },
+      "widgets_values": [
+        "qwen_3_8b.safetensors",
+        "flux2",
+        "default"
+      ]
+    },
+    {
+      "id": 35,
+      "type": "VAELoader",
+      "pos": [
+        -645.5302124023438,
+        806.6102294921875
+      ],
+      "size": [
+        304.5560607910156,
+        58
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            59,
+            72,
+            76,
+            115
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "vae_name": true
+        }
+      },
+      "widgets_values": [
+        "flux2-vae.safetensors"
+      ]
+    },
+    {
+      "id": 184,
+      "type": "easy showAnything",
+      "pos": [
+        730.3331909179688,
+        377.9706115722656
+      ],
+      "size": [
+        414.43194580078125,
+        792.3218994140625
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "anything",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 317
+        }
+      ],
+      "outputs": [
+        {
+          "label": "output",
+          "name": "output",
+          "type": "*"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy showAnything",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Next Scene; A boy and a girl walk in a straight line toward the right of the screen across an empty field edge under cloudy and windy weather, soft diffused overcast daylight, muted vintage color palette, restrained saturation, low contrast, soft natural shadows, and consistent exposure and white balance. The boy, positioned on the left, walks in side profile, body angled rightward, feet pointed ahead, face turned slightly downward, eyes focused forward—not toward the camera. The girl, on the right, mirrors him, also walking sideways, aligned beside him, both maintaining steady gait. Long shot captured at eye level, full-body framing, composed tightly to the right third of the frame, front-quarter perspective showing their path stretching into open field beyond. Background reveals sparse grassland fading to hazy horizon—no trees or buildings. The exact same atmospheric tone persists throughout: cloudy and windy weather, soft diffused overcast daylight, muted vintage color palette, restrained saturation, low contrast, soft natural shadows, and consistent exposure and white balance.",
+        "",
+        "Next Scene; A boy stands stationary on the left, facing front, shoulders squared, hands resting loosely at sides, while a girl stands to his immediate right, facing front too, extending her right arm fully extended with index finger pointing precisely toward the center of the screen. Both children wear identical outfits matching their respective reference images, untouched in detail including hairstyles and facial features. Medium shot, upper-body framing centered evenly, taken from direct frontal view at eye level, capturing expressions clearly without distortion. They occupy mid-ground against vast flat expanse of empty field edge stretching behind them under same sky conditions — gray clouds swirling gently above, wind stirring loose strands near their ankles. All elements rendered with cinematic realism, sharp focus on skin texture and fabric folds, natural anatomical precision preserved. Cloudy and windy weather, soft diffused overcast daylight, muted vintage color palette, restrained saturation, low contrast, soft natural shadows, and consistent exposure and white balance.",
+        "",
+        "Next Scene; In a wide-full-shot spanning the breadth of the empty field edge under persistent cloud cover and gusty winds, a boy pulls vigorously at a large red radish held firmly in his right hand, straining visibly beneath taut grip, bent slightly backward yet grounded squarely on uneven earth surface, legs apart bracing forceful effort, back arched subtly during exertion. Positioned prominently in right foreground, he wears authentic attire anchored through reference imagery unchanged since prior frames. To his extreme left, further receded into shallow depth-of-field blur, lies a girl whose whole form appears small-scale due to great separation — she gazes intently upon the boy's struggle, arms relaxed hanging naturally alongside slender waistline, chin tilted ever so faintly upwards tracking motion unfold before her. Side-view camera captures diagonal plane slicing cleanly past shoulder-height axis separating two figures vertically separated horizontally via compositional layering technique enhancing dramatic tension. Behind them stretches endless plain devoid even minimal flora except scattered tufts dried stalks rustling intermittently caught eddies breezes sweeping air currents around pair. Cinematic rendering prioritizes tactile authenticity material surfaces soil graininess root fibers pulled raw flesh exposed radial veins embedded organic matter radiating lifeblood vitality despite harsh environmental context. Cloudy and windy weather, soft diffused overcast daylight, muted vintage color palette, restrained saturation, low contrast, soft natural shadows, and consistent exposure and white balance."
+      ]
+    },
+    {
+      "id": 79,
+      "type": "Flux2KleinEditTextEncode_EditUtils",
+      "pos": [
+        1161.6419677734375,
+        378.7366027832031
+      ],
+      "size": [
+        400,
+        212
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 114
+        },
+        {
+          "label": "vae",
+          "name": "vae",
+          "type": "VAE",
+          "link": 115
+        },
+        {
+          "label": "image1",
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 108
+        },
+        {
+          "label": "image2",
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 109
+        },
+        {
+          "label": "image3",
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE"
+        },
+        {
+          "label": "mask",
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK"
+        },
+        {
+          "label": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 107
+        },
+        {
+          "label": "ref_longest_edge",
+          "name": "ref_longest_edge",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "ref_longest_edge"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "links": [
+            112,
+            113
+          ]
+        },
+        {
+          "label": "latent",
+          "name": "latent",
+          "type": "LATENT"
+        },
+        {
+          "label": "custom_output",
+          "name": "custom_output",
+          "type": "ANY"
+        },
+        {
+          "label": "main_image",
+          "name": "main_image",
+          "type": "IMAGE"
+        },
+        {
+          "label": "mask",
+          "name": "mask",
+          "type": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Flux2KleinEditTextEncode_EditUtils",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "",
+        1024
+      ]
+    },
+    {
+      "id": 36,
+      "type": "Int",
+      "pos": [
+        -643.2009887695312,
+        937.798828125
+      ],
+      "size": [
+        275.5072326660156,
+        58
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "value",
+          "name": "value",
+          "type": "INT",
+          "widget": {
+            "name": "value"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "INT",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            46,
+            48
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Int",
+        "cnr_id": "ComfyLiterals",
+        "ver": "bdddb08ca82d90d75d97b1d437a652e0284a32ac",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        2048
+      ]
+    },
+    {
+      "id": 52,
+      "type": "SaveImage",
+      "pos": [
+        2111.544921875,
+        380.77294921875
+      ],
+      "size": [
+        480.6602783203125,
+        1431.408203125
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 60
+        },
+        {
+          "label": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "image_urls",
+          "name": "image_urls",
+          "type": "STRING"
+        },
+        {
+          "label": "images",
+          "name": "images",
+          "type": "IMAGE"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "filename_prefix": true
+        }
+      },
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 69,
+      "type": "CFGGuider",
+      "pos": [
+        1585.5445556640625,
+        516.336181640625
+      ],
+      "size": [
+        270,
+        98
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 127
+        },
+        {
+          "label": "positive",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 87
+        },
+        {
+          "label": "negative",
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 88
+        },
+        {
+          "label": "cfg",
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "GUIDER",
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            82
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CFGGuider",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "cfg": true
+        }
+      },
+      "widgets_values": [
+        1.1
+      ]
+    },
+    {
+      "id": 71,
+      "type": "KSamplerSelect",
+      "pos": [
+        1584.1143798828125,
+        668.6890869140625
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "sampler_name",
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "SAMPLER",
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            83
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "sampler_name": true
+        }
+      },
+      "widgets_values": [
+        "euler"
+      ]
+    },
+    {
+      "id": 37,
+      "type": "EmptyFlux2LatentImage",
+      "pos": [
+        1585.69140625,
+        781.6484985351562
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "width",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 50
+        },
+        {
+          "label": "height",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 51
+        },
+        {
+          "label": "batch_size",
+          "name": "batch_size",
+          "type": "INT",
+          "widget": {
+            "name": "batch_size"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            85
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyFlux2LatentImage",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "batch_size": true,
+          "width": true,
+          "height": true
+        }
+      },
+      "widgets_values": [
+        1024,
+        1024,
         1
-      ],
-      "batch_size": 1
-    },
-    "class_type": "EmptyFlux2LatentImage",
-    "_meta": {
-      "title": "Empty Flux 2 Latent"
-    }
-  },
-  "38": {
-    "inputs": {
-      "megapixel": "1.0",
-      "aspect_ratio": "16:9 (Panorama)",
-      "divisible_by": "64",
-      "custom_ratio": false,
-      "custom_aspect_ratio": "1:1"
-    },
-    "class_type": "FluxResolutionNode",
-    "_meta": {
-      "title": "Flux Resolution Calc"
-    }
-  },
-  "40": {
-    "inputs": {
-      "lora_name": "bfs_head_v1_flux-klein_9b_step3500_rank128.safetensors",
-      "strength_model": 0.5,
-      "model": [
-        "42",
-        0
       ]
     },
-    "class_type": "LoraLoaderModelOnly",
-    "_meta": {
-      "title": "Load LoRA"
-    }
-  },
-  "41": {
-    "inputs": {
-      "clip_name": "qwen_3_8b.safetensors",
-      "type": "flux2",
-      "device": "default"
-    },
-    "class_type": "CLIPLoader",
-    "_meta": {
-      "title": "Load CLIP"
-    }
-  },
-  "42": {
-    "inputs": {
-      "unet_name": "flux-2-klein-9b.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
-    }
-  },
-  "43": {
-    "inputs": {
-      "text": "You are an expert cinematic prompt engineer for Qwen-VL 3.4B and Flux.2-klein movie storyboard generation.\n\nYou will receive:\n1. two reference images\n2. a JSON object named \"structured_shot_data\"\n\nYour task is to generate one independent Flux.2-klein scene prompt for each shot.\n\nCharacter identity, face, hairstyle, body shape, and outfit must rely only on the visual information in the reference images.\n\n[CORE GENERATION RULE — STRICT]\n- The \"description\" field is the primary source for writing each prompt.\n- Expand the description slightly into a compact cinematic scene prompt.\n- Use the other structured fields only to support, refine, and constrain the description.\n- Do not replace the description with a completely different sentence.\n- Do not invent new characters, props, outfits, actions, locations, or story events.\n\n[INPUT INTERPRETATION — STRICT]\n- Read each shot from structured_shot_data.shots.\n- For each shot, use:\n  - description as the main sentence basis\n  - characters for subject identity, position, and action checking\n  - environment for place refinement\n  - atmosphere for mood refinement\n  - camera fields for shot size, framing, and composition wording\n- The field \"flux_multi_angle_prompt\" is for a separate Multi-Angle branch only.\n- Do not include \"flux_multi_angle_prompt\" or \"<sks>\" in the final output.\n\n[OUTPUT FORMAT — STRICT]\n- Output exactly one single-line prompt for each shot.\n- Each line must follow this structure:\nNext scene: [shot number]) [shot size / framing] :: [description-based core scene description] :: [mood, color, style]\n- Do not insert a newline after \"Next scene:\".\n- Keep each prompt short, clear, and compact.\n- Do not combine multiple shots.\n- Do not include explanations, bullets, JSON, or quotes.\n- Output only the final prompts.\n\n[REFERENCE IMAGE MAPPING — STRICT]\n- Image 1 = the boy. Always call him \"the boy from Image 1\".\n- Image 2 = the girl. Always call her \"the girl from Image 2\".\n- Never use C1 or C2 in the output.\n- Preserve character identity only from the reference images.\n- Do not invent unseen facial details, hairstyle details, body details, or outfit details.\n\n[DESCRIPTION EXPANSION RULE]\n- Rewrite the description into natural cinematic English.\n- Keep the original action and direction intact.\n- Slightly enrich the sentence using only the provided structured data.\n- Keep the prompt visually clear and generation-friendly for Flux.2-klein.\n- Do not over-write or over-embellish the description.\n\n[CAMERA RULE]\n- Reflect shot_size and framing explicitly in the first segment.\n- Reflect composition, camera angle, and camera position naturally in the core scene description only when helpful.\n- Keep camera wording concise.\n\n[STYLE RULE]\n- Even if the shot data includes \"Vintage\", do not create a retro or old-film look.\n- Use a short modern style description.\n- Preferred style wording:\n\"modern digital cinema, sharp focus, clean color grading, balanced natural lighting.\"\n\n[WRITING RULE]\nFocus only on:\n1. shot size and framing\n2. description-based action and subject placement\n3. environment\n4. short mood/style\n\nIf shot_count is 1, output only one line.\nUse the reference image names only as identity labels. Do not visually analyze the images.\n\n"
-    },
-    "class_type": "Text Multiline",
-    "_meta": {
-      "title": "Text Multiline"
-    }
-  },
-  "44": {
-    "inputs": {
-      "storyboard_json": [
-        "57",
-        0
+    {
+      "id": 72,
+      "type": "Flux2Scheduler",
+      "pos": [
+        1583.2205810546875,
+        943.1865234375
       ],
-      "description_source": "english",
-      "include_technical_settings": "false"
-    },
-    "class_type": "ScenePromptBuilder",
-    "_meta": {
-      "title": "Scene Prompt Builder"
-    }
-  },
-  "45": {
-    "inputs": {
-      "a": [
-        "43",
-        0
+      "size": [
+        270,
+        106
       ],
-      "b": [
-        "44",
-        0
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "steps",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          }
+        },
+        {
+          "label": "width",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 89
+        },
+        {
+          "label": "height",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 90
+        }
+      ],
+      "outputs": [
+        {
+          "label": "SIGMAS",
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            84
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Flux2Scheduler",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "width": true,
+          "steps": true,
+          "height": true
+        }
+      },
+      "widgets_values": [
+        4,
+        1024,
+        1024
       ]
     },
-    "class_type": "JWStringConcat",
-    "_meta": {
-      "title": "String Concatenate"
-    }
-  },
-  "46": {
-    "inputs": {
-      "prompt": [
-        "58",
-        0
+    {
+      "id": 47,
+      "type": "ConditioningZeroOut",
+      "pos": [
+        1160.2327880859375,
+        644.0326538085938
       ],
-      "start_index": 0,
-      "max_rows": 1000,
-      "remove_empty_lines": ""
+      "size": [
+        402.685546875,
+        26
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "conditioning",
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 112
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CONDITIONING",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            77
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ConditioningZeroOut",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
     },
-    "class_type": "easy promptLine",
-    "_meta": {
-      "title": "PromptLine"
-    }
-  },
-  "47": {
-    "inputs": {
-      "conditioning": [
-        "59",
-        0
+    {
+      "id": 43,
+      "type": "Text Multiline",
+      "pos": [
+        -322.2481994628906,
+        380.3752136230469
+      ],
+      "size": [
+        364.44232177734375,
+        485.16131591796875
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "text",
+          "name": "text",
+          "type": "STRING",
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "STRING",
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            94
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Text Multiline",
+        "cnr_id": "was-node-suite-comfyui",
+        "ver": "ea935d1044ae5a26efa54ebeb18fe9020af49a45",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "text": true
+        }
+      },
+      "widgets_values": [
+        "You are a professional film storyboard prompt designer.\n\nConvert the structured_shot_data JSON appended below into one cinematic image-generation prompt per shot, optimized for FLUX.2 Klein. Follow the original shot order and use only information supported by the JSON and reference images.\n\n[Character Consistency]\n\nUse each reference_image as the sole source of the corresponding character’s visual appearance.\nPreserve identity, face, age, hairstyle, body proportions, clothing, footwear, accessories, and colors exactly as shown in the reference image.\nDo not invent, describe, or modify visual characteristics that are not provided by the reference image.\nCamera angle, body orientation, action, posture, gaze, and expression may change only when required by the shot data.\nPreserve the specified number of characters, roles, screen positions, actions, and spatial relationships.\nDo not duplicate, omit, replace, merge, or exchange characters.\n\n[Scene Continuity]\n\nFor shots sharing the same environment, maintain the same physical location and use consistent descriptions of its terrain, field boundaries, paths, horizon, distant landscape, vegetation, and major landmarks.\nCamera position and framing may change, but the location must remain recognizable as the same physical space.\nDo not introduce unexplained changes to the background or add unrelated locations, structures, vegetation, characters, or objects.\n\nOnly include props specified in the JSON or directly required by an action.\nKeep recurring or narratively important props consistent in type, size, color, shape, condition, and ownership.\nDo not duplicate, replace, transform, remove, or randomly add props.\n\n[Global Visual Lock]\n\nBefore generating the shot prompts, derive one shared Global Visual Lock from the atmosphere and cinematic_tone of the first shot.\nThe Global Visual Lock must define the common weather, time of day, lighting quality, color palette, saturation, contrast, shadows, exposure, and white balance using only information supported by the JSON.\n\nApply the same Global Visual Lock to every shot unless the JSON explicitly identifies a new scene or a deliberate visual transition.\nWrite the Global Visual Lock once internally, then repeat the exact same wording at the end of every generated prompt.\nDo not paraphrase, shorten, omit, or change the Global Visual Lock between shots.\nDo not introduce conflicting weather, lighting, time of day, or color conditions.\n\nFor example, when the JSON specifies “Cloudy, Windy” and “Cinematic, Vintage,” a shared Global Visual Lock may be:\ncloudy and windy weather, soft diffused overcast daylight, muted vintage color palette, restrained saturation, low contrast, soft natural shadows, and consistent exposure and white balance.\n\n[Shot Interpretation]\n\nUse description as the primary narrative instruction.\nAccurately reflect characters, position, action, environment, atmosphere, cinematic_tone, and camera information.\n\nInterpret character position as placement within the image frame:\n“Left” means the left side of the frame.\n“Right” means the right side of the frame.\n“Foreground” means closer to the camera.\n“Background” means farther from the camera.\nPreserve all specified foreground-background relationships and relative distances.\nComposition describes the overall placement of subjects and visual weight within the frame.\n\n[Movement and Orientation]\n\nExplicitly state each moving character’s screen direction, body orientation, face direction, gaze direction, and foot direction.\nDistinguish character orientation from camera position.\n\nWhen a character moves laterally, use the explicit wording “from screen left to screen right” or “from screen right to screen left.”\nThe character’s body, face, and feet must be oriented toward the stated screen direction.\nAlso state that the character is shown in side profile and is not moving toward the camera.\n\nA camera positioned in front of the scene does not mean that a laterally moving character faces the camera.\nFor lateral movement, do not describe the character as front-facing, facing forward, walking toward the viewer, posing frontally, or making direct eye contact.\nOnly use frontal body orientation when the description or action explicitly requires the character to face the camera or the front of the frame.\n\n[Camera and Framing Interpretation]\n\nTreat shot_size, camera_height, framing, composition, camera_angle, and camera_position as explicit camera constraints.\n\nCamera height determines the vertical viewing angle.\nUse “eye-level” when camera_height specifies Eye Level.\nDo not introduce a low-angle, high-angle, elevated, overhead, or ground-level view unless explicitly required by camera_height or another higher-priority shot instruction.\nForeground placement, background placement, subject distance, or a character’s physical action must not be interpreted as camera height.\n\nCamera angle and camera position determine whether the scene is viewed from the front, side, rear, or quarter direction.\nCharacter body orientation must still follow the described action and movement direction.\n\nFraming describes how much of each character is visible and must not be interpreted as an action or posture.\n“Knee shot” means the character is framed approximately from the knees upward.\nIt does not mean that the character is kneeling.\n“Full body” means the entire body is visible.\n“Upper body” means the frame primarily includes the torso and head.\nOnly describe a character as kneeling, crouching, sitting, lying down, or bending when that posture is explicitly stated in description or action.\n\nWhen different characters have different framing instructions, apply each framing instruction to its corresponding character.\nFor example, “boy knee shot, girl full body in distance” means the boy is shown from approximately the knees upward in the foreground while the girl’s full body remains visible in the background.\n\nIf shot fields conflict, resolve them using this priority:\n\n1. Main event and movement in description.\n2. Character identity, position, action, and posture in characters.\n3. Shot size, camera height, framing, composition, camera angle, and camera position in camera.\n\nDo not produce contradictory instructions.\nAdjust only lower-priority camera wording when necessary, while preserving the intended shot size, camera height, framing, composition, action, and screen direction.\n\n[Camera Tag Exclusion]\n\nIgnore flux_multi_angle_prompt if it exists in the JSON.\nDo not include `<sks>` or any other LoRA trigger, camera-control tag, or tag-form camera syntax in the generated prompts.\nExpress all camera information in clear natural language only.\n\n[FLUX.2 Klein Prompt Requirements]\n\nWrite each prompt as a direct visual description rather than an explanation.\nDescribe information in this order:\n\n1. Main characters and action.\n2. Screen positions, spatial relationships, and movement direction.\n3. Body orientation, face direction, gaze, and posture.\n4. Shot size, camera height, framing, composition, and camera viewpoint.\n5. Environment, foreground, middle ground, and background.\n6. The exact shared Global Visual Lock.\n\nUse clear and concrete visual language.\nInclude high-definition cinematic image quality, realistic materials and textures, natural anatomy, and natural body proportions.\nAvoid duplicated characters, malformed limbs, merged bodies, incorrect screen direction, unintended postures, inconsistent props, and changes to character appearance.\n\n[Output Validation]\n\nBefore outputting, silently verify that:\n\n1. The number and order of prompts match the JSON shots.\n2. No `<sks>` tag or flux_multi_angle_prompt text is included.\n3. Every lateral movement includes an explicit screen direction, side-profile orientation, and “not toward the camera.”\n4. Camera height matches camera_height exactly.\n5. Framing terms are not interpreted as character actions or postures.\n6. Every prompt ends with exactly the same Global Visual Lock wording.\n7. There are no blank lines between prompts.\n\n[Output Format]\n\nGenerate exactly one prompt for each shot in the JSON, following the original order.\nEach prompt must begin exactly with “Next Scene;” and the prompt content must follow immediately.\nWrite each shot as one continuous paragraph on a single line.\nDo not insert blank lines between prompts.\nPlace each new prompt on the immediately following line.\nDo not output Markdown, headings, numbering, JSON, analysis, quotation marks, or additional explanations.\nEach prompt should be approximately 100–130 words.\nOutput only the generated prompts in this format:\nNext Scene;prompt\nNext Scene;prompt\n\n[STRUCTURED_SHOT_DATA_JSON]\n\n{\n  \"structured_shot_data\": {\n    \"shot_count\": 3,\n    \"shots\": [\n      {\n        \"shot_id\": \"7-1\",\n        \"description\": \"From the empty field head, a girl and a boy are walking in a line toward the right of the screen.\",\n        \"characters\": [\n          {\n            \"reference_image\": \"image 1\",\n            \"original_character_id\": \"C1\",\n            \"role\": \"Boy\",\n            \"position\": \"Left\",\n            \"action\": \"Walking\"\n          },\n          {\n            \"reference_image\": \"image 2\",\n            \"original_character_id\": \"C2\",\n            \"role\": \"Girl\",\n            \"position\": \"Right\",\n            \"action\": \"Walking\"\n          }\n        ],\n        \"environment\": \"empty field edge\",\n        \"atmosphere\": \"Cloudy, Windy\",\n        \"cinematic_tone\": \"Cinematic\",\n        \"camera\": {\n          \"shot_size\": \"Long Shot\",\n          \"camera_height\": \"Eye Level\",\n          \"framing\": \"Full Body\",\n          \"composition\": \"Right Framing\",\n          \"camera_angle\": \"Front\",\n          \"camera_position\": \"Right\"\n        },\n        \"flux_multi_angle_prompt\": \"<sks> front view eye-level shot wide shot\"\n      },\n      {\n        \"shot_id\": \"7-2\",\n        \"description\": \"The boy and the girl are standing facing the front, and the girl on the right of the boy is pointing her finger at the center of the screen.\",\n        \"characters\": [\n          {\n            \"reference_image\": \"image 1\",\n            \"original_character_id\": \"C1\",\n            \"role\": \"Boy\",\n            \"position\": \"Left\",\n            \"action\": \"Standing\"\n          },\n          {\n            \"reference_image\": \"image 2\",\n            \"original_character_id\": \"C2\",\n            \"role\": \"Girl\",\n            \"position\": \"Right\",\n            \"action\": \"Right hand pointing forward\"\n          }\n        ],\n        \"environment\": \"empty field edge\",\n        \"atmosphere\": \"Cloudy, Windy\",\n        \"cinematic_tone\": \"Cinematic\",\n        \"camera\": {\n          \"shot_size\": \"Medium Shot\",\n          \"camera_height\": \"Eye Level\",\n          \"framing\": \"Upper Body\",\n          \"composition\": \"Center Framing\",\n          \"camera_angle\": \"Front\",\n          \"camera_position\": \"View\"\n        },\n        \"flux_multi_angle_prompt\": \"<sks> front view eye-level shot medium shot\"\n      },\n      {\n        \"shot_id\": \"7-3\",\n        \"description\": \"Behind the boy pulling a radish in his hand, a girl located far to the left of the boy is looking at the boy.\",\n        \"characters\": [\n          {\n            \"reference_image\": \"image 1\",\n            \"original_character_id\": \"C1\",\n            \"role\": \"Boy\",\n            \"position\": \"Right foreground\",\n            \"action\": \"Pulling a radish\"\n          },\n          {\n            \"reference_image\": \"image 2\",\n            \"original_character_id\": \"C2\",\n            \"role\": \"Girl\",\n            \"position\": \"Left background\",\n            \"action\": \"Looking at the boy\"\n          }\n        ],\n        \"environment\": \"empty field edge\",\n        \"atmosphere\": \"Cloudy, Windy\",\n        \"cinematic_tone\": \"Cinematic\",\n        \"camera\": {\n          \"shot_size\": \"Full Shot / Wide Shot\",\n          \"camera_height\": \"Eye Level\",\n          \"framing\": \"Boy knee shot, girl full body in distance\",\n          \"composition\": \"Boy foreground, girl background\",\n          \"camera_angle\": \"Side\",\n          \"camera_position\": \"Side\"\n        },\n        \"flux_multi_angle_prompt\": \"<sks> front-right quarter view eye-level shot wide shot\"\n      }\n    ]\n  }\n}"
       ]
     },
-    "class_type": "ConditioningZeroOut",
-    "_meta": {
-      "title": "ConditioningZeroOut"
-    }
-  },
-  "48": {
-    "inputs": {
-      "samples": [
-        "67",
-        0
+    {
+      "id": 73,
+      "type": "AILab_QwenVL",
+      "pos": [
+        53.73193359375,
+        380.7416687011719
       ],
-      "vae": [
-        "35",
-        0
+      "size": [
+        331.1688537597656,
+        483.1858825683594
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "image",
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE"
+        },
+        {
+          "label": "video",
+          "name": "video",
+          "shape": 7,
+          "type": "IMAGE"
+        },
+        {
+          "label": "model_name",
+          "name": "model_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "model_name"
+          }
+        },
+        {
+          "label": "quantization",
+          "name": "quantization",
+          "type": "COMBO",
+          "widget": {
+            "name": "quantization"
+          }
+        },
+        {
+          "label": "preset_prompt",
+          "name": "preset_prompt",
+          "type": "COMBO",
+          "widget": {
+            "name": "preset_prompt"
+          }
+        },
+        {
+          "label": "custom_prompt",
+          "name": "custom_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "custom_prompt"
+          },
+          "link": 94
+        },
+        {
+          "label": "max_tokens",
+          "name": "max_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "max_tokens"
+          }
+        },
+        {
+          "label": "keep_model_loaded",
+          "name": "keep_model_loaded",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "keep_model_loaded"
+          }
+        },
+        {
+          "label": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          }
+        },
+        {
+          "label": "attention_mode",
+          "name": "attention_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "attention_mode"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "RESPONSE",
+          "name": "RESPONSE",
+          "type": "STRING",
+          "links": [
+            95
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AILab_QwenVL",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Qwen3-VL-8B-Instruct",
+        "None (FP16)",
+        "🪄 Prompt Refine & Expand",
+        "",
+        1000,
+        false,
+        355240863077092,
+        "randomize",
+        "auto"
+      ],
+      "color": "#28403f",
+      "bgcolor": "#374539"
+    },
+    {
+      "id": 46,
+      "type": "easy promptLine",
+      "pos": [
+        395.4014892578125,
+        380.35626220703125
+      ],
+      "size": [
+        325.08343505859375,
+        482.376708984375
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "prompt",
+          "name": "prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 95
+        },
+        {
+          "label": "start_index",
+          "name": "start_index",
+          "type": "INT",
+          "widget": {
+            "name": "start_index"
+          }
+        },
+        {
+          "label": "max_rows",
+          "name": "max_rows",
+          "type": "INT",
+          "widget": {
+            "name": "max_rows"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "STRING",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            107,
+            317
+          ]
+        },
+        {
+          "label": "COMBO",
+          "name": "COMBO",
+          "shape": 6,
+          "type": "*"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "easy promptLine",
+        "cnr_id": "comfyui-easy-use",
+        "ver": "e900c2ca9c0d90b0896881910ca7f3f02d88ebd8",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "start_index": true,
+          "max_rows": true,
+          "prompt": true
+        }
+      },
+      "widgets_values": [
+        "text",
+        0,
+        1000,
+        ""
+      ],
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 68,
+      "type": "RandomNoise",
+      "pos": [
+        1584.5596923828125,
+        378.9621276855469
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "noise_seed",
+          "name": "noise_seed",
+          "type": "INT",
+          "widget": {
+            "name": "noise_seed"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "label": "NOISE",
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            81
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "cnr_id": "comfy-core",
+        "ver": "0.24.1",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "noise_seed": true
+        }
+      },
+      "widgets_values": [
+        411718684542221,
+        "randomize"
       ]
     },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
-  "50": {
-    "inputs": {
-      "image": "body_boy_631934065_00001__boy.png",
-      "keep_alpha_channel": false,
-      "output_mode": false
-    },
-    "class_type": "LoadImageFromUrl",
-    "_meta": {
-      "title": "Load Image From URL - boy"
-    }
-  },
-  "51": {
-    "inputs": {
-      "image": "body_girl_1650482446_00001_girl.png",
-      "keep_alpha_channel": false,
-      "output_mode": false
-    },
-    "class_type": "LoadImageFromUrl",
-    "_meta": {
-      "title": "Load Image From URL - girl"
-    }
-  },
-  "52": {
-    "inputs": {
-      "filename_prefix": "ComfyUI",
-      "images": [
-        "48",
-        0
-      ]
-    },
-    "class_type": "SaveImage",
-    "_meta": {
-      "title": "Save Image"
-    }
-  },
-  "53": {
-    "inputs": {
-      "model": "RMBG-2.0",
-      "sensitivity": 1,
-      "process_res": 1024,
-      "mask_blur": 0,
-      "mask_offset": 0,
-      "invert_output": false,
-      "refine_foreground": false,
-      "background": "Color",
-      "background_color": "#ffffff",
-      "image": [
-        "33",
-        0
-      ]
-    },
-    "class_type": "RMBG",
-    "_meta": {
-      "title": "Remove Background (RMBG)"
-    }
-  },
-  "54": {
-    "inputs": {
-      "model": "RMBG-2.0",
-      "sensitivity": 1,
-      "process_res": 1024,
-      "mask_blur": 0,
-      "mask_offset": 0,
-      "invert_output": false,
-      "refine_foreground": false,
-      "background": "Color",
-      "background_color": "#ffffff",
-      "image": [
-        "34",
-        0
-      ]
-    },
-    "class_type": "RMBG",
-    "_meta": {
-      "title": "Remove Background (RMBG)"
-    }
-  },
-  "57": {
-    "inputs": {
-      "input_mode": "text",
-      "csv_file": "Sonagi_S07_Shot_1-4.csv",
-      "csv_text": "",
-      "shot_filter": "ALL",
-      "custom_shot_ids": ""
-    },
-    "class_type": "CSVStoryboardParser",
-    "_meta": {
-      "title": "CSV Storyboard Parser"
-    }
-  },
-  "58": {
-    "inputs": {
-      "model_name": "Qwen3-VL-8B-Instruct-Abliterated [DL: 15GB, VRAM: 12.0GB]",
-      "attention_mode": "auto",
-      "preset_prompt": "🚫 No preset (image-only)",
-      "custom_prompt": [
-        "45",
-        0
+    {
+      "id": 38,
+      "type": "FluxResolutionNode",
+      "pos": [
+        1284.62451171875,
+        837.6697998046875
       ],
-      "max_tokens": 1000,
-      "keep_model_loaded": true,
-      "seed": 4068698443,
-      "keep_last_prompt": false,
-      "stream_tokens_to_terminal": false,
-      "enable_thinking": false,
-      "hf_token": ""
-    },
-    "class_type": "AILab_QwenVL",
-    "_meta": {
-      "title": "ThinkingLLM"
-    }
-  },
-  "59": {
-    "inputs": {
-      "prompt": [
-        "46",
-        0
+      "size": [
+        280.630859375,
+        214
       ],
-      "ref_longest_edge": 1536,
-      "clip": [
-        "41",
-        0
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "megapixel",
+          "name": "megapixel",
+          "type": "COMBO",
+          "widget": {
+            "name": "megapixel"
+          }
+        },
+        {
+          "label": "aspect_ratio",
+          "name": "aspect_ratio",
+          "type": "COMBO",
+          "widget": {
+            "name": "aspect_ratio"
+          }
+        },
+        {
+          "label": "divisible_by",
+          "name": "divisible_by",
+          "type": "COMBO",
+          "widget": {
+            "name": "divisible_by"
+          }
+        },
+        {
+          "label": "custom_ratio",
+          "name": "custom_ratio",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "custom_ratio"
+          }
+        },
+        {
+          "label": "custom_aspect_ratio",
+          "name": "custom_aspect_ratio",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "custom_aspect_ratio"
+          }
+        }
       ],
-      "vae": [
-        "35",
-        0
+      "outputs": [
+        {
+          "label": "width",
+          "name": "width",
+          "type": "INT",
+          "links": [
+            50,
+            89
+          ]
+        },
+        {
+          "label": "height",
+          "name": "height",
+          "type": "INT",
+          "links": [
+            51,
+            90
+          ]
+        },
+        {
+          "label": "resolution",
+          "name": "resolution",
+          "type": "STRING"
+        },
+        {
+          "label": "preview",
+          "name": "preview",
+          "type": "IMAGE"
+        }
       ],
-      "image1": [
-        "53",
-        0
-      ],
-      "image2": [
-        "54",
-        0
-      ]
-    },
-    "class_type": "Flux2KleinEditTextEncode_EditUtils",
-    "_meta": {
-      "title": "EditUtils: Flux2Klein Edit Text Encode lrzjason"
-    }
-  },
-  "60": {
-    "inputs": {
-      "conditioning": [
-        "59",
-        0
-      ],
-      "latent": [
-        "61",
-        0
-      ]
-    },
-    "class_type": "ReferenceLatent",
-    "_meta": {
-      "title": "ReferenceLatent"
-    }
-  },
-  "61": {
-    "inputs": {
-      "pixels": [
-        "53",
-        0
-      ],
-      "vae": [
-        "35",
-        0
-      ]
-    },
-    "class_type": "VAEEncode",
-    "_meta": {
-      "title": "VAE Encode"
-    }
-  },
-  "62": {
-    "inputs": {
-      "conditioning": [
-        "60",
-        0
-      ],
-      "latent": [
-        "63",
-        0
-      ]
-    },
-    "class_type": "ReferenceLatent",
-    "_meta": {
-      "title": "ReferenceLatent"
-    }
-  },
-  "63": {
-    "inputs": {
-      "pixels": [
-        "54",
-        0
-      ],
-      "vae": [
-        "35",
-        0
-      ]
-    },
-    "class_type": "VAEEncode",
-    "_meta": {
-      "title": "VAE Encode"
-    }
-  },
-  "64": {
-    "inputs": {
-      "conditioning": [
-        "47",
-        0
-      ],
-      "latent": [
-        "61",
-        0
-      ]
-    },
-    "class_type": "ReferenceLatent",
-    "_meta": {
-      "title": "ReferenceLatent"
-    }
-  },
-  "65": {
-    "inputs": {
-      "conditioning": [
+      "properties": {
+        "Node name for S&R": "FluxResolutionNode",
+        "cnr_id": "controlaltai-nodes",
+        "ver": "721492b66c9cede8ae23ae10615462ad80cfd061",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {}
+        },
+        "widget_ue_connectable": {
+          "aspect_ratio": true,
+          "divisible_by": true,
+          "megapixel": true,
+          "custom_ratio": true,
+          "custom_aspect_ratio": true
+        }
+      },
+      "widgets_values": [
+        "1.0",
+        "16:9 (Panorama)",
         "64",
-        0
-      ],
-      "latent": [
-        "63",
-        0
+        false,
+        "1:1"
       ]
-    },
-    "class_type": "ReferenceLatent",
-    "_meta": {
-      "title": "ReferenceLatent"
     }
-  },
-  "67": {
-    "inputs": {
-      "noise": [
-        "68",
-        0
-      ],
-      "guider": [
-        "69",
-        0
-      ],
-      "sampler": [
-        "71",
-        0
-      ],
-      "sigmas": [
-        "72",
-        0
-      ],
-      "latent_image": [
-        "37",
-        0
+  ],
+  "links": [
+    [
+      46,
+      36,
+      0,
+      33,
+      9,
+      "INT"
+    ],
+    [
+      48,
+      36,
+      0,
+      34,
+      9,
+      "INT"
+    ],
+    [
+      50,
+      38,
+      0,
+      37,
+      0,
+      "INT"
+    ],
+    [
+      51,
+      38,
+      1,
+      37,
+      1,
+      "INT"
+    ],
+    [
+      58,
+      67,
+      0,
+      48,
+      0,
+      "LATENT"
+    ],
+    [
+      59,
+      35,
+      0,
+      48,
+      1,
+      "VAE"
+    ],
+    [
+      60,
+      48,
+      0,
+      52,
+      0,
+      "IMAGE"
+    ],
+    [
+      70,
+      61,
+      0,
+      60,
+      1,
+      "LATENT"
+    ],
+    [
+      72,
+      35,
+      0,
+      61,
+      1,
+      "VAE"
+    ],
+    [
+      73,
+      60,
+      0,
+      62,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      74,
+      63,
+      0,
+      62,
+      1,
+      "LATENT"
+    ],
+    [
+      76,
+      35,
+      0,
+      63,
+      1,
+      "VAE"
+    ],
+    [
+      77,
+      47,
+      0,
+      64,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      78,
+      61,
+      0,
+      64,
+      1,
+      "LATENT"
+    ],
+    [
+      79,
+      64,
+      0,
+      65,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      80,
+      63,
+      0,
+      65,
+      1,
+      "LATENT"
+    ],
+    [
+      81,
+      68,
+      0,
+      67,
+      0,
+      "NOISE"
+    ],
+    [
+      82,
+      69,
+      0,
+      67,
+      1,
+      "GUIDER"
+    ],
+    [
+      83,
+      71,
+      0,
+      67,
+      2,
+      "SAMPLER"
+    ],
+    [
+      84,
+      72,
+      0,
+      67,
+      3,
+      "SIGMAS"
+    ],
+    [
+      85,
+      37,
+      0,
+      67,
+      4,
+      "LATENT"
+    ],
+    [
+      87,
+      62,
+      0,
+      69,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      88,
+      65,
+      0,
+      69,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      89,
+      38,
+      0,
+      72,
+      1,
+      "INT"
+    ],
+    [
+      90,
+      38,
+      1,
+      72,
+      2,
+      "INT"
+    ],
+    [
+      94,
+      43,
+      0,
+      73,
+      5,
+      "STRING"
+    ],
+    [
+      95,
+      73,
+      0,
+      46,
+      0,
+      "STRING"
+    ],
+    [
+      107,
+      46,
+      0,
+      79,
+      6,
+      "STRING"
+    ],
+    [
+      108,
+      33,
+      0,
+      79,
+      2,
+      "IMAGE"
+    ],
+    [
+      109,
+      34,
+      0,
+      79,
+      3,
+      "IMAGE"
+    ],
+    [
+      112,
+      79,
+      0,
+      47,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      113,
+      79,
+      0,
+      60,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      114,
+      41,
+      0,
+      79,
+      0,
+      "CLIP"
+    ],
+    [
+      115,
+      35,
+      0,
+      79,
+      1,
+      "VAE"
+    ],
+    [
+      116,
+      75,
+      0,
+      33,
+      0,
+      "IMAGE"
+    ],
+    [
+      117,
+      76,
+      0,
+      34,
+      0,
+      "IMAGE"
+    ],
+    [
+      118,
+      34,
+      0,
+      81,
+      0,
+      "IMAGE"
+    ],
+    [
+      119,
+      33,
+      0,
+      80,
+      0,
+      "IMAGE"
+    ],
+    [
+      120,
+      80,
+      0,
+      61,
+      0,
+      "IMAGE"
+    ],
+    [
+      121,
+      81,
+      0,
+      63,
+      0,
+      "IMAGE"
+    ],
+    [
+      126,
+      82,
+      0,
+      40,
+      0,
+      "MODEL"
+    ],
+    [
+      127,
+      40,
+      0,
+      69,
+      0,
+      "MODEL"
+    ],
+    [
+      317,
+      46,
+      0,
+      184,
+      0,
+      "*"
+    ],
+    [
+      318,
+      188,
+      0,
+      186,
+      0,
+      "STRING"
+    ],
+    [
+      319,
+      186,
+      0,
+      187,
+      0,
+      "*"
+    ],
+    [
+      320,
+      185,
+      0,
+      188,
+      5,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "links_added_by_ue": [],
+    "VHS_KeepIntermediate": true,
+    "KKvideo_latentpreview": false,
+    "ue_links": [],
+    "VHS_MetadataImage": true,
+    "KKvideo_latentpreviewrate": 0,
+    "0246.VERSION": [
+      0,
+      0,
+      4
+    ],
+    "VHS_latentpreviewrate": 0,
+    "frontendVersion": "1.23.0",
+    "VHS_latentpreview": false,
+    "ds": {
+      "scale": 0.6588450000000085,
+      "offset": [
+        -1489.6192650104485,
+        -272.963661631758
       ]
-    },
-    "class_type": "SamplerCustomAdvanced",
-    "_meta": {
-      "title": "SamplerCustomAdvanced"
     }
   },
-  "68": {
-    "inputs": {
-      "noise_seed": 355742293463858
-    },
-    "class_type": "RandomNoise",
-    "_meta": {
-      "title": "RandomNoise"
-    }
-  },
-  "69": {
-    "inputs": {
-      "cfg": 1.1,
-      "model": [
-        "40",
-        0
-      ],
-      "positive": [
-        "62",
-        0
-      ],
-      "negative": [
-        "65",
-        0
-      ]
-    },
-    "class_type": "CFGGuider",
-    "_meta": {
-      "title": "CFGGuider"
-    }
-  },
-  "71": {
-    "inputs": {
-      "sampler_name": "euler"
-    },
-    "class_type": "KSamplerSelect",
-    "_meta": {
-      "title": "KSamplerSelect"
-    }
-  },
-  "72": {
-    "inputs": {
-      "steps": 6,
-      "width": [
-        "38",
-        0
-      ],
-      "height": [
-        "38",
-        1
-      ]
-    },
-    "class_type": "Flux2Scheduler",
-    "_meta": {
-      "title": "Flux2Scheduler"
-    }
-  }
+  "version": 0.4
 }
