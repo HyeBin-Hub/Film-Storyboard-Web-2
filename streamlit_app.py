@@ -745,6 +745,66 @@ with tab2:
                 key="character_filter_label",
             )
 
+            if ENABLE_MANUAL_FACE_REFERENCE_INPUT:
+                st.caption("Manual Face Reference")
+            
+                manual_url_col, manual_apply_col = st.columns(
+                    [4.5, 1.0],
+                    gap="small",
+                )
+            
+                with manual_url_col:
+                    manual_face_url = st.text_input(
+                        "Manual Face Reference URL",
+                        value="",
+                        key="manual_face_reference_url",
+                        placeholder="Paste an existing face reference URL",
+                        label_visibility="collapsed",
+                        help=(
+                            "현재 Target Character Control에서 선택한 캐릭터의 "
+                            "face reference로 적용합니다."
+                        ),
+                    )
+            
+                with manual_apply_col:
+                    apply_manual_face_clicked = st.button(
+                        "Apply",
+                        type="secondary",
+                        use_container_width=True,
+                        key="apply_manual_face_reference",
+                    )
+            
+                if apply_manual_face_clicked:
+                    selected_face_target = st.session_state.get(
+                        "character_filter_label",
+                        "Image 2 - Girl",
+                    )
+                    manual_face_url = manual_face_url.strip()
+            
+                    if not manual_face_url:
+                        st.error("Face reference URL을 입력하세요.")
+            
+                    elif not manual_face_url.lower().startswith(("http://", "https://")):
+                        st.error(
+                            "http:// 또는 https://로 시작하는 이미지 URL을 입력하세요."
+                        )
+            
+                    elif selected_face_target == "Image 1 - Boy":
+                        st.session_state["face_result_image_c1"] = manual_face_url
+                        st.session_state["face_result_filename_c1"] = (
+                            "manual_boy_face_reference.png"
+                        )
+                        st.success("Image 1 - Boy face reference가 적용되었습니다.")
+                        st.rerun()
+            
+                    else:
+                        st.session_state["face_result_image_c2"] = manual_face_url
+                        st.session_state["face_result_filename_c2"] = (
+                            "manual_girl_face_reference.png"
+                        )
+                        st.success("Image 2 - Girl face reference가 적용되었습니다.")
+                        st.rerun()
+
             with st.expander("Identity Attribute Controls", expanded=True):
                 with st.container(border=True):
                     st.markdown("###### Core Identity")
