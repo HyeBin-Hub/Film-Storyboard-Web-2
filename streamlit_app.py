@@ -1129,6 +1129,12 @@ with tab2:
                         220,
                     )
 
+            # Garment / Outfit reference preview와 생성 버튼 사이 여백
+            st.markdown(
+                "<div style='height: 24px;'></div>",
+                unsafe_allow_html=True,
+            )
+
             generate_body_clicked = st.button(
                 "Generate Outfit Reference",
                 type="primary",
