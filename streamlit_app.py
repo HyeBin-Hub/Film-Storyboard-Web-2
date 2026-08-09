@@ -1143,7 +1143,6 @@ with tab2:
                             st.image(
                                 uploaded_garment,
                                 caption=f"{garment_label} Reference",
-                                # use_container_width=True,
                                 width=180,
                             )
                         else:
@@ -1159,41 +1158,51 @@ with tab2:
                     "Provide a single full outfit reference image to guide the outfit change."
                 )
 
-                single_outfit_upload = st.file_uploader(
-                    "Outfit Reference",
-                    type=["png", "jpg", "jpeg", "webp"],
-                    key=f"outfit_single_upload_{selected_character_code}",
-                    help=(
-                        "Full outfit reference image를 업로드합니다. "
-                        "업로드된 이미지는 base64 data URI로 변환되어 "
-                        "RunComfy LoadImageFromUrl 노드에 전달됩니다."
-                    ),
+                upload_col, preview_col = st.columns(
+                    [1.0, 1.0],
+                    gap="medium",
                 )
 
                 single_reference_key = (
                     f"outfit_single_reference_{selected_character_code}"
                 )
 
-                if single_outfit_upload is not None:
-                    single_outfit_data_uri = uploaded_image_to_data_uri(
-                        single_outfit_upload
-                    )
-                    st.session_state[single_reference_key] = (
-                        single_outfit_data_uri
+                with upload_col:
+                    single_outfit_upload = st.file_uploader(
+                        "Outfit Reference",
+                        type=["png", "jpg", "jpeg", "webp"],
+                        key=f"outfit_single_upload_{selected_character_code}",
+                        help=(
+                            "Full outfit reference image를 업로드합니다. "
+                            "업로드된 이미지는 base64 data URI로 변환되어 "
+                            "RunComfy LoadImageFromUrl 노드에 전달됩니다."
+                        ),
                     )
 
-                    st.image(
-                        single_outfit_upload,
-                        caption="Single Outfit Reference",
-                        # use_container_width=True,
-                        width=240,
-                    )
-                else:
-                    st.session_state[single_reference_key] = ""
-                    render_empty_preview_box(
-                        "Single Outfit<br>Reference",
-                        220,
-                    )
+                    if single_outfit_upload is not None:
+                        single_outfit_data_uri = uploaded_image_to_data_uri(
+                            single_outfit_upload
+                        )
+                        st.session_state[single_reference_key] = (
+                            single_outfit_data_uri
+                        )
+                    else:
+                        st.session_state[single_reference_key] = ""
+
+                with preview_col:
+                    st.markdown("##### Single Outfit Reference")
+
+                    if single_outfit_upload is not None:
+                        st.image(
+                            single_outfit_upload,
+                            caption="Single Outfit Reference",
+                            width=220,
+                        )
+                    else:
+                        render_empty_preview_box(
+                            "Single Outfit<br>Reference",
+                            220,
+                        )
 
             # Garment / Outfit reference preview와 생성 버튼 사이 여백
             st.markdown(
