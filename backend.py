@@ -11,8 +11,7 @@ RUNCOMFY_API_BASE = "https://api.runcomfy.net"
 
 WORKFLOW_DIR = Path(__file__).parent / "workflows"
 
-# 기존 프로젝트 파일명을 유지합니다.
-# 첨부한 최신 API-format workflow JSON을 아래 이름으로 workflows 폴더에 저장하세요.
+# 현재 프로젝트의 API-format workflow 파일명입니다.
 CSV_PARSER_TEST_WORKFLOW_PATH = WORKFLOW_DIR / "csv_parser_test_workflow_api.json"
 FACE_WORKFLOW_PATH = WORKFLOW_DIR / "Character_Appearance_Generation.json"
 BODY_WORKFLOW_PATH = WORKFLOW_DIR / "Reference-based_Outfit_Change.json"
@@ -310,16 +309,28 @@ def _set_image_input(
     image_value: str,
 ) -> None:
     """
-    현재 첨부 workflow의 LoadImage 노드 image 값을 교체합니다.
-    URL 문자열도 workflow JSON에서 이미 사용되고 있으므로 그대로 전달합니다.
+    LoadImageFromUrl 노드에 원격 이미지 URL을 주입합니다.
     """
+    if not str(image_value or "").strip():
+        raise ValueError(
+            f"Image URL for node {node_id} is empty."
+        )
+
     node = _require_node(
         workflow,
         node_id,
-        expected_class_type="LoadImage",
+        expected_class_type="LoadImageFromUrl",
         description=f"Image input node {node_id}",
     )
-    node.setdefault("inputs", {})["image"] = image_value
+
+    inputs = node.setdefault("inputs", {})
+    inputs["image"] = str(image_value).strip()
+
+    if "keep_alpha_channel" in inputs:
+        inputs["keep_alpha_channel"] = False
+
+    if "output_mode" in inputs:
+        inputs["output_mode"] = False
 
 
 def _extract_save_node_images(
@@ -747,21 +758,18 @@ def patch_body_workflow(
     config: dict,
 ) -> dict:
     """
-    Reference-based Outfit Change(1).json 기준:
+    Reference-based_Outfit_Change.json 기준:
 
-    - 26: Character image
-    - 33: Top reference
-    - 7 : Bottom reference
-    - 23: Shoes reference
-    - 24: Single outfit reference
+    - 34: Source Character
+    - 35: Top reference
+    - 38: Bottom reference
+    - 37: Shoes reference
+    - 36: Single Outfit Reference
     - 29: easy ifElse
-          False = Separate Garments (node 12)
-          True  = Single Outfit Reference (node 27)
+          False = Separate Garments
+          True  = Single Outfit Reference
     - 19: KSampler
     - 17: SaveImage
-
-    함수명 patch_body_workflow / run_body_generation은
-    app.py와의 기존 연결을 유지하기 위해 그대로 사용합니다.
     """
     workflow = deepcopy(workflow)
 
@@ -778,12 +786,12 @@ def patch_body_workflow(
         character_filter
     )
 
-    character_image_url = (
+    character_image_url = str(
         outfit_config.get("character_image_url")
         or outfit_config.get("face_image_url")
         or outfit_config.get("reference_image_url")
         or ""
-    )
+    ).strip()
 
     input_mode = outfit_config.get(
         "input_mode",
@@ -828,14 +836,13 @@ def patch_body_workflow(
             f"{input_mode}"
         )
 
-    # 26: Image 1 = character
+    # 34: Image 1 = Source Character
     _set_image_input(
         workflow,
-        "26",
+        "34",
         character_image_url,
     )
 
-    # 29 branch selection
     branch_node = _require_node(
         workflow,
         "29",
@@ -863,17 +870,17 @@ def patch_body_workflow(
         # Stitch order = Top -> Bottom -> Shoes
         _set_image_input(
             workflow,
-            "33",
+            "35",
             top_reference_url,
         )
         _set_image_input(
             workflow,
-            "7",
+            "38",
             bottom_reference_url,
         )
         _set_image_input(
             workflow,
-            "23",
+            "37",
             shoes_reference_url,
         )
 
@@ -887,10 +894,9 @@ def patch_body_workflow(
                 "single_outfit_reference is empty."
             )
 
-        # 24 -> scale -> remove background -> ifElse true
         _set_image_input(
             workflow,
-            "24",
+            "36",
             single_outfit_reference,
         )
 
@@ -903,7 +909,6 @@ def patch_body_workflow(
         f"outfit_{character_name}_{seed}"
     )
 
-    # 19: KSampler
     sampler_node = _require_node(
         workflow,
         "19",
@@ -912,7 +917,6 @@ def patch_body_workflow(
     )
     sampler_node.setdefault("inputs", {})["seed"] = seed
 
-    # 17: SaveImage
     save_node = _require_node(
         workflow,
         "17",
@@ -1008,8 +1012,8 @@ def patch_scene_workflow(
     """
     Reference-based Scene Generation(1).json 기준:
 
-    - 1 : Image 1 - Boy character reference
-    - 9 : Image 2 - Girl character reference
+    - 33: Image 1 - Boy character reference
+    - 34: Image 2 - Girl character reference
     - 25: CSVStoryboardParser
     - 27: ScenePromptBuilder
     - 28: Fixed Qwen instruction
@@ -1085,15 +1089,15 @@ def patch_scene_workflow(
             "Generate Image 2 - Girl outfit reference first."
         )
 
-    # 1 / 9: Character references
+    # 33 / 34: Character references
     _set_image_input(
         workflow,
-        "1",
+        "33",
         boy_body_image_url,
     )
     _set_image_input(
         workflow,
-        "9",
+        "34",
         girl_body_image_url,
     )
 
@@ -1217,15 +1221,15 @@ def patch_camera_refinement_workflow(
     config: dict,
 ) -> dict:
     """
-    Camera Refinement(1).json 기준:
+    Camera_Refinement.json 기준:
 
-    - 13: Source scene image
-    - 36: QwenMultiangleCameraNode
+    - 26: LoadImageFromUrl (Source Scene)
+    - 14: TextEncodeQwenImageEditPlusAdvance_lrzjason
     - 12: KSampler
     - 11: SaveImage
 
-    Step 1 CSV / ScenePromptBuilder / TwoWaySwitch는
-    현재 Camera Refinement workflow에서 더 이상 사용하지 않습니다.
+    현재 API JSON에서 QwenMultiangleCameraNode가 빠져 있으므로,
+    backend에서 36번 노드를 다시 구성하고 14번 prompt 입력에 연결합니다.
     """
     workflow = deepcopy(workflow)
 
@@ -1233,7 +1237,6 @@ def patch_camera_refinement_workflow(
         "camera_angle_refinement",
         {},
     )
-
     input_scene = camera_config.get(
         "input_scene",
         {},
@@ -1243,11 +1246,11 @@ def patch_camera_refinement_workflow(
         {},
     )
 
-    scene_image_url = (
+    scene_image_url = str(
         input_scene.get("image")
         or camera_config.get("scene_image_url")
         or ""
-    )
+    ).strip()
 
     if not scene_image_url:
         raise ValueError(
@@ -1289,33 +1292,45 @@ def patch_camera_refinement_workflow(
     seed = random.randint(1, 4_294_967_295)
     filename_prefix = f"camera_refined_{seed}"
 
-    # 13: Source Scene
+    # 26: Source Scene
     _set_image_input(
         workflow,
-        "13",
+        "26",
         scene_image_url,
     )
 
-    # 36: Qwen Multiangle Camera
-    camera_node = _require_node(
+    # 현재 Camera_Refinement.json에는 36번 노드가 빠져 있으므로
+    # 기존 QwenMultiangleCameraNode를 API graph에 복원합니다.
+    workflow["36"] = {
+        "inputs": {
+            "horizontal_angle": horizontal_angle,
+            "vertical_angle": vertical_angle,
+            "zoom": zoom,
+            "default_prompts": default_prompts,
+            "camera_view": camera_view,
+            "image": ["26", 0],
+        },
+        "class_type": "QwenMultiangleCameraNode",
+        "_meta": {
+            "title": "Qwen Multiangle Camera",
+        },
+    }
+
+    # 14: Camera prompt + source image 연결
+    encode_node = _require_node(
         workflow,
-        "36",
-        "QwenMultiangleCameraNode",
-        "Step 4 QwenMultiangleCameraNode",
+        "14",
+        "TextEncodeQwenImageEditPlusAdvance_lrzjason",
+        "Step 4 Qwen Image Edit Text Encoder",
     )
-    camera_inputs = camera_node.setdefault(
+    encode_inputs = encode_node.setdefault(
         "inputs",
         {},
     )
-    camera_inputs["horizontal_angle"] = horizontal_angle
-    camera_inputs["vertical_angle"] = vertical_angle
-    camera_inputs["zoom"] = zoom
-    camera_inputs["default_prompts"] = default_prompts
-    camera_inputs["camera_view"] = camera_view
+    encode_inputs["prompt"] = ["36", 0]
+    encode_inputs["vl_resize_image1"] = ["26", 0]
 
-    # 12: KSampler
-    # steps=8 / cfg=1 / euler / simple 등은
-    # 현재 workflow의 권장 고정값을 그대로 유지하고 seed만 변경합니다.
+    # 12: workflow의 고정 sampling 값은 유지하고 seed만 변경
     sampler_node = _require_node(
         workflow,
         "12",
