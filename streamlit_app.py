@@ -23,6 +23,11 @@ SHOW_REFERENCE_PROMPT_GUIDELINES = False
 ENABLE_MANUAL_FULL_BODY_REFERENCE_INPUT = False
 ENABLE_MANUAL_SCENE_REFERENCE_INPUT = False
 
+# Step 2A 결과를 UI 없이 미리 주입하는 테스트용 플래그
+# True  = 아래 PRESET URL을 Boy/Girl 2A 결과로 자동 등록
+# False = 기존 Step 2A 생성 결과만 사용
+ENABLE_PRESET_2A_RESULTS = True
+
 ENABLE_CAMERA_SAMPLING_CONTROL = False
 
 FIXED_CAMERA_REFINEMENT_STEPS = 8
@@ -549,6 +554,40 @@ def render_image_preview_box(image_url, caption="", height=400):
     st.markdown(html, unsafe_allow_html=True)
 
 
+# ------------------------- Step 2A Preset 결과 자동 주입 함수 -------------------------
+# ENABLE_PRESET_2A_RESULTS가 True일 때만 실행됩니다.
+# UI에는 아무 입력창도 표시하지 않고, 기존 Step 2A session_state 키에
+# Boy / Girl 결과 URL을 미리 주입합니다.
+# 이미 실제 Step 2A 생성 결과가 존재하면 덮어쓰지 않습니다.
+def apply_preset_2a_results():
+    if not ENABLE_PRESET_2A_RESULTS:
+        return
+
+    preset_boy_url = (
+        "https://serverless-api-storage.runcomfy.net/"
+        "deployment_requests/e3b5d793-e111-49fe-850f-4b0e08424dd2/"
+        "output/character_appearance_boy_3063348797_00001_.png"
+    )
+
+    preset_girl_url = (
+        "https://serverless-api-storage.runcomfy.net/"
+        "deployment_requests/94b10bea-a4e8-4f66-9d18-603ff35e325e/"
+        "output/character_appearance_girl_667573668_00001_.png"
+    )
+
+    if not st.session_state.get("face_result_image_c1"):
+        st.session_state["face_result_image_c1"] = preset_boy_url
+        st.session_state["face_result_filename_c1"] = (
+            "character_appearance_boy_3063348797_00001_.png"
+        )
+
+    if not st.session_state.get("face_result_image_c2"):
+        st.session_state["face_result_image_c2"] = preset_girl_url
+        st.session_state["face_result_filename_c2"] = (
+            "character_appearance_girl_667573668_00001_.png"
+        )
+
+
 # ------------------------- 비활성화된 수동 입력 상태 정리 함수 -------------------------
 # 기능 플래그가 False인 수동 입력의 텍스트·이미지·선택 상태를 세션에서 제거하는 함수
 # 이전 실행에서 수동 URL을 넣었더라도 현재 파이프라인이 생성 결과만 사용하도록 초기화함
@@ -617,6 +656,7 @@ st.set_page_config(
 )
 
 clear_disabled_manual_reference_state()
+apply_preset_2a_results()
 
 st.title("🎬 AI Storyboard Generation Pipeline")
 st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
