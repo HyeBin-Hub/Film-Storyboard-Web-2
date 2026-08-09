@@ -14,10 +14,10 @@ WORKFLOW_DIR = Path(__file__).parent / "workflows"
 # 기존 프로젝트 파일명을 유지합니다.
 # 첨부한 최신 API-format workflow JSON을 아래 이름으로 workflows 폴더에 저장하세요.
 CSV_PARSER_TEST_WORKFLOW_PATH = WORKFLOW_DIR / "csv_parser_test_workflow_api.json"
-FACE_WORKFLOW_PATH = WORKFLOW_DIR / "face_workflow_api.json"
-BODY_WORKFLOW_PATH = WORKFLOW_DIR / "body_workflow_api.json"
-SCENE_WORKFLOW_PATH = WORKFLOW_DIR / "scene_workflow_api.json"
-CAMERA_REFINEMENT_WORKFLOW_PATH = WORKFLOW_DIR / "camera_refinement_workflow_api.json"
+FACE_WORKFLOW_PATH = WORKFLOW_DIR / "Character_Appearance_Generation.json"
+BODY_WORKFLOW_PATH = WORKFLOW_DIR / "Reference-based_Outfit_Change.json"
+SCENE_WORKFLOW_PATH = WORKFLOW_DIR / "Reference-based_Scene_Generation.json"
+CAMERA_REFINEMENT_WORKFLOW_PATH = WORKFLOW_DIR / "Camera_Refinement.json"
 
 
 # =========================
