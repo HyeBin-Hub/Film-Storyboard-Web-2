@@ -1,3 +1,4 @@
+import base64
 import csv
 import io
 import pandas as pd
@@ -141,6 +142,20 @@ def decode_uploaded_file(uploaded_file):
             pass
     return raw.decode("utf-8", errors="ignore")
 
+# ----------------------------- 업로드 이미지 Data URI 변환 함수 -----------------------------
+# Streamlit file_uploader로 받은 이미지 파일을
+# RunComfy LoadImageFromUrl 노드에 전달할 수 있는 base64 data URI 문자열로 변환합니다.
+def uploaded_image_to_data_uri(uploaded_file):
+    if uploaded_file is None:
+        return ""
+
+    raw = uploaded_file.getvalue()
+    mime_type = getattr(uploaded_file, "type", None) or "image/png"
+
+    encoded = base64.b64encode(raw).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+
 # ----------------------------- CSV 샷 ID 추출 함수 -----------------------------
 # CSV 텍스트의 첫 번째 열에서 중복 없이 샷 ID 목록을 추출하는 함수입니다.
 def extract_shot_ids_from_csv(csv_text):
@@ -250,7 +265,7 @@ def body_character_label_to_value(label):
     return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, "C1")
 
 # ------------------------- 의상 레퍼런스 입력 초기화 함수 -------------------------
-# 2B Outfit Change에서 캐릭터별 입력 모드와 Garment / Outfit reference URL을 세션에 유지합니다.
+# 2B Outfit Change에서 캐릭터별 입력 모드와 Garment / Outfit reference data URI를 세션에 유지합니다.
 def initialize_outfit_reference_inputs():
     for character_code in ("c1", "c2"):
         st.session_state.setdefault(
@@ -358,7 +373,7 @@ def build_face_ui_config():
     }
 
 # ------------------------- 의상 변경 UI 설정 구성 함수 -------------------------
-# 선택한 2A 캐릭터 결과와 Top / Bottom / Shoes 레퍼런스를 2B Outfit Change 설정으로 구성합니다.
+# 선택한 2A 캐릭터 결과와 업로드된 Top / Bottom / Shoes 레퍼런스를 2B Outfit Change 설정으로 구성합니다.
 # 함수명 build_body_ui_config는 기존 app-backend 연결을 최소 변경하기 위해 유지합니다.
 def build_body_ui_config():
     character_filter_label = st.session_state.get(
@@ -1089,38 +1104,49 @@ with tab2:
                     (
                         garment_input_col1,
                         "Top",
+                        f"outfit_top_upload_{selected_character_code}",
                         f"outfit_top_reference_{selected_character_code}",
-                        "Paste top garment image URL",
                     ),
                     (
                         garment_input_col2,
                         "Bottom",
+                        f"outfit_bottom_upload_{selected_character_code}",
                         f"outfit_bottom_reference_{selected_character_code}",
-                        "Paste bottom garment image URL",
                     ),
                     (
                         garment_input_col3,
                         "Shoes",
+                        f"outfit_shoes_upload_{selected_character_code}",
                         f"outfit_shoes_reference_{selected_character_code}",
-                        "Paste shoes image URL",
                     ),
                 ]
 
-                for column, garment_label, session_key, placeholder in garment_input_specs:
+                for column, garment_label, upload_key, reference_key in garment_input_specs:
                     with column:
-                        st.text_input(
+                        uploaded_garment = st.file_uploader(
                             garment_label,
-                            key=session_key,
-                            placeholder=placeholder,
+                            type=["png", "jpg", "jpeg", "webp"],
+                            key=upload_key,
+                            help=(
+                                f"{garment_label} reference image를 업로드합니다. "
+                                "업로드된 이미지는 base64 data URI로 변환되어 "
+                                "RunComfy LoadImageFromUrl 노드에 전달됩니다."
+                            ),
                         )
 
-                        garment_url = str(
-                            st.session_state.get(session_key, "") or ""
-                        ).strip()
+                        if uploaded_garment is not None:
+                            garment_data_uri = uploaded_image_to_data_uri(
+                                uploaded_garment
+                            )
+                            st.session_state[reference_key] = garment_data_uri
 
-                        if garment_url.lower().startswith(("http://", "https://")):
-                            st.image(garment_url, use_container_width=True)
+                            st.image(
+                                uploaded_garment,
+                                caption=f"{garment_label} Reference",
+                                use_container_width=True,
+                            )
                         else:
+                            st.session_state[reference_key] = ""
                             render_empty_preview_box(
                                 f"{garment_label}<br>Reference",
                                 160,
@@ -1132,22 +1158,36 @@ with tab2:
                     "Provide a single full outfit reference image to guide the outfit change."
                 )
 
-                st.text_input(
-                    "Outfit Reference URL",
-                    key=f"outfit_single_reference_{selected_character_code}",
-                    placeholder="Paste full outfit image URL",
+                single_outfit_upload = st.file_uploader(
+                    "Outfit Reference",
+                    type=["png", "jpg", "jpeg", "webp"],
+                    key=f"outfit_single_upload_{selected_character_code}",
+                    help=(
+                        "Full outfit reference image를 업로드합니다. "
+                        "업로드된 이미지는 base64 data URI로 변환되어 "
+                        "RunComfy LoadImageFromUrl 노드에 전달됩니다."
+                    ),
                 )
 
-                single_outfit_reference_url = str(
-                    st.session_state.get(
-                        f"outfit_single_reference_{selected_character_code}",
-                        "",
-                    ) or ""
-                ).strip()
+                single_reference_key = (
+                    f"outfit_single_reference_{selected_character_code}"
+                )
 
-                if single_outfit_reference_url.lower().startswith(("http://", "https://")):
-                    st.image(single_outfit_reference_url, use_container_width=True)
+                if single_outfit_upload is not None:
+                    single_outfit_data_uri = uploaded_image_to_data_uri(
+                        single_outfit_upload
+                    )
+                    st.session_state[single_reference_key] = (
+                        single_outfit_data_uri
+                    )
+
+                    st.image(
+                        single_outfit_upload,
+                        caption="Single Outfit Reference",
+                        use_container_width=True,
+                    )
                 else:
+                    st.session_state[single_reference_key] = ""
                     render_empty_preview_box(
                         "Single Outfit<br>Reference",
                         220,
@@ -1204,17 +1244,6 @@ with tab2:
                     if not garment_url
                 ]
 
-                invalid_garments = [
-                    garment_name
-                    for garment_name, garment_url in (
-                        ("Top", top_reference_url),
-                        ("Bottom", bottom_reference_url),
-                        ("Shoes", shoes_reference_url),
-                    )
-                    if garment_url
-                    and not garment_url.lower().startswith(("http://", "https://"))
-                ]
-
                 if not character_image_url:
                     st.error(
                         f"{label}의 Character Appearance가 없습니다. "
@@ -1223,21 +1252,15 @@ with tab2:
 
                 elif input_mode == "Separate Garments" and missing_garments:
                     st.error(
-                        "다음 Garment Reference를 입력하세요: "
+                        "다음 Garment Reference 파일을 업로드하세요: "
                         + ", ".join(missing_garments)
                     )
 
-                elif input_mode == "Separate Garments" and invalid_garments:
-                    st.error(
-                        "다음 Garment Reference는 http:// 또는 https:// URL이어야 합니다: "
-                        + ", ".join(invalid_garments)
-                    )
-
-                elif input_mode == "Single Outfit Reference" and not single_outfit_reference:
-                    st.error("Outfit Reference를 입력하세요.")
-
-                elif input_mode == "Single Outfit Reference" and not single_outfit_reference.lower().startswith(("http://", "https://")):
-                    st.error("Outfit Reference는 http:// 또는 https:// URL이어야 합니다.")
+                elif (
+                    input_mode == "Single Outfit Reference"
+                    and not single_outfit_reference
+                ):
+                    st.error("Outfit Reference 파일을 업로드하세요.")
 
                 else:
                     try:
