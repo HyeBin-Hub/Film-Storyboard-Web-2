@@ -1528,39 +1528,29 @@ with tab4:
     # ================= LEFT: Camera Refinement Preview =================
     with preview_col:
         st.subheader("Camera Refinement Preview")
-
+    
         st.markdown("#### Refined Scene")
-
+    
         if st.session_state.get("camera_refined_result_image"):
             render_image_preview_box(
                 st.session_state["camera_refined_result_image"],
                 caption="Camera-Refined Storyboard Scene",
                 height=500,
             )
-        
+    
             refined_filename = st.session_state.get(
                 "camera_refined_result_filename",
                 "",
             )
+    
             if refined_filename:
                 st.caption(f"Filename: {refined_filename}")
+    
         else:
             render_empty_preview_box(
                 "The camera-refined scene will appear here.",
                 500,
-            )
-
-            refined_filename = st.session_state.get(
-                "camera_refined_result_filename",
-                "",
-            )
-            if refined_filename:
-                st.caption(f"Filename: {refined_filename}")
-        else:
-            render_empty_preview_box(
-                "The camera-refined scene will appear here.",
-                500,
-            )
+        )
 
     # ================= RIGHT: Camera Refinement Control =================
     with settings_col:
