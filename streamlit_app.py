@@ -1526,27 +1526,6 @@ with tab4:
     with preview_col:
         st.subheader("Camera Refinement Preview")
 
-        st.markdown("#### Input Scene")
-
-        selected_input_scene = get_selected_candidate(
-            scene_candidates,
-            st.session_state.get("camera_input_scene_label", ""),
-        )
-
-        if selected_input_scene and selected_input_scene.get("image"):
-            st.image(
-                selected_input_scene["image"],
-                caption=selected_input_scene.get("label", "Input Scene"),
-                use_container_width=True,
-            )
-        else:
-            render_empty_preview_box(
-                "A generated scene from Step 3 will appear here.",
-                360,
-            )
-
-        st.divider()
-
         st.markdown("#### Refined Scene")
 
         if st.session_state.get("camera_refined_result_image"):
@@ -1565,7 +1544,7 @@ with tab4:
         else:
             render_empty_preview_box(
                 "The camera-refined scene will appear here.",
-                360,
+                720,
             )
 
     # ================= RIGHT: Camera Refinement Control =================
@@ -1646,6 +1625,18 @@ with tab4:
                     filename = selected_input_scene.get("filename", "")
                     if filename:
                         st.caption(f"Selected File: {filename}")
+
+                    if selected_input_scene.get("image"):
+                        st.image(
+                            selected_input_scene["image"],
+                            caption=selected_input_scene.get("label", "Source Scene"),
+                            use_container_width=True,
+                        )
+                    else:
+                        render_empty_preview_box(
+                            "The selected source scene will appear here.",
+                            260,
+                        )
             else:
                 st.warning(
                     "Step 3에서 생성된 scene 이미지가 없습니다. "
@@ -1853,7 +1844,6 @@ with tab4:
                             expanded=False,
                         ):
                             st.json(result)
-
 
 # import csv
 # import io
