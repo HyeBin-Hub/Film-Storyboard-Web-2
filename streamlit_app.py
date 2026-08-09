@@ -245,12 +245,17 @@ def body_character_label_to_value(label):
     return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, "C1")
 
 # ------------------------- 의상 레퍼런스 입력 초기화 함수 -------------------------
-# 2B Outfit Change에서 캐릭터별 Top / Bottom / Shoes reference URL을 세션에 유지합니다.
+# 2B Outfit Change에서 캐릭터별 입력 모드와 Garment / Outfit reference URL을 세션에 유지합니다.
 def initialize_outfit_reference_inputs():
     for character_code in ("c1", "c2"):
+        st.session_state.setdefault(
+            f"outfit_input_mode_{character_code}",
+            "Separate Garments",
+        )
         st.session_state.setdefault(f"outfit_top_reference_{character_code}", "")
         st.session_state.setdefault(f"outfit_bottom_reference_{character_code}", "")
         st.session_state.setdefault(f"outfit_shoes_reference_{character_code}", "")
+        st.session_state.setdefault(f"outfit_single_reference_{character_code}", "")
 
 # ------------------------- 장면 샷 필터 설정 조회 함수 -------------------------
 # 장면 생성에 사용할 현재 샷 필터 값과 커스텀 샷 ID 값을 가져오는 함수
@@ -368,6 +373,11 @@ def build_body_ui_config():
         character_image_url = st.session_state.get("face_result_image_c2", "")
         character_filename = st.session_state.get("face_result_filename_c2", "")
 
+    input_mode = st.session_state.get(
+        f"outfit_input_mode_{character_code}",
+        "Separate Garments",
+    )
+
     return {
         "outfit_change": {
             "character_filter": character_filter,
@@ -375,6 +385,7 @@ def build_body_ui_config():
             "label": label,
             "character_image_url": character_image_url,
             "character_filename": character_filename,
+            "input_mode": input_mode,
             "garment_references": {
                 "top": st.session_state.get(
                     f"outfit_top_reference_{character_code}",
@@ -389,6 +400,10 @@ def build_body_ui_config():
                     "",
                 ).strip(),
             },
+            "single_outfit_reference": st.session_state.get(
+                f"outfit_single_reference_{character_code}",
+                "",
+            ).strip(),
         }
     }
  
@@ -1026,50 +1041,93 @@ with tab2:
                         "먼저 Character Appearance를 생성하세요."
                     )
 
-            st.markdown("###### Garment References")
-            st.caption("Provide separate reference images for the top, bottom, and shoes.")
-
-            top_reference_url = st.text_input(
-                "Top Reference URL",
-                key=f"outfit_top_reference_{selected_character_code}",
-                placeholder="Paste top garment image URL",
+            st.markdown("###### Garment Input Mode")
+            input_mode = st.radio(
+                "Garment Input Mode",
+                options=["Separate Garments", "Single Outfit Reference"],
+                horizontal=True,
+                key=f"outfit_input_mode_{selected_character_code}",
+                label_visibility="collapsed",
             )
 
-            bottom_reference_url = st.text_input(
-                "Bottom Reference URL",
-                key=f"outfit_bottom_reference_{selected_character_code}",
-                placeholder="Paste bottom garment image URL",
-            )
+            if input_mode == "Separate Garments":
+                st.markdown("###### Garment References")
+                st.caption(
+                    "Provide separate reference images for the top, bottom, and shoes."
+                )
 
-            shoes_reference_url = st.text_input(
-                "Shoes Reference URL",
-                key=f"outfit_shoes_reference_{selected_character_code}",
-                placeholder="Paste shoes image URL",
-            )
+                garment_input_col1, garment_input_col2, garment_input_col3 = st.columns(
+                    3,
+                    gap="medium",
+                )
 
-            garment_preview_col1, garment_preview_col2, garment_preview_col3 = st.columns(
-                3,
-                gap="small",
-            )
+                garment_input_specs = [
+                    (
+                        garment_input_col1,
+                        "Top",
+                        f"outfit_top_reference_{selected_character_code}",
+                        "Paste top garment image URL",
+                    ),
+                    (
+                        garment_input_col2,
+                        "Bottom",
+                        f"outfit_bottom_reference_{selected_character_code}",
+                        "Paste bottom garment image URL",
+                    ),
+                    (
+                        garment_input_col3,
+                        "Shoes",
+                        f"outfit_shoes_reference_{selected_character_code}",
+                        "Paste shoes image URL",
+                    ),
+                ]
 
-            garment_preview_items = [
-                (garment_preview_col1, "Top", top_reference_url),
-                (garment_preview_col2, "Bottom", bottom_reference_url),
-                (garment_preview_col3, "Shoes", shoes_reference_url),
-            ]
-
-            for column, garment_label, garment_url in garment_preview_items:
-                with column:
-                    st.caption(garment_label)
-                    garment_url = str(garment_url or "").strip()
-
-                    if garment_url.lower().startswith(("http://", "https://")):
-                        st.image(garment_url, use_container_width=True)
-                    else:
-                        render_empty_preview_box(
-                            f"{garment_label}<br>Reference",
-                            150,
+                for column, garment_label, session_key, placeholder in garment_input_specs:
+                    with column:
+                        st.text_input(
+                            garment_label,
+                            key=session_key,
+                            placeholder=placeholder,
                         )
+
+                        garment_url = str(
+                            st.session_state.get(session_key, "") or ""
+                        ).strip()
+
+                        if garment_url.lower().startswith(("http://", "https://")):
+                            st.image(garment_url, use_container_width=True)
+                        else:
+                            render_empty_preview_box(
+                                f"{garment_label}<br>Reference",
+                                160,
+                            )
+
+            else:
+                st.markdown("###### Outfit Reference")
+                st.caption(
+                    "Provide a single full outfit reference image to guide the outfit change."
+                )
+
+                st.text_input(
+                    "Outfit Reference URL",
+                    key=f"outfit_single_reference_{selected_character_code}",
+                    placeholder="Paste full outfit image URL",
+                )
+
+                single_outfit_reference_url = str(
+                    st.session_state.get(
+                        f"outfit_single_reference_{selected_character_code}",
+                        "",
+                    ) or ""
+                ).strip()
+
+                if single_outfit_reference_url.lower().startswith(("http://", "https://")):
+                    st.image(single_outfit_reference_url, use_container_width=True)
+                else:
+                    render_empty_preview_box(
+                        "Single Outfit<br>Reference",
+                        220,
+                    )
 
             generate_body_clicked = st.button(
                 "Generate Outfit Reference",
@@ -1089,9 +1147,17 @@ with tab2:
                     "character_image_url",
                     "",
                 )
+                input_mode = outfit_change_config.get(
+                    "input_mode",
+                    "Separate Garments",
+                )
                 garment_references = outfit_change_config.get(
                     "garment_references",
                     {},
+                )
+                single_outfit_reference = outfit_change_config.get(
+                    "single_outfit_reference",
+                    "",
                 )
 
                 top_reference_url = garment_references.get("top", "")
@@ -1125,17 +1191,23 @@ with tab2:
                         "먼저 2A에서 해당 캐릭터를 생성하세요."
                     )
 
-                elif missing_garments:
+                elif input_mode == "Separate Garments" and missing_garments:
                     st.error(
                         "다음 Garment Reference를 입력하세요: "
                         + ", ".join(missing_garments)
                     )
 
-                elif invalid_garments:
+                elif input_mode == "Separate Garments" and invalid_garments:
                     st.error(
                         "다음 Garment Reference는 http:// 또는 https:// URL이어야 합니다: "
                         + ", ".join(invalid_garments)
                     )
+
+                elif input_mode == "Single Outfit Reference" and not single_outfit_reference:
+                    st.error("Outfit Reference를 입력하세요.")
+
+                elif input_mode == "Single Outfit Reference" and not single_outfit_reference.lower().startswith(("http://", "https://")):
+                    st.error("Outfit Reference는 http:// 또는 https:// URL이어야 합니다.")
 
                 else:
                     try:
@@ -1826,7 +1898,6 @@ with tab4:
                     if "result" in locals():
                         with st.expander("RunComfy Raw Camera Refinement Result", expanded=False):
                             st.json(result)
-
 
 
 # import csv
