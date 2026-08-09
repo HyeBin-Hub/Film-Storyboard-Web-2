@@ -996,34 +996,34 @@ with tab2:
                 "c1" if selected_body_target == "Image 1 - Boy" else "c2"
             )
 
-            if selected_character_code == "c1":
-                source_character_image = st.session_state.get(
-                    "face_result_image_c1",
-                    "",
-                )
-                source_character_label = "Image 1 - Boy"
-            else:
-                source_character_image = st.session_state.get(
-                    "face_result_image_c2",
-                    "",
-                )
-                source_character_label = "Image 2 - Girl"
+            # if selected_character_code == "c1":
+            #     source_character_image = st.session_state.get(
+            #         "face_result_image_c1",
+            #         "",
+            #     )
+            #     source_character_label = "Image 1 - Boy"
+            # else:
+            #     source_character_image = st.session_state.get(
+            #         "face_result_image_c2",
+            #         "",
+            #     )
+            #     source_character_label = "Image 2 - Girl"
 
-            with st.container(border=True):
-                st.markdown("###### Source Character")
-                st.caption("Automatically uses the selected result from Step 2A.")
+            # with st.container(border=True):
+            #     st.markdown("###### Source Character")
+            #     st.caption("Automatically uses the selected result from Step 2A.")
 
-                if source_character_image:
-                    st.image(
-                        source_character_image,
-                        caption=f"{source_character_label} · Step 2A Result",
-                        use_container_width=True,
-                    )
-                else:
-                    st.warning(
-                        f"{source_character_label}의 Step 2A 결과가 없습니다. "
-                        "먼저 Character Appearance를 생성하세요."
-                    )
+            #     if source_character_image:
+            #         st.image(
+            #             source_character_image,
+            #             caption=f"{source_character_label} · Step 2A Result",
+            #             use_container_width=True,
+            #         )
+            #     else:
+            #         st.warning(
+            #             f"{source_character_label}의 Step 2A 결과가 없습니다. "
+            #             "먼저 Character Appearance를 생성하세요."
+            #         )
 
             st.markdown("###### Garment Input Mode")
             input_mode = st.radio(
