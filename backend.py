@@ -14,10 +14,10 @@ WORKFLOW_DIR = Path(__file__).parent / "workflows"
 # 기존 프로젝트 파일명을 유지합니다.
 # 첨부한 최신 API-format workflow JSON을 아래 이름으로 workflows 폴더에 저장하세요.
 CSV_PARSER_TEST_WORKFLOW_PATH = WORKFLOW_DIR / "csv_parser_test_workflow_api.json"
-FACE_WORKFLOW_PATH = WORKFLOW_DIR / "Character_Appearance_Generation.json"
-BODY_WORKFLOW_PATH = WORKFLOW_DIR / "Reference-based_Outfit_Change.json"
-SCENE_WORKFLOW_PATH = WORKFLOW_DIR / "Reference-based_Scene_Generation.json"
-CAMERA_REFINEMENT_WORKFLOW_PATH = WORKFLOW_DIR / "Camera_Refinement.json"
+FACE_WORKFLOW_PATH = WORKFLOW_DIR / "face_workflow_api.json"
+BODY_WORKFLOW_PATH = WORKFLOW_DIR / "body_workflow_api.json"
+SCENE_WORKFLOW_PATH = WORKFLOW_DIR / "scene_workflow_api.json"
+CAMERA_REFINEMENT_WORKFLOW_PATH = WORKFLOW_DIR / "camera_refinement_workflow_api.json"
 
 
 # =========================
@@ -613,6 +613,11 @@ def patch_face_workflow(
         ):
             base_inputs[key] = base_character_config[key]
 
+    # PortraitMaster의 API Format에서는 UI의 "randomize" 문자열을
+    # INT seed로 변환해야 RunComfy prompt validation을 통과합니다.
+    if "seed" in base_inputs:
+        base_inputs["seed"] = seed
+
     # 18: PortraitMasterSkinDetails
     skin_node = _require_node(
         workflow,
@@ -625,6 +630,9 @@ def patch_face_workflow(
     for key, value in skin_config.items():
         if key in skin_inputs:
             skin_inputs[key] = value
+
+    if "seed" in skin_inputs:
+        skin_inputs["seed"] = seed
 
     # 14: QwenVL seed / attention
     qwen_node = _require_node(
@@ -1385,7 +1393,6 @@ def run_camera_refinement(
         "images": images,
         "workflow_api_json": workflow,
     }
-
 
 # import csv
 # import io
