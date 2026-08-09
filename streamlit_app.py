@@ -1315,13 +1315,16 @@ with tab3:
             st.caption(f"Selected Scene Count: {storyboard_input['selected_shot_count']}")
 
         if "scene_result_image" in st.session_state:
-            st.image(
+            render_image_preview_box(
                 st.session_state["scene_result_image"],
                 caption="Generated Storyboard Scene",
-                use_container_width=True,
+                height=560,
             )
         else:
-            render_empty_preview_box("Generated storyboard scene will appear here.", 560)
+            render_empty_preview_box(
+                "Generated storyboard scene will appear here.",
+                560,
+            )
 
     # ================= RIGHT: Scene Control + References + Button =================
     with settings_col:
