@@ -1,0 +1,452 @@
+{
+  "2": {
+    "inputs": {
+      "clip_name": "qwen_3_8b.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "text": [
+        "29",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "conditioning": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "ConditioningZeroOut"
+    }
+  },
+  "6": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "Scale Image to Total Pixels"
+    }
+  },
+  "7": {
+    "inputs": {
+      "pixels": [
+        "6",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "8": {
+    "inputs": {
+      "conditioning": [
+        "4",
+        0
+      ],
+      "latent": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "10": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "Scale Image to Total Pixels"
+    }
+  },
+  "11": {
+    "inputs": {
+      "conditioning": [
+        "5",
+        0
+      ],
+      "latent": [
+        "7",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "12": {
+    "inputs": {
+      "pixels": [
+        "10",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "13": {
+    "inputs": {
+      "conditioning": [
+        "8",
+        0
+      ],
+      "latent": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "14": {
+    "inputs": {
+      "conditioning": [
+        "11",
+        0
+      ],
+      "latent": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "15": {
+    "inputs": {
+      "noise_seed": 1049849230000639
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "16": {
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "24",
+        0
+      ],
+      "positive": [
+        "13",
+        0
+      ],
+      "negative": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFG Guider"
+    }
+  },
+  "17": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "18": {
+    "inputs": {
+      "width": [
+        "23",
+        0
+      ],
+      "height": [
+        "23",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "Empty Flux 2 Latent"
+    }
+  },
+  "19": {
+    "inputs": {
+      "noise": [
+        "15",
+        0
+      ],
+      "guider": [
+        "16",
+        0
+      ],
+      "sampler": [
+        "17",
+        0
+      ],
+      "sigmas": [
+        "22",
+        0
+      ],
+      "latent_image": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "20": {
+    "inputs": {
+      "samples": [
+        "19",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "21": {
+    "inputs": {
+      "purge_cache": true,
+      "purge_models": true,
+      "anything": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: PurgeVRAM",
+    "_meta": {
+      "title": "LayerUtility: Purge VRAM"
+    }
+  },
+  "22": {
+    "inputs": {
+      "steps": 8,
+      "width": [
+        "23",
+        0
+      ],
+      "height": [
+        "23",
+        1
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2Scheduler"
+    }
+  },
+  "23": {
+    "inputs": {
+      "megapixel": "1.0",
+      "aspect_ratio": "16:9 (Panorama)",
+      "divisible_by": "64",
+      "custom_ratio": false,
+      "custom_aspect_ratio": "1:1"
+    },
+    "class_type": "FluxResolutionNode",
+    "_meta": {
+      "title": "Flux Resolution Calc"
+    }
+  },
+  "24": {
+    "inputs": {
+      "unet_name": "flux-2-klein-9b.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "25": {
+    "inputs": {
+      "input_mode": "text",
+      "csv_file": "Sonagi_S07_Shot_1-4.csv",
+      "csv_text": "",
+      "shot_filter": "CUSTOM",
+      "custom_shot_ids": "7-1, 7-2, 7-3"
+    },
+    "class_type": "CSVStoryboardParser",
+    "_meta": {
+      "title": "CSV Storyboard Parser"
+    }
+  },
+  "26": {
+    "inputs": {
+      "Prepend": [
+        "28",
+        0
+      ],
+      "Append": [
+        "27",
+        0
+      ],
+      "Delimiter": ""
+    },
+    "class_type": "DF_String_Concatenate",
+    "_meta": {
+      "title": "String Concatenate"
+    }
+  },
+  "27": {
+    "inputs": {
+      "storyboard_json": [
+        "25",
+        0
+      ],
+      "description_source": "english",
+      "include_technical_settings": "false"
+    },
+    "class_type": "ScenePromptBuilder",
+    "_meta": {
+      "title": "Scene Prompt Builder"
+    }
+  },
+  "28": {
+    "inputs": {
+      "text": "You are a professional film storyboard prompt designer.\n\nYour task is to convert the appended structured_shot_data JSON into cinematic image-generation prompts optimized for FLUX.2 Klein.\n\n[Core Task]\n\nRead the structured_shot_data JSON at the bottom.\nGenerate exactly one prompt for each shot in the original order.\nThe number of output prompts must exactly match shot_count.\nIf shot_count is 2, output 2 prompts.\nIf shot_count is 3, output 3 prompts.\nIf shot_count is 4, output 4 prompts.\n\nEach output line must begin exactly with:\nNext Scene;\n\nOutput one shot per line.\nDo not output anything except the final shot prompts.\n\n[Character Consistency]\n\nCharacter appearance must be preserved entirely from the reference images.\nDo not change or reinterpret face, hairstyle, body shape, clothing, shoes, accessories, colors, or any other visual appearance details.\nDo not describe character appearance in the prompt.\nUse only character role and reference mapping when referring to characters.\n\nReference mapping:\n- Boy = image 1\n- Girl = image 2\n\nWhen writing prompts, refer to them naturally as:\n- the boy from image 1\n- the girl from image 2\n\nDo not invent new appearance details.\nDo not swap characters.\nDo not duplicate characters.\nDo not omit characters.\n\n[Shot Description Expansion]\n\nFor each shot, expand the description into a clear cinematic scene prompt.\nThe description is the main instruction and must be followed first.\nUse the characters array to reinforce:\n- who appears\n- each character’s role\n- each character’s position\n- each character’s action\n\nPreserve all specified character positions and actions accurately.\n\nInterpret position as screen placement:\n- Left = left side of the frame\n- Right = right side of the frame\n- Foreground = closer to camera\n- Background = farther from camera\n\n[Scene Continuity]\n\nIf multiple shots share the same environment, keep the background and location consistent across those shots.\nIf multiple shots share the same atmosphere and cinematic_tone, keep them visually consistent across those shots as well.\n\nThis means you should maintain consistency in:\n- location\n- background elements\n- weather\n- lighting mood\n- cinematic tone\n- color mood\n\nDo not introduce unnecessary changes in background or atmosphere when the JSON indicates the same scene conditions.\n\n[Camera Interpretation]\n\nUse the camera information in each shot carefully and explicitly:\n- shot_size\n- camera_height\n- framing\n- composition\n- camera_angle\n- camera_position\n\nThese camera fields must guide the visual composition of the generated prompt.\n\nFraming rules:\n- Full Body = entire body is visible\n- Upper Body = mainly torso and head are visible\n- Knee Shot = framed approximately from the knees upward\n\nDo not interpret framing as an action or pose.\nFor example, Knee Shot does not mean kneeling.\n\nCamera height must be respected as written.\nCamera angle and camera position should guide the viewpoint of the shot.\nComposition should guide subject placement in the frame.\n\n[Prompt Writing Rules]\n\nEach prompt should be a direct scene description, not an explanation.\nWrite in natural English.\nKeep the prompt visually clear and cinematic.\nInclude the important action, position, environment, atmosphere, cinematic tone, and camera setup.\nMaintain character identity through image references only, without describing appearance.\n\nEach prompt should contain:\n1. the main scene event from description\n2. the involved characters using role + image reference\n3. their screen positions and actions\n4. the environment\n5. the atmosphere and cinematic tone\n6. the camera and framing information\n\n[Forbidden Elements]\n\nDo not include:\n- character appearance descriptions\n- invented details not supported by JSON\n- `<sks>`\n- flux_multi_angle_prompt text\n- LoRA trigger syntax\n- bullet points\n- numbering\n- JSON\n- analysis\n- explanations\n- quotation marks\n\n[Output Format]\n\nOutput only the final prompts.\n\nGenerate exactly one prompt per shot.\n\n\nEach line must start exactly with:\nNext Scene:\n\nDo not insert blank lines between prompts.\n\n[STRUCTURED_SHOT_DATA_JSON]\n\n"
+    },
+    "class_type": "ttN text",
+    "_meta": {
+      "title": "text"
+    }
+  },
+  "29": {
+    "inputs": {
+      "prompt": [
+        "31",
+        0
+      ],
+      "start_index": 0,
+      "max_rows": 1000,
+      "remove_empty_lines": true
+    },
+    "class_type": "easy promptLine",
+    "_meta": {
+      "title": "PromptLine"
+    }
+  },
+  "31": {
+    "inputs": {
+      "model_name": "Qwen3-VL-8B-Instruct",
+      "quantization": "None (FP16)",
+      "attention_mode": "auto",
+      "preset_prompt": "📖 Short Story",
+      "custom_prompt": [
+        "26",
+        0
+      ],
+      "max_tokens": 1000,
+      "keep_model_loaded": true,
+      "seed": 2084567701
+    },
+    "class_type": "AILab_QwenVL",
+    "_meta": {
+      "title": "QwenVL"
+    }
+  },
+  "32": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "33": {
+    "inputs": {
+      "image": "",
+      "keep_alpha_channel": false,
+      "output_mode": false
+    },
+    "class_type": "LoadImageFromUrl",
+    "_meta": {
+      "title": "Load Image From URL"
+    }
+  },
+  "34": {
+    "inputs": {
+      "image": "",
+      "keep_alpha_channel": false,
+      "output_mode": false
+    },
+    "class_type": "LoadImageFromUrl",
+    "_meta": {
+      "title": "Load Image From URL"
+    }
+  }
+}
