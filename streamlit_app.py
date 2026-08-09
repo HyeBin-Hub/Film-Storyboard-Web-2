@@ -1529,10 +1529,22 @@ with tab4:
         st.markdown("#### Refined Scene")
 
         if st.session_state.get("camera_refined_result_image"):
-            st.image(
+            render_image_preview_box(
                 st.session_state["camera_refined_result_image"],
                 caption="Camera-Refined Storyboard Scene",
-                use_container_width=True,
+                height=500,
+            )
+        
+            refined_filename = st.session_state.get(
+                "camera_refined_result_filename",
+                "",
+            )
+            if refined_filename:
+                st.caption(f"Filename: {refined_filename}")
+        else:
+            render_empty_preview_box(
+                "The camera-refined scene will appear here.",
+                500,
             )
 
             refined_filename = st.session_state.get(
