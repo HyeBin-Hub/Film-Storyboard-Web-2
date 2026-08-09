@@ -1143,7 +1143,8 @@ with tab2:
                             st.image(
                                 uploaded_garment,
                                 caption=f"{garment_label} Reference",
-                                use_container_width=True,
+                                # use_container_width=True,
+                                width=180,
                             )
                         else:
                             st.session_state[reference_key] = ""
@@ -1184,7 +1185,8 @@ with tab2:
                     st.image(
                         single_outfit_upload,
                         caption="Single Outfit Reference",
-                        use_container_width=True,
+                        # use_container_width=True,
+                        width=240,
                     )
                 else:
                     st.session_state[single_reference_key] = ""
