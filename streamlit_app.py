@@ -1544,7 +1544,7 @@ with tab4:
         else:
             render_empty_preview_box(
                 "The camera-refined scene will appear here.",
-                720,
+                500,
             )
 
     # ================= RIGHT: Camera Refinement Control =================
