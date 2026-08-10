@@ -616,7 +616,7 @@ def apply_preset_2b_results():
     )
 
     preset_girl_outfit_url = (
-        "https://cdn.phototourl.com/free/2026-08-10-31c0829b-b04d-43ee-9fb3-9b25cddaf035.png/"
+        "https://cdn.phototourl.com/free/2026-08-10-31c0829b-b04d-43ee-9fb3-9b25cddaf035.png"
     )
 
     # 이미 실제 2B 결과가 있으면 덮어쓰지 않음
