@@ -29,6 +29,11 @@ ENABLE_MANUAL_SCENE_REFERENCE_INPUT = False
 # False = 기존 Step 2A 생성 결과만 사용
 ENABLE_PRESET_2A_RESULTS = True
 
+# Step 2B 결과를 UI 없이 미리 주입하는 테스트용 플래그
+# True  = 아래 PRESET URL을 Boy/Girl 2B 결과로 자동 등록
+# False = 기존 Step 2B 생성 결과만 사용
+ENABLE_PRESET_2B_RESULTS = True
+
 ENABLE_CAMERA_SAMPLING_CONTROL = False
 
 FIXED_CAMERA_REFINEMENT_STEPS = 8
@@ -601,6 +606,29 @@ def apply_preset_2a_results():
         st.session_state["face_result_filename_c2"] = (
             "character_appearance_girl_667573668_00001_.png"
         )
+        
+def apply_preset_2b_results():
+    if not ENABLE_PRESET_2B_RESULTS:
+        return
+
+    preset_boy_outfit_url = (
+        "https://c9c03612-a475-4ad8-8091-c613fce69d51-comfyui.runcomfy.com/"
+        "api/view?filename=ComfyUI_01135_.png&subfolder=&type=output&rand=0.5877694927052253"
+    )
+
+    preset_girl_outfit_url = (
+        "https://c9c03612-a475-4ad8-8091-c613fce69d51-comfyui.runcomfy.com/"
+        "api/view?filename=%E6%8D%A2%E8%A3%85_00026_.png&subfolder=&type=output&rand=0.014337698296957191"
+    )
+
+    # 이미 실제 2B 결과가 있으면 덮어쓰지 않음
+    if not st.session_state.get("body_result_image_c1"):
+        st.session_state["body_result_image_c1"] = preset_boy_outfit_url
+        st.session_state["body_result_filename_c1"] = "ComfyUI_01135_.png"
+
+    if not st.session_state.get("body_result_image_c2"):
+        st.session_state["body_result_image_c2"] = preset_girl_outfit_url
+        st.session_state["body_result_filename_c2"] = "换装_00026_.png"
 
 
 # ------------------------- 비활성화된 수동 입력 상태 정리 함수 -------------------------
@@ -672,6 +700,7 @@ st.set_page_config(
 
 clear_disabled_manual_reference_state()
 apply_preset_2a_results()
+apply_preset_2b_results()
 
 st.title("🎬 AI Storyboard Generation Pipeline")
 st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
