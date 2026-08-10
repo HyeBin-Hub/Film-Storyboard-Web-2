@@ -1445,30 +1445,32 @@ with tab3:
             ]
 
         if valid_scene_previews:
-            scene_preview_cols = st.columns(
-                len(valid_scene_previews),
-                gap="medium",
-            )
-
             for idx, scene_item in enumerate(valid_scene_previews):
-                with scene_preview_cols[idx]:
-                    scene_label = scene_item.get(
-                        "label",
-                        f"Scene {idx + 1}",
-                    )
-                    scene_filename = scene_item.get(
-                        "filename",
-                        "",
-                    )
+                scene_label = scene_item.get(
+                    "label",
+                    f"Scene {idx + 1}",
+                )
+                scene_filename = scene_item.get(
+                    "filename",
+                    "",
+                )
 
-                    render_image_preview_box(
-                        scene_item["image"],
-                        caption=scene_label,
-                        height=360,
-                    )
+                st.markdown(f"##### {scene_label}")
 
-                    if scene_filename:
-                        st.caption(f"Filename: {scene_filename}")
+                render_image_preview_box(
+                    scene_item["image"],
+                    caption=scene_label,
+                    height=460,
+                )
+
+                if scene_filename:
+                    st.caption(f"Filename: {scene_filename}")
+
+                if idx < len(valid_scene_previews) - 1:
+                    st.markdown(
+                        "<div style='height: 18px;'></div>",
+                        unsafe_allow_html=True,
+                    )
         else:
             render_empty_preview_box(
                 "Generated storyboard scenes will appear here.",
@@ -1560,7 +1562,6 @@ with tab3:
                     boy_body_image,
                     caption="Image 1 Character Reference",
                     use_container_width=True,
-                    
                 )
                 if boy_body_filename:
                     st.caption(f"Filename: {boy_body_filename}")
@@ -1999,6 +2000,7 @@ with tab4:
                             expanded=False,
                         ):
                             st.json(result)
+
 
 # import base64
 # import csv
