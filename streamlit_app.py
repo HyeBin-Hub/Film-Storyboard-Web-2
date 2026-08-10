@@ -703,7 +703,7 @@ def apply_preset_step4_results():
         return
 
     preset_step4_result_url = (
-        "https://kommodo.ai/i/HpyZFucpWx3kUNodzHXu"
+        "https://i.postimg.cc/XqnCWSTw/image-(7).png"
     )
 
     st.session_state["camera_refined_candidates"] = [
