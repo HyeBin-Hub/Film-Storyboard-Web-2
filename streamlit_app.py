@@ -1950,18 +1950,18 @@ with tab4:
         # -------------------------------------------------
         # Guide
         # -------------------------------------------------
-        with st.expander("Camera Refinement Guide", expanded=False):
-            st.markdown(
-                """
-                - Step 4는 Step 3에서 생성한 장면을 직접 입력으로 사용합니다.
-                - Horizontal Angle은 좌/우 카메라 시점을 조정합니다.
-                - Vertical Angle은 상/하 카메라 시점을 조정합니다.
-                - Zoom은 장면의 확대/축소와 프레이밍을 조정합니다.
-                - Use Default Angle Prompts는 Qwen Multi-Angle Camera의 기본 앵글 프롬프트를 사용합니다.
-                - Camera View Mode는 카메라 관점 중심의 해석을 활성화합니다.
-                - Sampling 설정은 workflow의 고정값을 사용합니다.
-                """
-            )
+        # with st.expander("Camera Refinement Guide", expanded=False):
+        #     st.markdown(
+        #         """
+        #         - Step 4는 Step 3에서 생성한 장면을 직접 입력으로 사용합니다.
+        #         - Horizontal Angle은 좌/우 카메라 시점을 조정합니다.
+        #         - Vertical Angle은 상/하 카메라 시점을 조정합니다.
+        #         - Zoom은 장면의 확대/축소와 프레이밍을 조정합니다.
+        #         - Use Default Angle Prompts는 Qwen Multi-Angle Camera의 기본 앵글 프롬프트를 사용합니다.
+        #         - Camera View Mode는 카메라 관점 중심의 해석을 활성화합니다.
+        #         - Sampling 설정은 workflow의 고정값을 사용합니다.
+        #         """
+        #     )
 
         # -------------------------------------------------
         # Generate Button
