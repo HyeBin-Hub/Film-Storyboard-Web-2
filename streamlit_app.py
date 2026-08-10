@@ -34,6 +34,11 @@ ENABLE_PRESET_2A_RESULTS = True
 # False = 기존 Step 2B 생성 결과만 사용
 ENABLE_PRESET_2B_RESULTS = True
 
+# Step 3 결과를 UI 없이 미리 주입하는 테스트용 플래그
+# True  = 아래 PRESET URL 3장을 Generated Storyboard Preview에 자동 등록
+# False = 기존 Step 3 생성 결과만 사용
+ENABLE_PRESET_STEP3_RESULTS = True
+
 ENABLE_CAMERA_SAMPLING_CONTROL = False
 
 FIXED_CAMERA_REFINEMENT_STEPS = 8
@@ -629,6 +634,60 @@ def apply_preset_2b_results():
         st.session_state["body_result_filename_c2"] = "换装_00026_.png"
 
 
+# ------------------------- Step 3 Preset 결과 자동 주입 함수 -------------------------
+# ENABLE_PRESET_STEP3_RESULTS가 True일 때만 실행됩니다.
+# UI에는 별도 입력창을 표시하지 않고, 기존 scene_candidates 구조에
+# 3개의 storyboard scene 결과를 미리 등록합니다.
+# 실제 Step 3 생성 결과가 이미 존재하면 덮어쓰지 않습니다.
+def apply_preset_step3_results():
+    if not ENABLE_PRESET_STEP3_RESULTS:
+        return
+
+    if st.session_state.get("scene_candidates"):
+        return
+
+    preset_scene_urls = [
+        (
+            "Scene 1",
+            "https://serverless-api-storage.runcomfy.net/"
+            "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
+            "output/scene_3123289005_00001_.png",
+            "scene_3123289005_00001_.png",
+        ),
+        (
+            "Scene 2",
+            "https://serverless-api-storage.runcomfy.net/"
+            "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
+            "output/scene_3123289005_00002_.png",
+            "scene_3123289005_00002_.png",
+        ),
+        (
+            "Scene 3",
+            "https://serverless-api-storage.runcomfy.net/"
+            "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
+            "output/scene_3123289005_00003_.png",
+            "scene_3123289005_00003_.png",
+        ),
+    ]
+
+    preset_candidates = [
+        {
+            "label": label,
+            "image": image_url,
+            "url": image_url,
+            "filename": filename,
+        }
+        for label, image_url, filename in preset_scene_urls
+    ]
+
+    st.session_state["scene_candidates"] = preset_candidates
+
+    first_scene = preset_candidates[0]
+    st.session_state["scene_result_image"] = first_scene["image"]
+    st.session_state["scene_result_filename"] = first_scene["filename"]
+    st.session_state["scene_selected_label"] = first_scene["label"]
+
+
 # ------------------------- 비활성화된 수동 입력 상태 정리 함수 -------------------------
 # 기능 플래그가 False인 수동 입력의 텍스트·이미지·선택 상태를 세션에서 제거하는 함수
 # 이전 실행에서 수동 URL을 넣었더라도 현재 파이프라인이 생성 결과만 사용하도록 초기화함
@@ -699,6 +758,7 @@ st.set_page_config(
 clear_disabled_manual_reference_state()
 apply_preset_2a_results()
 apply_preset_2b_results()
+apply_preset_step3_results()
 
 st.title("🎬 AI Storyboard Generation Pipeline")
 st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
