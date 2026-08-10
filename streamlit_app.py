@@ -1556,7 +1556,7 @@ with tab3:
                 st.image(
                     boy_body_image,
                     caption="Image 1 Character Reference",
-                    width=220,
+                    width=500,
                 )
                 if boy_body_filename:
                     st.caption(f"Filename: {boy_body_filename}")
