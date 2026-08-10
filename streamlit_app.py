@@ -1206,129 +1206,139 @@ with tab2:
             #             "먼저 Character Appearance를 생성하세요."
             #         )
 
-            st.markdown("###### Garment Input Mode")
-            input_mode = st.radio(
-                "Garment Input Mode",
-                options=["Separate Garments", "Single Outfit Reference"],
-                horizontal=True,
-                key=f"outfit_input_mode_{selected_character_code}",
-                label_visibility="collapsed",
+            # -------------------------------------------------
+            # Separate Garment References
+            # -------------------------------------------------
+            st.markdown("###### Garment References")
+            st.caption(
+                "Provide separate reference images for the top, bottom, and shoes."
             )
 
-            if input_mode == "Separate Garments":
-                st.markdown("###### Garment References")
-                st.caption(
-                    "Provide separate reference images for the top, bottom, and shoes."
-                )
+            garment_input_col1, garment_input_col2, garment_input_col3 = st.columns(
+                3,
+                gap="medium",
+            )
 
-                garment_input_col1, garment_input_col2, garment_input_col3 = st.columns(
-                    3,
-                    gap="medium",
-                )
+            garment_input_specs = [
+                (
+                    garment_input_col1,
+                    "Top",
+                    f"outfit_top_upload_{selected_character_code}",
+                    f"outfit_top_reference_{selected_character_code}",
+                ),
+                (
+                    garment_input_col2,
+                    "Bottom",
+                    f"outfit_bottom_upload_{selected_character_code}",
+                    f"outfit_bottom_reference_{selected_character_code}",
+                ),
+                (
+                    garment_input_col3,
+                    "Shoes",
+                    f"outfit_shoes_upload_{selected_character_code}",
+                    f"outfit_shoes_reference_{selected_character_code}",
+                ),
+            ]
 
-                garment_input_specs = [
-                    (
-                        garment_input_col1,
-                        "Top",
-                        f"outfit_top_upload_{selected_character_code}",
-                        f"outfit_top_reference_{selected_character_code}",
-                    ),
-                    (
-                        garment_input_col2,
-                        "Bottom",
-                        f"outfit_bottom_upload_{selected_character_code}",
-                        f"outfit_bottom_reference_{selected_character_code}",
-                    ),
-                    (
-                        garment_input_col3,
-                        "Shoes",
-                        f"outfit_shoes_upload_{selected_character_code}",
-                        f"outfit_shoes_reference_{selected_character_code}",
-                    ),
-                ]
-
-                for column, garment_label, upload_key, reference_key in garment_input_specs:
-                    with column:
-                        uploaded_garment = st.file_uploader(
-                            garment_label,
-                            type=["png", "jpg", "jpeg", "webp"],
-                            key=upload_key,
-                            help=(
-                                f"{garment_label} reference image를 업로드합니다. "
-                                "업로드된 이미지는 base64 data URI로 변환되어 "
-                                "RunComfy LoadImageFromUrl 노드에 전달됩니다."
-                            ),
-                        )
-
-                        if uploaded_garment is not None:
-                            garment_data_uri = uploaded_image_to_data_uri(
-                                uploaded_garment
-                            )
-                            st.session_state[reference_key] = garment_data_uri
-
-                            st.image(
-                                uploaded_garment,
-                                caption=f"{garment_label} Reference",
-                                width=180,
-                            )
-                        else:
-                            st.session_state[reference_key] = ""
-                            render_empty_preview_box(
-                                f"{garment_label}<br>Reference",
-                                160,
-                            )
-
-            else:
-                st.markdown("###### Outfit Reference")
-                st.caption(
-                    "Provide a single full outfit reference image to guide the outfit change."
-                )
-
-                upload_col, preview_col = st.columns(
-                    [1.0, 1.0],
-                    gap="medium",
-                )
-
-                single_reference_key = (
-                    f"outfit_single_reference_{selected_character_code}"
-                )
-
-                with upload_col:
-                    single_outfit_upload = st.file_uploader(
-                        "Outfit Reference",
+            for column, garment_label, upload_key, reference_key in garment_input_specs:
+                with column:
+                    uploaded_garment = st.file_uploader(
+                        garment_label,
                         type=["png", "jpg", "jpeg", "webp"],
-                        key=f"outfit_single_upload_{selected_character_code}",
+                        key=upload_key,
                         help=(
-                            "Full outfit reference image를 업로드합니다. "
+                            f"{garment_label} reference image를 업로드합니다. "
                             "업로드된 이미지는 base64 data URI로 변환되어 "
                             "RunComfy LoadImageFromUrl 노드에 전달됩니다."
                         ),
                     )
 
-                    if single_outfit_upload is not None:
-                        single_outfit_data_uri = uploaded_image_to_data_uri(
-                            single_outfit_upload
+                    if uploaded_garment is not None:
+                        garment_data_uri = uploaded_image_to_data_uri(
+                            uploaded_garment
                         )
-                        st.session_state[single_reference_key] = (
-                            single_outfit_data_uri
-                        )
-                    else:
-                        st.session_state[single_reference_key] = ""
+                        st.session_state[reference_key] = garment_data_uri
 
-                with preview_col:
-                    st.markdown("##### Single Outfit Reference")
-
-                    if single_outfit_upload is not None:
                         st.image(
-                            single_outfit_upload,
-                            caption="Single Outfit Reference",
-                            width=220,
+                            uploaded_garment,
+                            caption=f"{garment_label} Reference",
+                            width=180,
                         )
                     else:
+                        st.session_state[reference_key] = ""
                         render_empty_preview_box(
-                            "Single Outfit<br>Reference",
-                            220,
+                            f"{garment_label}<br>Reference",
+                            160,
                         )
+
+            # -------------------------------------------------
+            # Single Outfit Reference
+            # -------------------------------------------------
+            st.markdown(
+                "<div style='height: 12px;'></div>",
+                unsafe_allow_html=True,
+            )
+
+            st.markdown("###### Outfit Reference Image Load")
+
+            single_reference_key = (
+                f"outfit_single_reference_{selected_character_code}"
+            )
+
+            single_outfit_upload = st.file_uploader(
+                "Outfit Reference Image",
+                type=["png", "jpg", "jpeg", "webp"],
+                key=f"outfit_single_upload_{selected_character_code}",
+                label_visibility="collapsed",
+                help=(
+                    "Full outfit reference image를 업로드합니다. "
+                    "업로드된 이미지는 base64 data URI로 변환되어 "
+                    "RunComfy LoadImageFromUrl 노드에 전달됩니다."
+                ),
+            )
+
+            use_single_outfit_reference = st.checkbox(
+                "Single Outfit Reference",
+                value=(
+                    st.session_state.get(
+                        f"outfit_input_mode_{selected_character_code}",
+                        "Separate Garments",
+                    )
+                    == "Single Outfit Reference"
+                ),
+                key=f"use_single_outfit_reference_{selected_character_code}",
+                help=(
+                    "활성화하면 Top / Bottom / Shoes 개별 입력 대신 "
+                    "위의 Outfit Reference Image를 사용합니다."
+                ),
+            )
+
+            input_mode = (
+                "Single Outfit Reference"
+                if use_single_outfit_reference
+                else "Separate Garments"
+            )
+            st.session_state[
+                f"outfit_input_mode_{selected_character_code}"
+            ] = input_mode
+
+            if single_outfit_upload is not None:
+                single_outfit_data_uri = uploaded_image_to_data_uri(
+                    single_outfit_upload
+                )
+                st.session_state[single_reference_key] = single_outfit_data_uri
+
+                st.image(
+                    single_outfit_upload,
+                    caption="Single Outfit Reference",
+                    width=220,
+                )
+            else:
+                st.session_state[single_reference_key] = ""
+                render_empty_preview_box(
+                    "Single Outfit<br>Reference",
+                    220,
+                )
 
             # Garment / Outfit reference preview와 생성 버튼 사이 여백
             st.markdown(
