@@ -1555,8 +1555,8 @@ with tab3:
                     height=460,
                 )
 
-                if scene_filename:
-                    st.caption(f"Filename: {scene_filename}")
+                # if scene_filename:
+                #     st.caption(f"Filename: {scene_filename}")
 
                 if idx < len(valid_scene_previews) - 1:
                     st.markdown(
@@ -1655,8 +1655,8 @@ with tab3:
                     caption="Image 1 Character Reference",
                     width=400,
                 )
-                if boy_body_filename:
-                    st.caption(f"Filename: {boy_body_filename}")
+                # if boy_body_filename:
+                #     st.caption(f"Filename: {boy_body_filename}")
             else:
                 st.warning("Step 2에서 Image 1 character reference를 먼저 생성해야 합니다.")
     
@@ -1669,8 +1669,8 @@ with tab3:
                     caption="Image 2 Character Reference",
                     width=400,
                 )
-                if girl_body_filename:
-                    st.caption(f"Filename: {girl_body_filename}")
+                # if girl_body_filename:
+                #     st.caption(f"Filename: {girl_body_filename}")
             else:
                 st.warning("Step 2에서 Image 2 character reference를 먼저 생성해야 합니다.")
     
@@ -1781,13 +1781,13 @@ with tab4:
                 height=500,
             )
     
-            refined_filename = st.session_state.get(
-                "camera_refined_result_filename",
-                "",
-            )
+            # refined_filename = st.session_state.get(
+            #     "camera_refined_result_filename",
+            #     "",
+            # )
     
-            if refined_filename:
-                st.caption(f"Filename: {refined_filename}")
+            # if refined_filename:
+            #     st.caption(f"Filename: {refined_filename}")
     
         else:
             render_empty_preview_box(
@@ -1870,9 +1870,9 @@ with tab4:
                 )
 
                 if selected_input_scene:
-                    filename = selected_input_scene.get("filename", "")
-                    if filename:
-                        st.caption(f"Selected File: {filename}")
+                    # filename = selected_input_scene.get("filename", "")
+                    # if filename:
+                    #     st.caption(f"Selected File: {filename}")
 
                     if selected_input_scene.get("image"):
                         st.image(
