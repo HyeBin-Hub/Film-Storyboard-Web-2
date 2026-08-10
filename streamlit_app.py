@@ -1724,7 +1724,7 @@ with tab3:
                 st.image(
                     boy_body_image,
                     caption="Image 1 Character Reference",
-                    width=350,
+                    width=220,
                 )
                 # if boy_body_filename:
                 #     st.caption(f"Filename: {boy_body_filename}")
@@ -1738,7 +1738,7 @@ with tab3:
                 st.image(
                     girl_body_image,
                     caption="Image 2 Character Reference",
-                    width=350,
+                    width=220,
                 )
                 # if girl_body_filename:
                 #     st.caption(f"Filename: {girl_body_filename}")
