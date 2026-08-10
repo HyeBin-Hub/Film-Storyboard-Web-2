@@ -1897,19 +1897,19 @@ with tab4:
                     help="카메라 줌과 프레이밍 강도를 제어합니다.",
                 )
 
-                st.checkbox(
-                    "Use Default Angle Prompts",
-                    value=True,
-                    key="camera_default_prompts",
-                    help="Qwen Multi-Angle Camera의 기본 앵글 프롬프트를 사용합니다.",
-                )
+                # st.checkbox(
+                #     "Use Default Angle Prompts",
+                #     value=True,
+                #     key="camera_default_prompts",
+                #     help="Qwen Multi-Angle Camera의 기본 앵글 프롬프트를 사용합니다.",
+                # )
 
-                st.checkbox(
-                    "Enable Camera View Mode",
-                    value=False,
-                    key="camera_view",
-                    help="카메라 관점 중심의 view 해석을 활성화합니다.",
-                )
+                # st.checkbox(
+                #     "Enable Camera View Mode",
+                #     value=False,
+                #     key="camera_view",
+                #     help="카메라 관점 중심의 view 해석을 활성화합니다.",
+                # )
 
         # -------------------------------------------------
         # Guide
