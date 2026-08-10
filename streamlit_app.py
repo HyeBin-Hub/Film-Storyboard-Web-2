@@ -38,6 +38,10 @@ ENABLE_PRESET_2B_RESULTS = True
 # True  = 아래 PRESET URL 3장을 Generated Storyboard Preview에 자동 등록
 # False = 기존 Step 3 생성 결과만 사용
 ENABLE_PRESET_STEP3_RESULTS = True
+# Step 4 결과를 UI 없이 미리 주입하는 테스트용 플래그
+# True  = 아래 PRESET URL 3장을 Generated Storyboard Preview에 자동 등록
+# False = 기존 Step 4 생성 결과만 사용
+ENABLE_PRESET_STEP4_RESULTS = True
 
 ENABLE_CAMERA_SAMPLING_CONTROL = False
 
@@ -691,6 +695,37 @@ def apply_preset_step3_results():
     st.session_state["scene_selected_label"] = first_scene["label"]
 
 
+def apply_preset_step4_results():
+    if not ENABLE_PRESET_STEP4_RESULTS:
+        return
+
+    if st.session_state.get("camera_refined_result_image"):
+        return
+
+    preset_step4_result_url = (
+        "https://kommodo.ai/i/HpyZFucpWx3kUNodzHXu"
+    )
+
+    st.session_state["camera_refined_candidates"] = [
+        {
+            "label": "Camera Refined Scene 1",
+            "image": preset_step4_result_url,
+            "url": preset_step4_result_url,
+            "filename": "step4_preset_image.png",
+        }
+    ]
+
+    st.session_state["camera_refined_result_image"] = (
+        preset_step4_result_url
+    )
+    st.session_state["camera_refined_result_filename"] = (
+        "step4_preset_image.png"
+    )
+    st.session_state["camera_refined_selected_label"] = (
+        "Camera Refined Scene 1"
+    )
+
+
 # ------------------------- 비활성화된 수동 입력 상태 정리 함수 -------------------------
 # 기능 플래그가 False인 수동 입력의 텍스트·이미지·선택 상태를 세션에서 제거하는 함수
 # 이전 실행에서 수동 URL을 넣었더라도 현재 파이프라인이 생성 결과만 사용하도록 초기화함
@@ -762,6 +797,7 @@ clear_disabled_manual_reference_state()
 apply_preset_2a_results()
 apply_preset_2b_results()
 apply_preset_step3_results()
+apply_preset_step4_results()
 
 st.title("🎬 AI Storyboard Generation Pipeline")
 st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
