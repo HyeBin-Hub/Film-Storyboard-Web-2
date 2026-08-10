@@ -656,11 +656,10 @@ def apply_preset_step3_results():
         ),
         (
             "Scene 2",
-            "https://cdn.phototourl.com/free/2026-08-10-98c475bc-901c-4750-9b3d-fffeafd98a13.png",
-            # "https://serverless-api-storage.runcomfy.net/"
-            # "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
-            # "output/scene_3123289005_00002_.png",
-            # "scene_3123289005_00002_.png",
+            "https://serverless-api-storage.runcomfy.net/"
+            "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
+            "output/scene_3123289005_00002_.png",
+            "scene_3123289005_00002_.png",
         ),
         (
             "Scene 3",
