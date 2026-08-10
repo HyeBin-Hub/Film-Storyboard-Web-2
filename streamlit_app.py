@@ -612,13 +612,11 @@ def apply_preset_2b_results():
         return
 
     preset_boy_outfit_url = (
-        "https://c9c03612-a475-4ad8-8091-c613fce69d51-comfyui.runcomfy.com/"
-        "api/view?filename=ComfyUI_01135_.png&subfolder=&type=output&rand=0.5877694927052253"
+        "https://cdn.phototourl.com/free/2026-08-10-010c7a6f-95f8-4c76-af5d-0aa5eaf44048.png"
     )
 
     preset_girl_outfit_url = (
-        "https://c9c03612-a475-4ad8-8091-c613fce69d51-comfyui.runcomfy.com/"
-        "api/view?filename=%E6%8D%A2%E8%A3%85_00026_.png&subfolder=&type=output&rand=0.014337698296957191"
+        "https://cdn.phototourl.com/free/2026-08-10-31c0829b-b04d-43ee-9fb3-9b25cddaf035.png/"
     )
 
     # 이미 실제 2B 결과가 있으면 덮어쓰지 않음
