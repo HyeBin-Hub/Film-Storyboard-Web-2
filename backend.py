@@ -23,12 +23,11 @@ CAMERA_REFINEMENT_WORKFLOW_PATH = WORKFLOW_DIR / "Camera_Refinement.json"
 # Common helpers
 # =========================
 def _headers(api_key: str, include_content_type: bool = True) -> dict:
+    
     if not api_key:
         raise ValueError("RunComfy API key is missing.")
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-    }
+    headers = {"Authorization": f"Bearer {api_key}", }
 
     if include_content_type:
         headers["Content-Type"] = "application/json"
@@ -37,76 +36,48 @@ def _headers(api_key: str, include_content_type: bool = True) -> dict:
 
 
 def load_workflow_api_json(workflow_path: str | Path) -> dict:
+    
     workflow_path = Path(workflow_path)
 
     if not workflow_path.exists():
-        raise FileNotFoundError(
-            f"workflow_api_json file not found: {workflow_path}"
-        )
+        raise FileNotFoundError(f"Workflow_API_JSON file not found: {workflow_path}")
 
     with workflow_path.open("r", encoding="utf-8") as f:
         workflow = json.load(f)
 
-    # RunComfy dynamic workflow에는 ComfyUI API Format JSON이 필요합니다.
     if isinstance(workflow, dict) and isinstance(workflow.get("nodes"), list):
-        raise ValueError(
-            "The workflow is a ComfyUI UI-format JSON. "
-            "Export it again with 'Save (API Format)' and save it as a workflow_api.json file."
-        )
+        raise ValueError("The workflow must be exported in ComfyUI API Format using 'Save (API Format)'.")
 
     return workflow
 
 
-def submit_runcomfy_dynamic_workflow(
-    api_key: str,
-    deployment_id: str,
-    workflow_api_json: dict,
-) -> dict:
+def submit_runcomfy_dynamic_workflow(api_key: str, deployment_id: str, workflow_api_json: dict) -> dict:
+    
     if not deployment_id:
         raise ValueError("RunComfy deployment_id is missing.")
 
     url = f"{RUNCOMFY_API_BASE}/prod/v2/deployments/{deployment_id}/inference"
 
-    response = requests.post(
-        url,
-        headers=_headers(api_key),
-        json={"workflow_api_json": workflow_api_json},
-        timeout=60,
-    )
+    response = requests.post(url, headers=_headers(api_key), json={"workflow_api_json": workflow_api_json}, timeout=60)
 
     if response.status_code >= 400:
-        raise RuntimeError(
-            "RunComfy dynamic workflow submit failed: "
-            f"{response.status_code} / {response.text}"
-        )
+        raise RuntimeError(f"RunComfy dynamic workflow submit failed: {response.status_code} / {response.text}")
 
     return response.json()
 
 
-def poll_runcomfy_result(
-    api_key: str,
-    status_url: str,
-    result_url: str,
-    poll_interval: int = 10,
-    timeout_seconds: int = 1800,
-) -> dict:
-    start_time = time.time()
+def poll_runcomfy_result(api_key: str, status_url: str, result_url: str, poll_interval: int = 5, timeout_seconds: int = 1800) -> dict:
+    
+    start_time = time.monotonic()
 
     while True:
-        if time.time() - start_time > timeout_seconds:
+        if time.monotonic() - start_time > timeout_seconds:
             raise TimeoutError("RunComfy request timed out.")
 
-        status_response = requests.get(
-            status_url,
-            headers=_headers(api_key, include_content_type=False),
-            timeout=60,
-        )
+        status_response = requests.get(status_url, headers=_headers(api_key, include_content_type=False), timeout=60)
 
         if status_response.status_code >= 400:
-            raise RuntimeError(
-                "RunComfy status check failed: "
-                f"{status_response.status_code} / {status_response.text}"
-            )
+            raise RuntimeError(f"RunComfy status check failed: {status_response.status_code} / {status_response.text}")
 
         status_data = status_response.json()
         status = status_data.get("status", "")
@@ -114,36 +85,20 @@ def poll_runcomfy_result(
         if status == "completed":
             break
 
-        if status in {"failed", "error", "cancelled", "canceled"}:
-            raise RuntimeError(
-                f"RunComfy request failed during polling: {status_data}"
-            )
-
         if status not in {"in_queue", "in_progress"}:
-            raise RuntimeError(
-                f"Unexpected RunComfy status: {status_data}"
-            )
+            raise RuntimeError(f"RunComfy workflow failed or unexpected status: {status_data}")
 
         time.sleep(poll_interval)
 
-    result_response = requests.get(
-        result_url,
-        headers=_headers(api_key, include_content_type=False),
-        timeout=60,
-    )
+    result_response = requests.get(result_url, headers=_headers(api_key, include_content_type=False), timeout=60)
 
     if result_response.status_code >= 400:
-        raise RuntimeError(
-            "RunComfy result fetch failed: "
-            f"{result_response.status_code} / {result_response.text}"
-        )
+        raise RuntimeError(f"RunComfy result fetch failed: {result_response.status_code} / {result_response.text}")
 
     result_data = result_response.json()
 
     if result_data.get("status") != "succeeded":
-        raise RuntimeError(
-            f"RunComfy result is not succeeded: {result_data}"
-        )
+        raise RuntimeError(f"RunComfy result is not succeeded: {result_data}")
 
     return result_data
 
@@ -255,24 +210,22 @@ def extract_output_images(result: dict) -> list[dict]:
 
 
 def find_nodes_by_class_type(workflow: dict, class_type: str) -> list[str]:
-    return [
-        str(node_id)
-        for node_id, node in workflow.items()
-        if isinstance(node, dict)
-        and node.get("class_type") == class_type
-    ]
+    
+    node_ids = []
+
+    for node_id, node in workflow.items():
+        if isinstance(node, dict) and node.get("class_type") == class_type:
+            node_ids.append(str(node_id))
+
+    return node_ids
 
 
-def find_first_node_by_class_type(
-    workflow: dict,
-    class_type: str,
-) -> str:
+def find_first_node_by_class_type(workflow: dict, class_type: str) -> str:
+    
     node_ids = find_nodes_by_class_type(workflow, class_type)
 
     if not node_ids:
-        raise KeyError(
-            f"Node with class_type='{class_type}' was not found."
-        )
+        raise KeyError(f"Node with class_type='{class_type}' was not found.")
 
     return node_ids[0]
 
@@ -365,27 +318,19 @@ def character_filter_to_name(character_filter: str) -> str:
     return str(character_filter).lower().replace(" ", "_")
 
 
-def _run_workflow(
-    api_key: str,
-    deployment_id: str,
-    workflow: dict,
-    poll_interval: int,
-    timeout_seconds: int,
-) -> tuple[dict, dict]:
+def _run_workflow(api_key: str, deployment_id: str, workflow: dict, poll_interval: int, timeout_seconds: int) -> tuple[dict, dict]:
+    
     request_data = submit_runcomfy_dynamic_workflow(
-        api_key=api_key,
-        deployment_id=deployment_id,
-        workflow_api_json=workflow,
+        api_key=api_key, 
+        deployment_id=deployment_id, 
+        workflow_api_json=workflow
     )
 
     status_url = request_data.get("status_url")
     result_url = request_data.get("result_url")
 
     if not status_url or not result_url:
-        raise RuntimeError(
-            "RunComfy response does not include status/result URL: "
-            f"{request_data}"
-        )
+        raise RuntimeError(f"RunComfy response does not include status/result URL: {request_data}")
 
     result_data = poll_runcomfy_result(
         api_key=api_key,
@@ -401,30 +346,20 @@ def _run_workflow(
 # =========================
 # Step 1. CSV Parser Test
 # =========================
-def patch_csv_parser_test_workflow(
-    workflow: dict,
-    storyboard_input_config: dict,
-) -> dict:
+def patch_csv_parser_test_workflow(workflow: dict, storyboard_input_config: dict) -> dict:
+    
     workflow = deepcopy(workflow)
 
-    storyboard_input = storyboard_input_config.get(
-        "storyboard_input",
-        storyboard_input_config,
-    )
+    storyboard_input = storyboard_input_config.get("storyboard_input", storyboard_input_config)
 
     csv_text = storyboard_input.get("csv_text", "")
     shot_filter = storyboard_input.get("shot_filter", "ALL")
     custom_shot_ids = storyboard_input.get("custom_shot_ids", "")
 
     if not str(csv_text).strip():
-        raise ValueError(
-            "csv_text is empty. Upload a CSV file first."
-        )
+        raise ValueError("csv_text is empty. Upload a CSV file first.")
 
-    csv_parser_node_id = find_first_node_by_class_type(
-        workflow,
-        "CSVStoryboardParser",
-    )
+    csv_parser_node_id = find_first_node_by_class_type(workflow,"CSVStoryboardParser")
 
     inputs = workflow[csv_parser_node_id].setdefault("inputs", {})
     inputs["input_mode"] = "text"
