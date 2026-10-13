@@ -34,7 +34,7 @@ def load_workflow_api_json(workflow_path: str | Path) -> dict:
         raise ValueError("The workflow must be exported in ComfyUI API Format using 'Save (API Format)'.")
 
     if not isinstance(workflow, dict):
-    raise ValueError("Workflow API JSON must be a dictionary.")
+        raise ValueError("Workflow API JSON must be a dictionary.")
 
     return workflow
 
