@@ -664,7 +664,7 @@ def render_manual_reference_inputs():
 
 
 # =============================================================================================================================
-# 4. Page Config
+# Page Config
 # =============================================================================================================================
 st.set_page_config(
     page_title="AI Storyboard Pipeline",
@@ -692,7 +692,7 @@ st.caption("A ComfyUI-based generation pipeline for character-consistent cinemat
 render_manual_reference_inputs()
 
 # =============================================================================================================================
-# 5. Tabs
+# Tabs
 # =============================================================================================================================
 tab1, tab2, tab3, tab4 = st.tabs(
     [
@@ -705,7 +705,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
 
 
 # =============================================================================================================================
-# 6. Step 1. Storyboard Data Parsing
+# Step 1. Storyboard Data Parsing
 # =============================================================================================================================
 with tab1:
     st.header("Step 1. Storyboard Data Parsing")
@@ -759,12 +759,12 @@ with tab1:
 
 
 # =============================================================================================================================
-# 7. Step 2. Character Reference Generation
+# Step 2. Character Reference Generation
 # =============================================================================================================================
 with tab2:
     st.header("Step 2. Character Reference Generation")
     st.caption(
-        "Generate character appearances first, then apply garment" 
+        "Generate character appearances first, then apply garment "
         "references to build the final character references for scene generation."
     )
 
@@ -865,12 +865,12 @@ with tab2:
                         st.selectbox("Hair Length", options=HAIR_LENGTH_OPTIONS, index=0, key="hair_length")
 
             with st.expander("Fine-Grained Appearance Attributes", expanded=False):
-                skin_keys = list(SKIN_DEFAULTS.keys())
+
                 skin_cols = st.columns(3)
-                for i, key in enumerate(skin_keys):
+            
+                for i, (key, default_value) in enumerate(SKIN_DEFAULTS.items()):
                     with skin_cols[i % 3]:
-                        default_checked = SKIN_DEFAULTS[key] > 0
-                        st.checkbox(key, value=default_checked, key=f"skin_{key}")
+                        st.checkbox(key, value=default_value > 0, key=f"skin_{key}")
 
             # st.divider()
 
@@ -880,9 +880,9 @@ with tab2:
                 csv_text = st.session_state.get("csv_text", "")
 
                 if not csv_text.strip():
-                    st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+                    st.error("Upload a CSV file in Step 1 first.")
                 elif st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM" and len(st.session_state.get("custom_shots", [])) == 0:
-                    st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+                    st.error("Select at least one shot when CUSTOM mode is enabled.")
                 else:
                     config = build_face_ui_config()
                     character_filter = config["character_registry_parser"]["character_filter"]
@@ -892,7 +892,7 @@ with tab2:
                         api_key = st.secrets["RUNCOMFY_API_KEY"]
                         deployment_id = st.secrets["DEPLOYMENT_ID"]
 
-                        with st.spinner("Character Appearance를 생성하는 중입니다..."):
+                        with st.spinner("Generating character appearance..."):
                             result = run_face_generation(
                                 api_key=api_key,
                                 deployment_id=deployment_id,
@@ -904,7 +904,7 @@ with tab2:
                         images = result.get("images", [])
 
                         if not images:
-                            st.error("RunComfy 실행은 완료되었지만 결과 이미지가 없습니다.")
+                            st.error("Completed, but no output images were returned.")
                             with st.expander("RunComfy Raw Result", expanded=False):
                                 st.json(result)
                             with st.expander("Collected Character Appearance Config", expanded=False):
@@ -915,21 +915,21 @@ with tab2:
                             st.session_state[f"face_result_image_{character_code}"] = first_image["image"]
                             st.session_state[f"face_result_filename_{character_code}"] = first_image.get("filename", "")
        
-                            st.success("Character Appearance 생성이 완료되었습니다.")
+                            st.success("Character appearance generated successfully.")
                             st.rerun()
 
                     except KeyError as e:
-                        st.error("RunComfy secret 설정이 없습니다.")
-                        st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
+                        st.error(f"A required configuration key is missing: {e}")
                         st.exception(e)
                         with st.expander("Collected Character Appearance Config", expanded=False):
                             st.json(config)
+                            
                     except Exception as e:
-                        st.error("RunComfy Character Appearance 실행 중 오류가 발생했습니다.")
+                        st.error("An error occurred during character appearance generation.")
                         st.exception(e)
                         with st.expander("Collected Character Appearance Config", expanded=False):
                             st.json(config)
-    # st.divider()
+                            
 
     # ------------------- 2B. Reference-based Outfit Change -------------------
     with st.container(border=True):
@@ -938,7 +938,6 @@ with tab2:
 
         preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
-        # ================= LEFT: Outfit Change Results =================
         with preview_col:
             st.subheader("Outfit Change Preview")
             body_preview_col1, body_preview_col2 = st.columns(2, gap="medium")
@@ -946,34 +945,27 @@ with tab2:
             with body_preview_col1:
                 st.markdown("##### Image 1 - Boy")
 
-                if st.session_state.get("body_result_image_c1") is not None:
+                if st.session_state.get("body_result_image_c1"):
                     render_image_preview_box(
                         st.session_state["body_result_image_c1"],
                         caption="Image 1 - Boy Final Character Reference",
                         height=400,
                     )
                 else:
-                    render_empty_preview_box(
-                        "Image 1 - Boy outfit-changed reference will appear here.",
-                        400,
-                    )
+                    render_empty_preview_box("Image 1 - Boy outfit-changed reference will appear here.", 400)
 
             with body_preview_col2:
                 st.markdown("##### Image 2 - Girl")
 
-                if st.session_state.get("body_result_image_c2") is not None:
+                if st.session_state.get("body_result_image_c2"):
                     render_image_preview_box(
                         st.session_state["body_result_image_c2"],
                         caption="Image 2 - Girl Final Character Reference",
                         height=400,
                     )
                 else:
-                    render_empty_preview_box(
-                        "Image 2 - Girl outfit-changed reference will appear here.",
-                        400,
-                    )
+                    render_empty_preview_box("Image 2 - Girl outfit-changed reference will appear here.", 400)
 
-        # ================= RIGHT: Outfit Change Controls =================
         with settings_col:
             st.subheader("Outfit Change Control")
 
@@ -985,43 +977,9 @@ with tab2:
                 key="body_character_filter_label",
             )
 
-            selected_body_target = st.session_state.get(
-                "body_character_filter_label",
-                "Image 1 - Boy",
-            )
+            selected_body_target = st.session_state.get("body_character_filter_label", "Image 1 - Boy")
 
-            selected_character_code = (
-                "c1" if selected_body_target == "Image 1 - Boy" else "c2"
-            )
-
-            # if selected_character_code == "c1":
-            #     source_character_image = st.session_state.get(
-            #         "face_result_image_c1",
-            #         "",
-            #     )
-            #     source_character_label = "Image 1 - Boy"
-            # else:
-            #     source_character_image = st.session_state.get(
-            #         "face_result_image_c2",
-            #         "",
-            #     )
-            #     source_character_label = "Image 2 - Girl"
-
-            # with st.container(border=True):
-            #     st.markdown("###### Source Character")
-            #     st.caption("Automatically uses the selected result from Step 2A.")
-
-            #     if source_character_image:
-            #         st.image(
-            #             source_character_image,
-            #             caption=f"{source_character_label} · Step 2A Result",
-            #             use_container_width=True,
-            #         )
-            #     else:
-            #         st.warning(
-            #             f"{source_character_label}의 Step 2A 결과가 없습니다. "
-            #             "먼저 Character Appearance를 생성하세요."
-            #         )
+            selected_character_code = ("c1" if selected_body_target == "Image 1 - Boy" else "c2")
 
             st.markdown("###### Garment Input Mode")
             input_mode = st.radio(
@@ -1033,15 +991,7 @@ with tab2:
             )
 
             if input_mode == "Separate Garments":
-                st.markdown("###### Garment References")
-                st.caption(
-                    "Provide separate reference images for the top, bottom, and shoes."
-                )
-
-                garment_input_col1, garment_input_col2, garment_input_col3 = st.columns(
-                    3,
-                    gap="medium",
-                )
+                garment_input_col1, garment_input_col2, garment_input_col3 = st.columns(3, gap="medium")
 
                 garment_input_specs = [
                     (
@@ -1066,70 +1016,45 @@ with tab2:
 
                 for column, garment_label, upload_key, reference_key in garment_input_specs:
                     with column:
-                        uploaded_garment = st.file_uploader(
-                            garment_label,
-                            type=["png", "jpg", "jpeg", "webp"],
-                            key=upload_key,
-                            help=(
-                                f"{garment_label} reference image를 업로드합니다. "
-                                "업로드된 이미지는 base64 data URI로 변환되어 "
-                                "RunComfy LoadImageFromUrl 노드에 전달됩니다."
-                            ),
-                        )
+                        uploaded_garment = st.file_uploader(garment_label, type=["png", "jpg", "jpeg", "webp"], key=upload_key)
 
                         if uploaded_garment is not None:
-                            garment_data_uri = uploaded_image_to_data_uri(
-                                uploaded_garment
-                            )
+                            garment_data_uri = uploaded_image_to_data_uri(uploaded_garment)
                             st.session_state[reference_key] = garment_data_uri
-
                             st.image(
                                 uploaded_garment,
                                 caption=f"{garment_label} Reference",
                                 width=180,
                             )
                         else:
-                            st.session_state[reference_key] = ""
-                            render_empty_preview_box(
-                                f"{garment_label}<br>Reference",
-                                160,
-                            )
+                            saved_reference = st.session_state.get(reference_key, "")
+                        
+                            if saved_reference:
+                                render_image_preview_box(
+                                    saved_reference,
+                                    caption=f"{garment_label} Reference",
+                                    height=160,
+                                )
+                            else:
+                                render_empty_preview_box(f"{garment_label}<br>Reference", 160)
 
             else:
-                st.markdown("###### Outfit Reference Image Load")
-                st.caption(
-                    "Provide a single full outfit reference image to guide the outfit change."
-                )
-
-                single_reference_key = (
-                    f"outfit_single_reference_{selected_character_code}"
-                )
-
+                single_reference_key = f"outfit_single_reference_{selected_character_code}"
+            
                 single_outfit_upload = st.file_uploader(
                     "Outfit Reference Image",
                     type=["png", "jpg", "jpeg", "webp"],
                     key=f"outfit_single_upload_{selected_character_code}",
                     label_visibility="collapsed",
-                    help=(
-                        "Full outfit reference image를 업로드합니다. "
-                        "업로드된 이미지는 base64 data URI로 변환되어 "
-                        "RunComfy LoadImageFromUrl 노드에 전달됩니다."
-                    ),
                 )
-
+            
                 if single_outfit_upload is not None:
-                    single_outfit_data_uri = uploaded_image_to_data_uri(
+                    st.session_state[single_reference_key] = uploaded_image_to_data_uri(
                         single_outfit_upload
                     )
-                    st.session_state[single_reference_key] = (
-                        single_outfit_data_uri
-                    )
-                else:
-                    st.session_state[single_reference_key] = ""
-
-                # Outfit Reference Image Load 바로 아래에 preview를 배치
+            
                 st.markdown("##### Single Outfit Reference")
-
+            
                 if single_outfit_upload is not None:
                     st.image(
                         single_outfit_upload,
@@ -1137,22 +1062,23 @@ with tab2:
                         width=220,
                     )
                 else:
-                    render_empty_preview_box(
-                        "Single Outfit<br>Reference",
-                        220,
-                    )
+                    saved_reference = st.session_state.get(single_reference_key, "")
+            
+                    if saved_reference:
+                        render_image_preview_box(
+                            saved_reference,
+                            caption="Single Outfit Reference",
+                            height=220,
+                        )
+                    else:
+                        render_empty_preview_box(
+                            "Single Outfit<br>Reference",
+                            220,
+                        )
 
-            # Garment / Outfit reference preview와 생성 버튼 사이 여백
-            st.markdown(
-                "<div style='height: 24px;'></div>",
-                unsafe_allow_html=True,
-            )
+            st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
-            generate_body_clicked = st.button(
-                "Generate Outfit Reference",
-                type="primary",
-                use_container_width=True,
-            )
+            generate_body_clicked = st.button("Generate Outfit Reference", type="primary", use_container_width=True)
 
             if generate_body_clicked:
                 body_config = build_body_ui_config()
@@ -1162,22 +1088,10 @@ with tab2:
                 character_code = "c1" if character_filter == "C1" else "c2"
                 label = outfit_change_config["label"]
 
-                character_image_url = outfit_change_config.get(
-                    "character_image_url",
-                    "",
-                )
-                input_mode = outfit_change_config.get(
-                    "input_mode",
-                    "Separate Garments",
-                )
-                garment_references = outfit_change_config.get(
-                    "garment_references",
-                    {},
-                )
-                single_outfit_reference = outfit_change_config.get(
-                    "single_outfit_reference",
-                    "",
-                )
+                character_image_url = outfit_change_config.get("character_image_url", "")
+                input_mode = outfit_change_config.get("input_mode", "Separate Garments")
+                garment_references = outfit_change_config.get("garment_references", {})
+                single_outfit_reference = outfit_change_config.get("single_outfit_reference", "")
 
                 top_reference_url = garment_references.get("top", "")
                 bottom_reference_url = garment_references.get("bottom", "")
@@ -1194,29 +1108,20 @@ with tab2:
                 ]
 
                 if not character_image_url:
-                    st.error(
-                        f"{label}의 Character Appearance가 없습니다. "
-                        "먼저 2A에서 해당 캐릭터를 생성하세요."
-                    )
+                    st.error(f"No character appearance found for {label}. Generate the character in Step 2A first.")
 
                 elif input_mode == "Separate Garments" and missing_garments:
-                    st.error(
-                        "다음 Garment Reference 파일을 업로드하세요: "
-                        + ", ".join(missing_garments)
-                    )
+                    st.error("Upload the following garment references: " + ", ".join(missing_garments))
 
-                elif (
-                    input_mode == "Single Outfit Reference"
-                    and not single_outfit_reference
-                ):
-                    st.error("Outfit Reference 파일을 업로드하세요.")
+                elif input_mode == "Single Outfit Reference" and not single_outfit_reference:
+                    st.error("Upload a single outfit reference image.")
 
                 else:
                     try:
                         api_key = st.secrets["RUNCOMFY_API_KEY"]
                         deployment_id = st.secrets["DEPLOYMENT_ID"]
 
-                        with st.spinner("Reference-based Outfit Change를 실행하는 중입니다..."):
+                        with st.spinner("Generating outfit reference..."):
                             result = run_body_generation(
                                 api_key=api_key,
                                 deployment_id=deployment_id,
@@ -1227,61 +1132,26 @@ with tab2:
 
                         images = result.get("images", [])
 
-                        # backend 수정 전/응답 구조 차이를 고려한 fallback.
-                        # 새 Outfit Change workflow의 final SaveImage는 node 17을 사용합니다.
                         if not images:
-                            raw_result = result.get("result", result)
-                            outputs = raw_result.get("outputs", {})
-                            save_output = outputs.get("17", {})
-                            raw_images = save_output.get("images", [])
-
-                            images = [
-                                {
-                                    "label": (
-                                        f"{'Boy' if character_code == 'c1' else 'Girl'} "
-                                        f"Outfit Reference {idx + 1}"
-                                    ),
-                                    "image": item.get("url", ""),
-                                    "url": item.get("url", ""),
-                                    "filename": item.get("filename", ""),
-                                    "node_id": "17",
-                                    "raw": item,
-                                }
-                                for idx, item in enumerate(raw_images)
-                                if item.get("url")
-                            ]
-
-                        if not images:
-                            st.error(
-                                "RunComfy 실행은 완료되었지만 Outfit Change 결과 이미지가 없습니다."
-                            )
+                            st.error("Completed, but no outfit images were returned.")
+                            
                             with st.expander("RunComfy Raw Result", expanded=False):
                                 st.json(result)
-                            with st.expander(
-                                "Collected Outfit Change Config",
-                                expanded=False,
-                            ):
+                                
+                            with st.expander("Collected Outfit Change Config", expanded=False,):
                                 st.json(body_config)
+                                
                         else:
                             first_image = images[0]
 
-                            # Step 3가 기존 키를 그대로 사용하므로 결과 저장 키는 유지합니다.
-                            st.session_state[f"body_result_image_{character_code}"] = (
-                                first_image["image"]
-                            )
-                            st.session_state[f"body_result_filename_{character_code}"] = (
-                                first_image.get("filename", "")
-                            )
+                            st.session_state[f"body_result_image_{character_code}"] = (first_image["image"])
+                            st.session_state[f"body_result_filename_{character_code}"] = (first_image.get("filename", ""))
 
-                            st.success("Reference-based Outfit Change가 완료되었습니다.")
+                            st.success("Outfit reference generated successfully.")
                             st.rerun()
 
                     except KeyError as e:
-                        st.error("RunComfy secret 설정이 없습니다.")
-                        st.caption(
-                            "`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 "
-                            "DEPLOYMENT_ID를 추가해야 합니다."
-                        )
+                        st.error(f"A required key is missing: {e}")
                         st.exception(e)
 
                         with st.expander(
@@ -1291,7 +1161,7 @@ with tab2:
                             st.json(body_config)
 
                     except Exception as e:
-                        st.error("RunComfy Outfit Change 실행 중 오류가 발생했습니다.")
+                        st.error("An error occurred during outfit reference generation.")
                         st.exception(e)
 
                         with st.expander(
@@ -1308,23 +1178,16 @@ with tab3:
     st.header("Step 3. Reference-Guided Scene Generation")
 
     boy_body_image = st.session_state.get("body_result_image_c1")
-    boy_body_filename = st.session_state.get("body_result_filename_c1", "")
-
     girl_body_image = st.session_state.get("body_result_image_c2")
-    girl_body_filename = st.session_state.get("body_result_filename_c2", "")
 
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
     preview_col, settings_col = st.columns([1.45, 1.25], gap="large")
 
-    # ================= LEFT: Generated Storyboard Preview =================
     with preview_col:
         st.subheader("Generated Storyboard Preview")
 
-        scene_preview_candidates = st.session_state.get(
-            "scene_candidates",
-            [],
-        )
+        scene_preview_candidates = st.session_state.get("scene_candidates",[])
 
         valid_scene_previews = [
             item
@@ -1332,7 +1195,6 @@ with tab3:
             if isinstance(item, dict) and item.get("image")
         ]
 
-        # scene_candidates가 없을 때만 기존 단일 결과를 fallback으로 사용
         if not valid_scene_previews and st.session_state.get("scene_result_image"):
             valid_scene_previews = [
                 {
@@ -1354,10 +1216,6 @@ with tab3:
                     "label",
                     f"Scene {idx + 1}",
                 )
-                scene_filename = scene_item.get(
-                    "filename",
-                    "",
-                )
 
                 st.markdown(f"##### {scene_label}")
 
@@ -1366,9 +1224,6 @@ with tab3:
                     caption=scene_label,
                     height=460,
                 )
-
-                # if scene_filename:
-                #     st.caption(f"Filename: {scene_filename}")
 
                 if idx < len(valid_scene_previews) - 1:
                     st.markdown(
@@ -1381,18 +1236,16 @@ with tab3:
                 560,
             )
 
-    # ================= RIGHT: Scene Control + References + Button =================
     with settings_col:
         with st.container(border=True):
-            # st.subheader("Scene Generation Control")
     
             st.markdown("###### Selected Storyboard Context")
     
             if storyboard_input["selected_shot_count"] == 0:
-                st.warning("표시할 scene 정보가 없습니다. Step 1에서 CSV와 shot 선택을 확인하세요.")
+                st.warning("No storyboard data available. Check the CSV file and shot selection in Step 1.")
             else:
                 if storyboard_input["shot_filter"] == "ALL":
-                    st.caption(f"Shot Filter: ALL / {storyboard_input['selected_shot_count']} scene(s)")
+                    st.caption(f"Shot Filter: ALL / {storyboard_input['selected_shot_count']} CSV row(s)")
                 elif storyboard_input["custom_shot_ids"]:
                     st.caption(f"Shot Filter: CUSTOM / {storyboard_input['custom_shot_ids']}")
                 else:
@@ -1419,10 +1272,9 @@ with tab3:
                     caption="Image 1 Character Reference",
                     width=220,
                 )
-                # if boy_body_filename:
-                #     st.caption(f"Filename: {boy_body_filename}")
+
             else:
-                st.warning("Step 2에서 Image 1 character reference를 먼저 생성해야 합니다.")
+                st.warning("Generate the Image 1 character reference in Step 2B first.")
     
         with ref_col2:
             st.markdown("##### Image 2 Reference")
@@ -1433,10 +1285,9 @@ with tab3:
                     caption="Image 2 Character Reference",
                     width=220,
                 )
-                # if girl_body_filename:
-                #     st.caption(f"Filename: {girl_body_filename}")
+
             else:
-                st.warning("Step 2에서 Image 2 character reference를 먼저 생성해야 합니다.")
+                st.warning("Generate the Image 2 character reference in Step 2B first.")
     
         st.divider()
     
@@ -1450,19 +1301,22 @@ with tab3:
             storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
             if not storyboard_input["csv_text"].strip():
-                st.error("먼저 Step 1에서 CSV 파일을 업로드해야 합니다.")
+                st.error("Upload a CSV file in Step 1 first.")
 
             elif (
                 storyboard_input["shot_filter"] == "CUSTOM"
                 and not storyboard_input["custom_shot_ids"]
             ):
-                st.error("shot_filter가 CUSTOM이면 최소 1개 이상의 shot을 선택해야 합니다.")
+                st.error("Select at least one shot when CUSTOM mode is enabled.")
+
+            elif storyboard_input["selected_shot_count"] == 0:
+                st.error("No valid storyboard shots found. Check the CSV data and shot selection.")
 
             elif not boy_body_image:
-                st.error("Image 1 - Boy body reference가 없습니다. 먼저 Step 2B에서 생성하세요.")
+                st.error("Generate the Image 1 - Boy body reference in Step 2B first.")
 
             elif not girl_body_image:
-                st.error("Image 2 - Girl body reference가 없습니다. 먼저 Step 2B에서 생성하세요.")
+                st.error("Generate the Image 2 - Girl body reference in Step 2B first.")
 
             else:
                 scene_config = build_scene_ui_config()
@@ -1471,7 +1325,7 @@ with tab3:
                     api_key = st.secrets["RUNCOMFY_API_KEY"]
                     deployment_id = st.secrets["DEPLOYMENT_ID"]
 
-                    with st.spinner("Storyboard Scene을 생성하는 중입니다..."):
+                    with st.spinner("Generating storyboard scenes..."):
                         result = run_scene_generation(
                             api_key=api_key,
                             deployment_id=deployment_id,
@@ -1483,7 +1337,7 @@ with tab3:
                     images = result.get("images", [])
 
                     if not images:
-                        st.error("RunComfy 실행은 완료되었지만 scene 결과 이미지가 없습니다.")
+                        st.error("Completed, but no scene images were returned.")
 
                         with st.expander("RunComfy Raw Scene Result", expanded=False):
                             st.json(result)
@@ -1497,29 +1351,28 @@ with tab3:
                         st.session_state["scene_candidates"] = images
                         st.session_state["scene_result_image"] = first_image["image"]
                         st.session_state["scene_result_filename"] = first_image.get("filename", "")
-                        st.session_state["scene_selected_label"] = first_image["label"]
+                        st.session_state["scene_selected_label"] = first_image.get("label", "Scene 1")
 
-                        st.success("Storyboard Scene 생성이 완료되었습니다.")
+                        st.success("Storyboard scenes generated successfully.")
                         st.rerun()
 
                 except KeyError as e:
-                    st.error("RunComfy secret 설정이 없습니다.")
-                    st.caption("`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 DEPLOYMENT_ID를 추가해야 합니다.")
+                    st.error(f"A required key is missing: {e}")
                     st.exception(e)
-
+                
                     with st.expander("Collected Scene Generation Config", expanded=False):
                         st.json(scene_config)
-
+                
                 except Exception as e:
-                    st.error("RunComfy Scene Generation 실행 중 오류가 발생했습니다.")
+                    st.error("An error occurred during storyboard scene generation.")
                     st.exception(e)
-
+                
                     with st.expander("Collected Scene Generation Config", expanded=False):
                         st.json(scene_config)
 
-# =========================
+# =============================================================================================================================
 # Step 4. Camera Refinement
-# =========================
+# =============================================================================================================================
 with tab4:
     st.header("Step 4. Camera Refinement")
     st.caption(
@@ -1529,7 +1382,6 @@ with tab4:
 
     preview_col, settings_col = st.columns([1.6, 1.1], gap="large")
 
-    # ================= LEFT: Camera Refinement Preview =================
     with preview_col:
         st.subheader("Camera Refinement Preview")
     
@@ -1542,31 +1394,20 @@ with tab4:
                 height=500,
             )
     
-            # refined_filename = st.session_state.get(
-            #     "camera_refined_result_filename",
-            #     "",
-            # )
-    
-            # if refined_filename:
-            #     st.caption(f"Filename: {refined_filename}")
-    
         else:
             render_empty_preview_box(
                 "The camera-refined scene will appear here.",
                 500,
-        )
+            )
 
-    # ================= RIGHT: Camera Refinement Control =================
     with settings_col:
         st.subheader("Camera Refinement Control")
 
-        # -------------------------------------------------
-        # Source Scene Input
-        # -------------------------------------------------
         with st.container(border=True):
             st.markdown("###### Source Scene")
 
             scene_candidates = get_scene_result_candidates()
+            
             sync_scene_reference_selection(
                 "camera_input_scene_label",
                 scene_candidates,
@@ -1585,9 +1426,6 @@ with tab4:
                 )
 
                 if selected_input_scene:
-                    # filename = selected_input_scene.get("filename", "")
-                    # if filename:
-                    #     st.caption(f"Selected File: {filename}")
 
                     if selected_input_scene.get("image"):
                         st.image(
@@ -1602,15 +1440,11 @@ with tab4:
                         )
             else:
                 st.warning(
-                    "Step 3에서 생성된 scene 이미지가 없습니다. "
-                    "먼저 Scene Generation을 진행하세요."
+                    "No scene images available. Generate storyboard scenes in Step 3 first."
                 )
 
         st.divider()
 
-        # -------------------------------------------------
-        # Camera Angle Control
-        # -------------------------------------------------
         with st.container(border=True):
             st.markdown("###### Camera Angle Control")
 
@@ -1624,7 +1458,7 @@ with tab4:
                     value=0,
                     step=1,
                     key="camera_horizontal_angle",
-                    help="좌우 카메라 시점 변화를 제어합니다.",
+                    help="Adjust the horizontal camera angle.",
                 )
 
                 st.slider(
@@ -1634,7 +1468,7 @@ with tab4:
                     value=0,
                     step=1,
                     key="camera_vertical_angle",
-                    help="상하 카메라 시점 변화를 제어합니다.",
+                    help="Adjust the vertical camera angle.",
                 )
 
             with angle_col2:
@@ -1645,42 +1479,9 @@ with tab4:
                     value=5,
                     step=1,
                     key="camera_zoom",
-                    help="카메라 줌과 프레이밍 강도를 제어합니다.",
+                    help="Adjust the camera zoom and framing.",
                 )
 
-                # st.checkbox(
-                #     "Use Default Angle Prompts",
-                #     value=True,
-                #     key="camera_default_prompts",
-                #     help="Qwen Multi-Angle Camera의 기본 앵글 프롬프트를 사용합니다.",
-                # )
-
-                # st.checkbox(
-                #     "Enable Camera View Mode",
-                #     value=False,
-                #     key="camera_view",
-                #     help="카메라 관점 중심의 view 해석을 활성화합니다.",
-                # )
-
-        # -------------------------------------------------
-        # Guide
-        # -------------------------------------------------
-        # with st.expander("Camera Refinement Guide", expanded=False):
-        #     st.markdown(
-        #         """
-        #         - Step 4는 Step 3에서 생성한 장면을 직접 입력으로 사용합니다.
-        #         - Horizontal Angle은 좌/우 카메라 시점을 조정합니다.
-        #         - Vertical Angle은 상/하 카메라 시점을 조정합니다.
-        #         - Zoom은 장면의 확대/축소와 프레이밍을 조정합니다.
-        #         - Use Default Angle Prompts는 Qwen Multi-Angle Camera의 기본 앵글 프롬프트를 사용합니다.
-        #         - Camera View Mode는 카메라 관점 중심의 해석을 활성화합니다.
-        #         - Sampling 설정은 workflow의 고정값을 사용합니다.
-        #         """
-        #     )
-
-        # -------------------------------------------------
-        # Generate Button
-        # -------------------------------------------------
         st.markdown(
             "<div style='height: 16px;'></div>",
             unsafe_allow_html=True,
@@ -1701,26 +1502,23 @@ with tab4:
             )
 
             if not scene_candidates:
-                st.error(
-                    "Step 3 결과 이미지가 없습니다. 먼저 Scene Generation을 진행하세요."
-                )
-
+                st.error("No scene images available. Generate storyboard scenes in Step 3 first.")
+            
             elif not selected_input_scene:
-                st.error("Camera Refinement에 사용할 입력 scene을 선택하세요.")
-
+                st.error("Select an input scene for camera refinement.")
+            
             elif not selected_input_scene.get("image"):
-                st.error(
-                    "선택된 scene 이미지가 비어 있습니다. Step 3 결과를 다시 확인하세요."
-                )
+                st.error("The selected scene image is empty. Check the Step 3 results.")
 
             else:
                 camera_config = build_camera_refinement_ui_config()
+                result = None
 
                 try:
                     api_key = st.secrets["RUNCOMFY_API_KEY"]
                     deployment_id = st.secrets["DEPLOYMENT_ID"]
 
-                    with st.spinner("Camera-Refined Scene을 생성하는 중입니다..."):
+                    with st.spinner("Generating camera-refined scene..."):
                         result = run_camera_refinement(
                             api_key=api_key,
                             deployment_id=deployment_id,
@@ -1732,10 +1530,7 @@ with tab4:
                     images = result.get("images", [])
 
                     if not images:
-                        st.error(
-                            "RunComfy 실행은 완료되었지만 "
-                            "camera refinement 결과 이미지가 없습니다."
-                        )
+                        st.error("RunComfy completed, but no camera-refined images were returned.")
 
                         with st.expander(
                             "RunComfy Raw Camera Refinement Result",
@@ -1772,38 +1567,23 @@ with tab4:
                             )
                         )
 
-                        st.success("Camera-Refined Scene 생성이 완료되었습니다.")
+                        st.success("Camera-refined scene generated successfully.")
                         st.rerun()
 
                 except KeyError as e:
-                    st.error("RunComfy secret 설정이 없습니다.")
-                    st.caption(
-                        "`.streamlit/secrets.toml`에 RUNCOMFY_API_KEY와 "
-                        "DEPLOYMENT_ID를 추가해야 합니다."
-                    )
+                    st.error(f"A required key is missing: {e}")
                     st.exception(e)
-
-                    with st.expander(
-                        "Collected Camera Refinement Config",
-                        expanded=False,
-                    ):
+                
+                    with st.expander("Collected Camera Refinement Config", expanded=False):
                         st.json(camera_config)
-
+                
                 except Exception as e:
-                    st.error(
-                        "RunComfy Camera Refinement 실행 중 오류가 발생했습니다."
-                    )
+                    st.error("An error occurred during camera refinement.")
                     st.exception(e)
-
-                    with st.expander(
-                        "Collected Camera Refinement Config",
-                        expanded=False,
-                    ):
+                
+                    with st.expander("Collected Camera Refinement Config", expanded=False):
                         st.json(camera_config)
-
-                    if "result" in locals():
-                        with st.expander(
-                            "RunComfy Raw Camera Refinement Result",
-                            expanded=False,
-                        ):
+                
+                    if result is not None:
+                        with st.expander("RunComfy Raw Camera Refinement Result", expanded=False):
                             st.json(result)
