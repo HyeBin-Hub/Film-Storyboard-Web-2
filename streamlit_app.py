@@ -117,7 +117,7 @@ NATIONALITY_OPTIONS = [
 HAIR_LENGTH_OPTIONS = ["-", "Short", "Medium", "Long"]
 
 # =============================================================================================================================
-# 3. Helper Functions
+# 3. File and Upload Helpers
 # =============================================================================================================================
 
 def decode_uploaded_file(uploaded_file):
@@ -145,6 +145,10 @@ def uploaded_image_to_data_uri(uploaded_file):
     
     return f"data:{mime_type};base64,{encoded}"
 
+
+# =============================================================================================================================
+# 4. CSV and Shot Helpers
+# =============================================================================================================================
 
 def read_csv_as_dataframe(csv_text):
     
@@ -231,9 +235,12 @@ def build_storyboard_input_config():
     }
 
 
+# =============================================================================================================================
+# 5. Character and Outfit Helpers
+# =============================================================================================================================
+
 def character_label_to_value(label, default="C2"):
     return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, default)
-
 
 
 def initialize_outfit_reference_inputs():
@@ -244,6 +251,10 @@ def initialize_outfit_reference_inputs():
         for garment in ("top", "bottom", "shoes", "single"):
             st.session_state.setdefault(f"outfit_{garment}_reference_{character_code}","")
 
+
+# =============================================================================================================================
+# 6. Scene Result Selection
+# =============================================================================================================================
 
 def get_selected_candidate(candidates, selected_label):
     
@@ -264,6 +275,35 @@ def sync_scene_reference_selection(session_key, candidates):
     if st.session_state.get(session_key) not in labels:
         st.session_state[session_key] = labels[0]
 
+
+def get_scene_result_candidates():
+    
+    candidates = st.session_state.get("scene_candidates", [])
+    normalized = []
+
+    for i, item in enumerate(candidates, start=1):
+        if not isinstance(item, dict):
+            continue
+        normalized.append(
+            {
+                "label": item.get("label", f"Scene {i}"),
+                "image": item.get("image"),
+                "filename": item.get("filename", ""),
+            }
+        )
+
+    fallback_image = st.session_state.get("scene_result_image")
+    fallback_filename = st.session_state.get("scene_result_filename", "")
+
+    if not normalized and fallback_image is not None:
+        normalized.append({"label": "Scene 1", "image": fallback_image, "filename": fallback_filename})
+
+    return normalized
+
+
+# =============================================================================================================================
+# 7. Workflow Configuration Builders
+# =============================================================================================================================
 
 def build_face_ui_config():
     
@@ -349,7 +389,6 @@ def build_body_ui_config():
             ).strip(),
         }
     }
- 
 
 
 def build_scene_ui_config():
@@ -382,32 +421,6 @@ def build_scene_ui_config():
     }
 
 
-
-def get_scene_result_candidates():
-    
-    candidates = st.session_state.get("scene_candidates", [])
-    normalized = []
-
-    for i, item in enumerate(candidates, start=1):
-        if not isinstance(item, dict):
-            continue
-        normalized.append(
-            {
-                "label": item.get("label", f"Scene {i}"),
-                "image": item.get("image"),
-                "filename": item.get("filename", ""),
-            }
-        )
-
-    fallback_image = st.session_state.get("scene_result_image")
-    fallback_filename = st.session_state.get("scene_result_filename", "")
-
-    if not normalized and fallback_image is not None:
-        normalized.append({"label": "Scene 1", "image": fallback_image, "filename": fallback_filename})
-
-    return normalized
-
-
 def build_camera_refinement_ui_config():
 
     scene_candidates = get_scene_result_candidates()
@@ -431,6 +444,10 @@ def build_camera_refinement_ui_config():
         }
     }
 
+
+# =============================================================================================================================
+# 8. Image Preview UI
+# =============================================================================================================================
 
 def render_empty_preview_box(message, height=520):
     
@@ -485,6 +502,10 @@ def render_image_preview_box(image_url, caption="", height=400):
 
     st.markdown(html, unsafe_allow_html=True)
 
+
+# =============================================================================================================================
+# 9. Manual Reference Testing
+# =============================================================================================================================
 
 def clear_disabled_manual_reference_state():
 
@@ -642,9 +663,9 @@ def render_manual_reference_inputs():
         st.rerun()
 
 
-# =========================
-# Page Config
-# =========================
+# =============================================================================================================================
+# 4. Page Config
+# =============================================================================================================================
 st.set_page_config(
     page_title="AI Storyboard Pipeline",
     page_icon="🎬",
@@ -670,9 +691,9 @@ st.caption("A ComfyUI-based generation pipeline for character-consistent cinemat
 
 render_manual_reference_inputs()
 
-# =========================
-# Tabs
-# =========================
+# =============================================================================================================================
+# 5. Tabs
+# =============================================================================================================================
 tab1, tab2, tab3, tab4 = st.tabs(
     [
         "Step 1. Storyboard Data",
@@ -683,111 +704,37 @@ tab1, tab2, tab3, tab4 = st.tabs(
 )
 
 
-# # =================================
-# # Step 1. Storyboard Data Parsing
-# # =================================
-# with tab1:
-#     st.header("Step 1. Storyboard Data Parsing")
-
-#     # Streamlit 화면에 파일 업로드 버튼/영역을 만드는 함수
-#     # 사용자가 CSV 같은 파일을 선택하면, 그 파일을 코드에서 읽을 수 있는 uploaded_file 객체로 반환
-#     uploaded_csv = st.file_uploader(
-#         "Upload Storyboard CSV",
-#         type=["csv"],
-#     )
-
-#     if uploaded_csv is not None:
-#         csv_text = decode_uploaded_file(uploaded_csv)
-#         st.session_state["csv_text"] = csv_text
-#         st.success(f"업로드 완료: {uploaded_csv.name}")
-#     else:
-#         csv_text = st.session_state.get("csv_text", "")
-
-#     if csv_text:
-#         preview_col, filter_col = st.columns([1.55, 1.0], gap="large")
-
-#         with preview_col:
-#             with st.expander("Parsed Storyboard Data Preview", expanded=True):
-#                 try:
-#                     preview_df = pd.read_csv(io.StringIO(csv_text))
-#                     st.dataframe(preview_df, use_container_width=True, hide_index=True)
-#                 except Exception:
-#                     st.warning("CSV를 표 형태로 읽지 못했습니다. 원본 텍스트로 표시합니다.")
-#                     st.code(csv_text)
-
-#         with filter_col:
-#             st.subheader("Shot Selection Control")
-#             shot_ids = extract_shot_ids_from_csv(csv_text)
-
-#             st.radio(
-#                 "shot_filter",
-#                 options=["ALL", "CUSTOM"],
-#                 horizontal=True,
-#                 key="shot_filter_mode",
-#                 help="ALL은 전체 shot을 사용하고, CUSTOM은 선택한 shot만 사용합니다.",
-#             )
-
-#             if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
-#                 if shot_ids:
-#                     st.multiselect(
-#                         "Select Storyboard Shots",
-#                         options=shot_ids,
-#                         default=[],
-#                         key="custom_shots",
-#                         # help="CUSTOM일 때만 shot을 선택합니다.",
-#                     )
-#                 else:
-#                     st.warning("CSV에서 추출된 shot id가 없습니다.")
-
-#             # st.divider()
-    
-#     else:
-#         st.info("CSV 파일을 업로드하면 Parsed Storyboard Data Preview와 Shot Selection Control이 표시됩니다.")
-
-# =================================
-# Step 1. Storyboard Data Parsing
-# =================================
+# =============================================================================================================================
+# 6. Step 1. Storyboard Data Parsing
+# =============================================================================================================================
 with tab1:
     st.header("Step 1. Storyboard Data Parsing")
 
-    uploaded_csv = st.file_uploader(
-        "Upload Storyboard CSV",
-        type=["csv"],
-    )
+    uploaded_csv = st.file_uploader("Upload Storyboard CSV", type=["csv"])
 
     if uploaded_csv is not None:
         csv_text = decode_uploaded_file(uploaded_csv)
+
+        if csv_text != st.session_state.get("csv_text", ""):
+            st.session_state["custom_shots"] = []
+
         st.session_state["csv_text"] = csv_text
-        st.success(f"업로드 완료: {uploaded_csv.name}")
+        st.success(f"Upload complete: {uploaded_csv.name}")
+
     else:
         csv_text = st.session_state.get("csv_text", "")
 
     if csv_text:
+        with st.expander("Parsed Storyboard Data Preview", expanded=True):
 
-        # =========================
-        # Parsed Storyboard Preview
-        # =========================
-        with st.expander(
-            "Parsed Storyboard Data Preview",
-            expanded=True,
-        ):
-            try:
-                preview_df = pd.read_csv(io.StringIO(csv_text))
-                st.dataframe(
-                    preview_df,
-                    use_container_width=True,
-                    hide_index=True,
-                )
-            except Exception:
-                st.warning(
-                    "CSV를 표 형태로 읽지 못했습니다. "
-                    "원본 텍스트로 표시합니다."
-                )
+            preview_df = read_csv_as_dataframe(csv_text)
+
+            if not preview_df.empty:
+                st.dataframe(preview_df, use_container_width=True, hide_index=True)
+            else:
+                st.warning("Unable to read CSV data or the CSV contains no rows.")
                 st.code(csv_text)
 
-        # =========================
-        # Shot Selection Control
-        # =========================
         st.subheader("Shot Selection Control")
 
         shot_ids = extract_shot_ids_from_csv(csv_text)
@@ -797,37 +744,29 @@ with tab1:
             options=["ALL", "CUSTOM"],
             horizontal=True,
             key="shot_filter_mode",
-            help=(
-                "ALL은 전체 shot을 사용하고, "
-                "CUSTOM은 선택한 shot만 사용합니다."
-            ),
+            help="ALL selects all shots, while CUSTOM selects only specified shots",
         )
 
         if st.session_state.get("shot_filter_mode", "ALL") == "CUSTOM":
+
             if shot_ids:
-                st.multiselect(
-                    "Select Storyboard Shots",
-                    options=shot_ids,
-                    default=[],
-                    key="custom_shots",
-                )
+                st.multiselect("Select Storyboard Shots", options=shot_ids, key="custom_shots",)
             else:
-                st.warning("CSV에서 추출된 shot id가 없습니다.")
+                st.warning("CSV에서 추출된 Shot ID가 없습니다.")
 
     else:
-        st.info(
-            "CSV 파일을 업로드하면 "
-            "Parsed Storyboard Data Preview와 "
-            "Shot Selection Control이 표시됩니다."
-        )
+        st.info("Upload a CSV file to display the storyboard data preview and shot selection controls.")
 
-# ========================================
-# Step 2. Character Reference Generation
-# ========================================
+
+# =============================================================================================================================
+# 7. Step 2. Character Reference Generation
+# =============================================================================================================================
 with tab2:
-
     st.header("Step 2. Character Reference Generation")
-    st.caption("Generate character appearances first, then apply garment references to build the final character references for scene generation.")
+    st.caption(
+        "Generate character appearances first, then apply garment" 
+        "references to build the final character references for scene generation."
+    )
 
     # ------------------- 2A. Character Appearance Generation ------------------- 
     with st.container(border=True):
@@ -843,7 +782,7 @@ with tab2:
             with face_preview_col1:
                 st.markdown("##### Image 1 - Boy")
             
-                if st.session_state.get("face_result_image_c1") is not None:
+                if st.session_state.get("face_result_image_c1"):
                     render_image_preview_box(
                         st.session_state["face_result_image_c1"],
                         caption="Image 1 - Boy Appearance Reference",
@@ -858,7 +797,7 @@ with tab2:
             with face_preview_col2:
                 st.markdown("##### Image 2 - Girl")
             
-                if st.session_state.get("face_result_image_c2") is not None:
+                if st.session_state.get("face_result_image_c2"):
                     render_image_preview_box(
                         st.session_state["face_result_image_c2"],
                         caption="Image 2 - Girl Appearance Reference",
@@ -877,12 +816,12 @@ with tab2:
             st.radio(
                 "character_filter",
                 options=["Image 1 - Boy", "Image 2 - Girl"],
-                index=1,
+                index=0,
                 horizontal=True,
                 key="character_filter_label",
             )
 
-            with st.expander("Identity Attribute Controls", expanded=True):
+            with st.expander("Identity Attribute Controls", expanded=False):
                 with st.container(border=True):
                     st.markdown("###### Core Identity")
                     basic_col1, basic_col2 = st.columns(2)
@@ -890,12 +829,7 @@ with tab2:
                     with basic_col1:
                         st.slider("Age", min_value=1, max_value=100, value=9, step=1, key="age")
                     with basic_col2:
-                        st.selectbox(
-                            "Nationality",
-                            options=NATIONALITY_OPTIONS,
-                            index=0,
-                            key="nationality",
-                        )
+                        st.selectbox("Nationality", options=NATIONALITY_OPTIONS, index=0, key="nationality")
 
                 with st.container(border=True):
                     st.markdown("###### Face")
@@ -914,7 +848,7 @@ with tab2:
 
                     with eye_col1:
                         st.selectbox("Eyes Color", options=EYES_COLOR_OPTIONS, index=2, key="eyes_color")
-                        st.selectbox("Eyes Shape", options=EYES_SHAPE_OPTIONS, index=1, key="eyes_shape")
+                        st.selectbox("Eyes Shape", options=EYES_SHAPE_OPTIONS, index=EYES_SHAPE_OPTIONS.index("Double Eyelid Eyes Shape"), key="eyes_shape")
                     with eye_col2:
                         st.selectbox("Lips Color", options=LIPS_COLOR_OPTIONS, index=9, key="lips_color")
                         st.selectbox("Lips Shape", options=LIPS_SHAPE_OPTIONS, index=18, key="lips_shape")
