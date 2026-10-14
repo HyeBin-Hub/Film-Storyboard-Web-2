@@ -3,51 +3,22 @@ import csv
 import io
 import pandas as pd
 import streamlit as st
+from preset_results import (apply_preset_2a_results,apply_preset_2b_results,apply_preset_step3_results,apply_preset_step4_results)
+from backend import (run_face_generation, run_body_generation, run_scene_generation, run_camera_refinement)
 
-from backend import (
-    run_csv_parser_test,
-    run_face_generation,
-    run_body_generation,
-    run_scene_generation,
-    run_camera_refinement,
-)
+# =============================================================================================================================
+# 1. Feature Flags
+# =============================================================================================================================
+ENABLE_MANUAL_REFERENCE_INPUT = False
 
-# =========================
-# Fixed Values
-# =========================
-FIXED_BASE_BACKGROUND_CLOTHING_PROMPT = "gray background"
+ENABLE_PRESET_2A_RESULTS = False
+ENABLE_PRESET_2B_RESULTS = False
+ENABLE_PRESET_STEP3_RESULTS = False
+ENABLE_PRESET_STEP4_RESULTS = False
 
-# Temporary UI feature flags
-# True로 변경하면 각 수동 입력/가이드 UI를 다시 표시할 수 있습니다.
-ENABLE_MANUAL_FACE_REFERENCE_INPUT = False
-SHOW_REFERENCE_PROMPT_GUIDELINES = False
-ENABLE_MANUAL_FULL_BODY_REFERENCE_INPUT = False
-ENABLE_MANUAL_SCENE_REFERENCE_INPUT = False
-
-# Step 2A 결과를 UI 없이 미리 주입하는 테스트용 플래그
-# True  = 아래 PRESET URL을 Boy/Girl 2A 결과로 자동 등록
-# False = 기존 Step 2A 생성 결과만 사용
-ENABLE_PRESET_2A_RESULTS = True
-
-# Step 2B 결과를 UI 없이 미리 주입하는 테스트용 플래그
-# True  = 아래 PRESET URL을 Boy/Girl 2B 결과로 자동 등록
-# False = 기존 Step 2B 생성 결과만 사용
-ENABLE_PRESET_2B_RESULTS = True
-
-# Step 3 결과를 UI 없이 미리 주입하는 테스트용 플래그
-# True  = 아래 PRESET URL 3장을 Generated Storyboard Preview에 자동 등록
-# False = 기존 Step 3 생성 결과만 사용
-ENABLE_PRESET_STEP3_RESULTS = True
-# Step 4 결과를 UI 없이 미리 주입하는 테스트용 플래그
-# True  = 아래 PRESET URL 3장을 Generated Storyboard Preview에 자동 등록
-# False = 기존 Step 4 생성 결과만 사용
-ENABLE_PRESET_STEP4_RESULTS = True
-
-ENABLE_CAMERA_SAMPLING_CONTROL = False
-
-FIXED_CAMERA_REFINEMENT_STEPS = 8
-FIXED_CAMERA_REFINEMENT_CFG = 1.0
-
+# =============================================================================================================================
+# 2. UI Defaults
+# =============================================================================================================================
 SKIN_DEFAULTS = {
     "natural_skin": 0.74,
     "bare_face": 0.75,
@@ -139,27 +110,31 @@ HAIR_COLOR_OPTIONS = [
     "Dirty", "Gray", "Honey", "Jet Black", "Mahogany", "Multicolored", "Pastel", "Platinum",
     "Red", "Salt and pepper", "Silver", "Strawberry", "White",
 ]
+NATIONALITY_OPTIONS = [
+    "South Korean", "Korean", "East Asian",
+    "Japanese", "Chinese"
+]
+HAIR_LENGTH_OPTIONS = ["-", "Short", "Medium", "Long"]
 
+# =============================================================================================================================
+# 3. Helper Functions
+# =============================================================================================================================
 
-# =========================
-# Helper Functions
-# =========================
-
-# ----------------------------- 업로드 파일 텍스트 변환 함수 -----------------------------
-# 업로드된 파일의 바이너리 데이터를 여러 인코딩 방식으로 시도해 문자열 텍스트로 안전하게 디코딩하는 함수
 def decode_uploaded_file(uploaded_file):
+    
     raw = uploaded_file.getvalue()
-    for encoding in ["utf-8-sig", "utf-8", "cp949"]:
+    
+    for encoding in ["utf-8-sig", "cp949"]:
         try:
             return raw.decode(encoding)
-        except Exception:
-            pass
+        except UnicodeDecodeError:
+            continue
+            
     return raw.decode("utf-8", errors="ignore")
 
-# ----------------------------- 업로드 이미지 Data URI 변환 함수 -----------------------------
-# Streamlit file_uploader로 받은 이미지 파일을
-# RunComfy LoadImageFromUrl 노드에 전달할 수 있는 base64 data URI 문자열로 변환합니다.
+
 def uploaded_image_to_data_uri(uploaded_file):
+    
     if uploaded_file is None:
         return ""
 
@@ -167,68 +142,57 @@ def uploaded_image_to_data_uri(uploaded_file):
     mime_type = getattr(uploaded_file, "type", None) or "image/png"
 
     encoded = base64.b64encode(raw).decode("ascii")
+    
     return f"data:{mime_type};base64,{encoded}"
 
 
-# ----------------------------- CSV 샷 ID 추출 함수 -----------------------------
-# CSV 텍스트의 첫 번째 열에서 중복 없이 샷 ID 목록을 추출하는 함수입니다.
-def extract_shot_ids_from_csv(csv_text):
-    if not csv_text.strip():
-        return []
-
-    shot_ids = []
-    reader = csv.reader(io.StringIO(csv_text.strip()))
-
-    for row in reader:
-        if not row:
-            continue
-
-        first_value = row[0].strip()
-        if not first_value:
-            continue
-
-        if first_value.lower() in {"shot", "shot_id", "shot id", "id"}:
-            continue
-
-        if first_value not in shot_ids:
-            shot_ids.append(first_value)
-
-    return shot_ids
-
-# ----------------------------- CSV 데이터프레임 변환 함수 -----------------------------
-# CSV 텍스트를 pandas DataFrame으로 변환하고, 실패하거나 비어 있으면 빈 DataFrame을 반환하는 함수
 def read_csv_as_dataframe(csv_text):
+    
     if not csv_text.strip():
         return pd.DataFrame()
     try:
-        return pd.read_csv(io.StringIO(csv_text))
+        return pd.read_csv(io.StringIO(csv_text), dtype=str)
     except Exception:
         return pd.DataFrame()
 
-# ----------------------------- 샷 ID 컬럼 탐색 함수 -----------------------------
-# DataFrame에서 샷 ID로 보이는 컬럼을 찾고, 없으면 첫 번째 컬럼을 반환하는 함수
+
 def get_shot_id_column(df):
+    
     if df.empty:
         return None
 
     candidates = ["shot", "shot_id", "shot id", "id", "Shot", "Shot ID", "Shot_ID"]
+    
     for col in df.columns:
         if str(col).strip() in candidates:
             return col
+            
     return df.columns[0]
 
-# ----------------------------- 선택 샷 DataFrame 추출 함수 -----------------------------
-# Streamlit 세션의 CSV 데이터에서 현재 선택된 샷 필터에 해당하는 행만 추출해 DataFrame으로 반환하는 함수
-# CSV를 DataFrame으로 읽은 뒤, ALL이면 전체를 반환하고 CUSTOM이면 선택된 샷 ID만 필터링함
+
+def extract_shot_ids_from_csv(csv_text):
+    
+    df = read_csv_as_dataframe(csv_text)
+
+    shot_col = get_shot_id_column(df)
+
+    if shot_col is None:
+        return []
+
+    shot_ids = df[shot_col].dropna().astype(str).str.strip()
+
+    return shot_ids[shot_ids != ""].drop_duplicates().tolist()
+
+
 def get_selected_shot_dataframe():
+    
     csv_text = st.session_state.get("csv_text", "")
     df = read_csv_as_dataframe(csv_text)
+
     if df.empty:
         return pd.DataFrame()
 
     shot_col = get_shot_id_column(df)
-    if shot_col is None:
-        return df
 
     shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
     custom_shots = st.session_state.get("custom_shots", [])
@@ -239,11 +203,11 @@ def get_selected_shot_dataframe():
     if not custom_shots:
         return pd.DataFrame()
 
-    return df[df[shot_col].astype(str).isin([str(x) for x in custom_shots])]
+    return df[df[shot_col].isin([str(x) for x in custom_shots])]
 
-# ----------------------------- 스토리보드 입력 설정 구성 함수 -----------------------------
-# Streamlit 세션의 CSV와 샷 선택 정보를 모아 RunComfy 요청용 storyboard_input 설정 딕셔너리로 구성하는 함수
+
 def build_storyboard_input_config():
+    
     csv_text = st.session_state.get("csv_text", "")
     shot_filter_mode = st.session_state.get("shot_filter_mode", "ALL")
     custom_shots = st.session_state.get("custom_shots", [])
@@ -266,52 +230,31 @@ def build_storyboard_input_config():
         }
     }
 
-# ------------------------- 캐릭터 라벨 변환 함수 ----------------------------- 
-# 선택된 캐릭터 라벨을 RunComfy 워크플로우에서 사용하는 C1, C2 값으로 변환하는 함수
-# 라벨이 Image 1 - Boy이면 C1, Image 2 - Girl이면 C2를 반환하고 기본값은 함수별로 다르게 설정
-def character_label_to_value(label):
-    return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, "C2")
 
-# ------------------------- 전신 프롬프트 초기화 함수 -------------------------
-# 전신 생성에서 선택된 캐릭터 라벨을 워크플로우용 C1, C2 값으로 변환하는 함수
-# 라벨이 Image 1 - Boy이면 C1, Image 2 - Girl이면 C2를 반환하고, 알 수 없는 라벨이면 기본값으로 C1을 반환
-def body_character_label_to_value(label):
-    return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, "C1")
+def character_label_to_value(label, default="C2"):
+    return {"Image 1 - Boy": "C1", "Image 2 - Girl": "C2"}.get(label, default)
 
-# ------------------------- 의상 레퍼런스 입력 초기화 함수 -------------------------
-# 2B Outfit Change에서 캐릭터별 입력 모드와 Garment / Outfit reference data URI를 세션에 유지합니다.
+
+
 def initialize_outfit_reference_inputs():
+    
     for character_code in ("c1", "c2"):
-        st.session_state.setdefault(
-            f"outfit_input_mode_{character_code}",
-            "Separate Garments",
-        )
-        st.session_state.setdefault(f"outfit_top_reference_{character_code}", "")
-        st.session_state.setdefault(f"outfit_bottom_reference_{character_code}", "")
-        st.session_state.setdefault(f"outfit_shoes_reference_{character_code}", "")
-        st.session_state.setdefault(f"outfit_single_reference_{character_code}", "")
+        st.session_state.setdefault(f"outfit_input_mode_{character_code}","Separate Garments")
 
-# ------------------------- 장면 샷 필터 설정 조회 함수 -------------------------
-# 장면 생성에 사용할 현재 샷 필터 값과 커스텀 샷 ID 값을 가져오는 함수
-# build_storyboard_input_config()에서 storyboard_input을 만들고, 그 안의 shot_filter와 custom_shot_ids를 반환
-def get_scene_shot_filter_config():
-    storyboard_input = build_storyboard_input_config()["storyboard_input"]
-    return storyboard_input["shot_filter"], storyboard_input["custom_shot_ids"]
+        for garment in ("top", "bottom", "shoes", "single"):
+            st.session_state.setdefault(f"outfit_{garment}_reference_{character_code}","")
 
-# ------------------------- 선택 후보 조회 함수 -------------------------
-# 후보 목록에서 선택된 라벨과 일치하는 항목을 찾아 반환하는 함수
-# candidates를 순회하며 label이 selected_label과 같은 항목을 반환하고, 없으면 None을 반환
+
 def get_selected_candidate(candidates, selected_label):
+    
     for item in candidates:
         if item["label"] == selected_label:
             return item
     return None
 
 
-# ------------------------- 장면 레퍼런스 선택 동기화 함수 -------------------------
-# 장면 생성용 레퍼런스 선택값이 후보 목록과 일치하도록 세션 상태를 보정하는 함수
-# 후보 라벨이 없으면 선택값을 비우고, 현재 선택값이 후보에 없으면 첫 번째 후보 라벨로 자동 설정
 def sync_scene_reference_selection(session_key, candidates):
+    
     labels = [item["label"] for item in candidates]
 
     if not labels:
@@ -321,21 +264,22 @@ def sync_scene_reference_selection(session_key, candidates):
     if st.session_state.get(session_key) not in labels:
         st.session_state[session_key] = labels[0]
 
-# ------------------------- 얼굴 생성 UI 설정 구성 함수 -------------------------
-# Streamlit에서 선택한 스토리보드·캐릭터·외형 설정을 얼굴 생성 워크플로우용 설정 딕셔너리로 구성하는 함수
-# 세션 상태에서 CSV, 샷 필터, 캐릭터 정보, 얼굴 외형 옵션, 피부 디테일 값을 가져와 RunComfy 요청에 맞는 노드별 입력값으로 정리
+
 def build_face_ui_config():
+    
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
+    
+    skin_details = {}
+
+    for key, default_value in SKIN_DEFAULTS.items():
+        if st.session_state.get(f"skin_{key}", False):
+            skin_details[key] = default_value
+        else:
+            skin_details[key] = 0.0
 
     return {
         "storyboard_input": storyboard_input,
-        "csvstoryboardparser": {
-            "input_mode": "text",
-            "csv_file": "CUSTOM",
-            "csv_text": storyboard_input["csv_text"],
-            "shot_filter": storyboard_input["shot_filter"],
-            "custom_shot_ids": storyboard_input["custom_shot_ids"],
-        },
+        
         "character_registry_parser": {
             "character_filter": character_label_to_value(
                 st.session_state.get("character_filter_label", "Image 2 - Girl")
@@ -344,73 +288,38 @@ def build_face_ui_config():
             "age": st.session_state.get("age", 9),
             "include_character_id": "false",
         },
-        "base_background_clothing_prompt": {
-            "text": FIXED_BASE_BACKGROUND_CLOTHING_PROMPT,
-        },
+
         "portrait_master_base_character": {
-            "shot": "Head and shoulders portrait",
-            "shot_weight": 2,
-            "gender": "-",
-            "age": "-",
+            "shot": "Full body",
             "nationality_1": st.session_state.get("nationality", "South Korean"),
-            "nationality_2": "-",
-            "nationality_mix": 0,
             "body_type": st.session_state.get("body_type", "Slim"),
-            "body_type_weight": 0,
-            "breast_size": "-",
-            "breast_size_weight": 0,
-            "butt_size": "-",
-            "butt_size_weight": 0,
             "eyes_color": st.session_state.get("eyes_color", "Brown"),
             "eyes_shape": st.session_state.get("eyes_shape", "Double Eyelid Eyes Shape"),
             "lips_color": st.session_state.get("lips_color", "Peach Lips"),
             "lips_shape": st.session_state.get("lips_shape", "Thin Lips"),
             "facial_expression": st.session_state.get("facial_expression", "Curious"),
-            "facial_expression_weight": 0,
             "face_shape": st.session_state.get("face_shape", "Square with Soft Jaw"),
-            "face_shape_weight": 0,
             "hair_style": st.session_state.get("hair_style", "Bob"),
             "hair_color": st.session_state.get("hair_color", "Chestnut"),
             "hair_length": st.session_state.get("hair_length", "-"),
-            "androgynous": 0,
-            "ugly": 0,
-            "ordinary_face": 0.25,
-            "facial_asymmetry": 0,
-            "disheveled": 0,
-            "beard": "-",
-            "beard_color": "-",
         },
-        "portrait_master_skin_details": {
-            key: default_value if st.session_state.get(f"skin_{key}", False) else 0.0
-            for key, default_value in SKIN_DEFAULTS.items()
-        },
+        
+        "portrait_master_skin_details": skin_details,
     }
 
-# ------------------------- 의상 변경 UI 설정 구성 함수 -------------------------
-# 선택한 2A 캐릭터 결과와 업로드된 Top / Bottom / Shoes 레퍼런스를 2B Outfit Change 설정으로 구성합니다.
-# 함수명 build_body_ui_config는 기존 app-backend 연결을 최소 변경하기 위해 유지합니다.
-def build_body_ui_config():
-    character_filter_label = st.session_state.get(
-        "body_character_filter_label",
-        "Image 1 - Boy",
-    )
 
-    character_filter = body_character_label_to_value(character_filter_label)
+def build_body_ui_config():
+    
+    character_filter_label = st.session_state.get("body_character_filter_label", "Image 1 - Boy")
+
+    character_filter = character_label_to_value(character_filter_label, default="C1")
     character_code = "c1" if character_filter == "C1" else "c2"
 
-    if character_filter == "C1":
-        label = "Image 1 - Boy"
-        character_image_url = st.session_state.get("face_result_image_c1", "")
-        character_filename = st.session_state.get("face_result_filename_c1", "")
-    else:
-        label = "Image 2 - Girl"
-        character_image_url = st.session_state.get("face_result_image_c2", "")
-        character_filename = st.session_state.get("face_result_filename_c2", "")
+    label = "Image 1 - Boy" if character_code == "c1" else "Image 2 - Girl"
+    character_image_url = st.session_state.get(f"face_result_image_{character_code}", "")
+    character_filename = st.session_state.get(f"face_result_filename_{character_code}", "")
 
-    input_mode = st.session_state.get(
-        f"outfit_input_mode_{character_code}",
-        "Separate Garments",
-    )
+    input_mode = st.session_state.get(f"outfit_input_mode_{character_code}", "Separate Garments")
 
     return {
         "outfit_change": {
@@ -441,10 +350,10 @@ def build_body_ui_config():
         }
     }
  
-# ------------------------- 장면 생성 UI 설정 구성 함수 -------------------------
-# 스토리보드 선택 정보와 남자/여자 전신 레퍼런스를 장면 생성용 설정 딕셔너리로 구성하는 함수
-# 스토리보드 입력값을 만든 뒤, 선택된 c1 남자 전신 후보와 c2 여자 전신 후보의 라벨·이미지·파일명을 reference_images에 넣어 반환
+
+
 def build_scene_ui_config():
+    
     storyboard_input = build_storyboard_input_config()["storyboard_input"]
 
     boy_body_image = st.session_state.get("body_result_image_c1", "")
@@ -455,11 +364,8 @@ def build_scene_ui_config():
 
     return {
         "storyboard_input": storyboard_input,
+        
         "scene_generation": {
-            "shot_filter": storyboard_input["shot_filter"],
-            "custom_shot_ids": storyboard_input["custom_shot_ids"],
-            "selected_shot_count": storyboard_input["selected_shot_count"],
-            "selected_shot_data": storyboard_input["selected_shot_data"],
             "reference_images": {
                 "image_1_boy_body": {
                     "label": "Image 1 - Boy Character Reference",
@@ -467,7 +373,7 @@ def build_scene_ui_config():
                     "filename": boy_body_filename,
                 },
                 "image_2_girl_body": {
-                    "label": "Image 2 - Gril Character Reference",
+                    "label": "Image 2 - Girl Character Reference",
                     "image": girl_body_image,
                     "filename": girl_body_filename,
                 },
@@ -475,10 +381,10 @@ def build_scene_ui_config():
         },
     }
 
-# ------------------------- 장면 결과 후보 조회 함수 -------------------------
-# 장면 생성 결과 이미지 후보 목록을 Streamlit 세션에서 가져와 화면 표시용으로 정리하는 함수
-# scene_candidates를 label, image, filename 형태로 정리하고, 후보가 없으면 기존 단일 장면 결과 이미지를 fallback으로 추가
+
+
 def get_scene_result_candidates():
+    
     candidates = st.session_state.get("scene_candidates", [])
     normalized = []
 
@@ -501,23 +407,19 @@ def get_scene_result_candidates():
 
     return normalized
 
-# ------------------------- 카메라 보정 UI 설정 구성 함수 -------------------------
-# Step 3에서 선택한 장면과 Qwen Multi-Angle Camera 제어값을
-# 새 Camera Refinement workflow용 설정 딕셔너리로 구성합니다.
+
 def build_camera_refinement_ui_config():
+
     scene_candidates = get_scene_result_candidates()
 
-    selected_scene = get_selected_candidate(
-        scene_candidates,
-        st.session_state.get("camera_input_scene_label", ""),
-    )
+    selected_scene = get_selected_candidate(scene_candidates, st.session_state.get("camera_input_scene_label", "")) or {}
 
     return {
         "camera_angle_refinement": {
             "input_scene": {
-                "label": selected_scene["label"] if selected_scene else "",
-                "image": selected_scene.get("image", "") if selected_scene else "",
-                "filename": selected_scene.get("filename", "") if selected_scene else "",
+                "label": selected_scene.get("label", ""),
+                "image": selected_scene.get("image", ""),
+                "filename": selected_scene.get("filename", ""),
             },
             "camera_control": {
                 "horizontal_angle": st.session_state.get("camera_horizontal_angle", 0),
@@ -526,13 +428,12 @@ def build_camera_refinement_ui_config():
                 "default_prompts": st.session_state.get("camera_default_prompts", True),
                 "camera_view": st.session_state.get("camera_view", False),
             },
-        },
+        }
     }
 
-# ------------------------- 빈 미리보기 박스 렌더링 함수 -------------------------
-# 이미지가 없을 때 안내 메시지를 담은 빈 미리보기 박스를 Streamlit 화면에 표시하는 함수
-# 전달받은 message와 height 값을 HTML 스타일에 넣고 st.markdown()으로 렌더링
+
 def render_empty_preview_box(message, height=520):
+    
     st.markdown(
         f"""
         <div style="
@@ -553,7 +454,9 @@ def render_empty_preview_box(message, height=520):
         unsafe_allow_html=True,
     )
 
+
 def render_image_preview_box(image_url, caption="", height=400):
+    
     max_img_height = height - 55
 
     html = (
@@ -583,205 +486,160 @@ def render_image_preview_box(image_url, caption="", height=400):
     st.markdown(html, unsafe_allow_html=True)
 
 
-# ------------------------- Step 2A Preset 결과 자동 주입 함수 -------------------------
-# ENABLE_PRESET_2A_RESULTS가 True일 때만 실행됩니다.
-# UI에는 아무 입력창도 표시하지 않고, 기존 Step 2A session_state 키에
-# Boy / Girl 결과 URL을 미리 주입합니다.
-# 이미 실제 Step 2A 생성 결과가 존재하면 덮어쓰지 않습니다.
-def apply_preset_2a_results():
-    if not ENABLE_PRESET_2A_RESULTS:
-        return
-
-    preset_boy_url = (
-        "https://serverless-api-storage.runcomfy.net/"
-        "deployment_requests/e3b5d793-e111-49fe-850f-4b0e08424dd2/"
-        "output/character_appearance_boy_3063348797_00001_.png"
-    )
-
-    preset_girl_url = (
-        "https://serverless-api-storage.runcomfy.net/"
-        "deployment_requests/94b10bea-a4e8-4f66-9d18-603ff35e325e/"
-        "output/character_appearance_girl_667573668_00001_.png"
-    )
-
-    if not st.session_state.get("face_result_image_c1"):
-        st.session_state["face_result_image_c1"] = preset_boy_url
-        st.session_state["face_result_filename_c1"] = (
-            "character_appearance_boy_3063348797_00001_.png"
-        )
-
-    if not st.session_state.get("face_result_image_c2"):
-        st.session_state["face_result_image_c2"] = preset_girl_url
-        st.session_state["face_result_filename_c2"] = (
-            "character_appearance_girl_667573668_00001_.png"
-        )
-        
-def apply_preset_2b_results():
-    if not ENABLE_PRESET_2B_RESULTS:
-        return
-
-    preset_boy_outfit_url = (
-        "https://cdn.phototourl.com/free/2026-08-10-cc0d90a8-b115-4c15-bd6f-57d30a16bbd9.png"
-    )
-
-    preset_girl_outfit_url = (
-        "https://cdn.phototourl.com/free/2026-08-10-fa2ccad6-deec-4063-9bd5-b4c9f742c285.png"
-    )
-
-    # 이미 실제 2B 결과가 있으면 덮어쓰지 않음
-    if not st.session_state.get("body_result_image_c1"):
-        st.session_state["body_result_image_c1"] = preset_boy_outfit_url
-        st.session_state["body_result_filename_c1"] = "ComfyUI_01135_.png"
-
-    if not st.session_state.get("body_result_image_c2"):
-        st.session_state["body_result_image_c2"] = preset_girl_outfit_url
-        st.session_state["body_result_filename_c2"] = "换装_00026_.png"
-
-
-# ------------------------- Step 3 Preset 결과 자동 주입 함수 -------------------------
-# ENABLE_PRESET_STEP3_RESULTS가 True일 때만 실행됩니다.
-# UI에는 별도 입력창을 표시하지 않고, 기존 scene_candidates 구조에
-# 3개의 storyboard scene 결과를 미리 등록합니다.
-# 실제 Step 3 생성 결과가 이미 존재하면 덮어쓰지 않습니다.
-def apply_preset_step3_results():
-    if not ENABLE_PRESET_STEP3_RESULTS:
-        return
-
-    if st.session_state.get("scene_candidates"):
-        return
-
-    preset_scene_urls = [
-        (
-            "Scene 1",
-            "https://serverless-api-storage.runcomfy.net/"
-            "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
-            "output/scene_3123289005_00001_.png",
-            "scene_3123289005_00001_.png",
-        ),
-        (
-            # "Scene 2",
-            # "https://serverless-api-storage.runcomfy.net/"
-            # "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
-            # "output/scene_3123289005_00002_.png",
-            # "scene_3123289005_00002_.png",
-            "Scene 2",
-            "https://cdn.phototourl.com/free/2026-08-10-98c475bc-901c-4750-9b3d-fffeafd98a13.png",
-            "scene2_custom.png",
-        ),
-        (
-            "Scene 3",
-            "https://serverless-api-storage.runcomfy.net/"
-            "deployment_requests/c48de276-8299-4f96-ba30-5f3deed58153/"
-            "output/scene_3123289005_00003_.png",
-            "scene_3123289005_00003_.png",
-        ),
-    ]
-
-    preset_candidates = [
-        {
-            "label": label,
-            "image": image_url,
-            "url": image_url,
-            "filename": filename,
-        }
-        for label, image_url, filename in preset_scene_urls
-    ]
-
-    st.session_state["scene_candidates"] = preset_candidates
-
-    first_scene = preset_candidates[0]
-    st.session_state["scene_result_image"] = first_scene["image"]
-    st.session_state["scene_result_filename"] = first_scene["filename"]
-    st.session_state["scene_selected_label"] = first_scene["label"]
-
-
-def apply_preset_step4_results():
-    if not ENABLE_PRESET_STEP4_RESULTS:
-        return
-
-    if st.session_state.get("camera_refined_result_image"):
-        return
-
-    preset_step4_result_url = (
-        "https://i.postimg.cc/XqnCWSTw/image-(7).png"
-    )
-
-    st.session_state["camera_refined_candidates"] = [
-        {
-            "label": "Camera Refined Scene 1",
-            "image": preset_step4_result_url,
-            "url": preset_step4_result_url,
-            "filename": "step4_preset_image.png",
-        }
-    ]
-
-    st.session_state["camera_refined_result_image"] = (
-        preset_step4_result_url
-    )
-    st.session_state["camera_refined_result_filename"] = (
-        "step4_preset_image.png"
-    )
-    st.session_state["camera_refined_selected_label"] = (
-        "Camera Refined Scene 1"
-    )
-
-
-# ------------------------- 비활성화된 수동 입력 상태 정리 함수 -------------------------
-# 기능 플래그가 False인 수동 입력의 텍스트·이미지·선택 상태를 세션에서 제거하는 함수
-# 이전 실행에서 수동 URL을 넣었더라도 현재 파이프라인이 생성 결과만 사용하도록 초기화함
 def clear_disabled_manual_reference_state():
-    if not ENABLE_MANUAL_FACE_REFERENCE_INPUT:
-        st.session_state.pop("manual_face_reference_url", None)
 
+    if ENABLE_MANUAL_REFERENCE_INPUT:
+        return
+
+    manual_input_keys = (
+        "manual_face_reference_url",
+        "manual_boy_face_reference_url",
+        "manual_girl_face_reference_url",
+        "manual_boy_body_reference_url",
+        "manual_girl_body_reference_url",
+        "manual_camera_scene_reference_url",
+    )
+
+    for key in manual_input_keys:
+        st.session_state.pop(key, None)
+
+    for result_prefix in ("face", "body"):
         for character_code in ("c1", "c2"):
-            filename_key = f"face_result_filename_{character_code}"
-            image_key = f"face_result_image_{character_code}"
 
-            if str(st.session_state.get(filename_key, "")).startswith("manual_"):
+            filename_key = f"{result_prefix}_result_filename_{character_code}"
+            image_key = f"{result_prefix}_result_image_{character_code}"
+
+            filename = str(st.session_state.get(filename_key, ""))
+
+            if filename.startswith("manual_"):
                 st.session_state.pop(filename_key, None)
                 st.session_state.pop(image_key, None)
 
-    if not ENABLE_MANUAL_FULL_BODY_REFERENCE_INPUT:
-        st.session_state.pop("manual_boy_body_reference_url", None)
-        st.session_state.pop("manual_girl_body_reference_url", None)
+    scene_candidates = st.session_state.get("scene_candidates", [])
 
-        for character_code in ("c1", "c2"):
-            filename_key = f"body_result_filename_{character_code}"
-            image_key = f"body_result_image_{character_code}"
-
-            if str(st.session_state.get(filename_key, "")).startswith("manual_"):
-                st.session_state.pop(filename_key, None)
-                st.session_state.pop(image_key, None)
-
-    if not ENABLE_MANUAL_SCENE_REFERENCE_INPUT:
-        st.session_state.pop("manual_camera_scene_reference_url", None)
-
-        scene_candidates = st.session_state.get("scene_candidates", [])
-        if isinstance(scene_candidates, list):
-            filtered_candidates = [
-                item
-                for item in scene_candidates
-                if not (
-                    isinstance(item, dict)
-                    and (
-                        item.get("label") == "Manual Camera Input Scene"
-                        or str(item.get("filename", "")).startswith("manual_camera_input_scene")
+    if isinstance(scene_candidates, list):
+        remaining_candidates = [
+            item
+            for item in scene_candidates
+            if not (
+                isinstance(item, dict)
+                and (
+                    item.get("label") == "Manual Camera Input Scene"
+                    or str(item.get("filename", "")).startswith(
+                        "manual_camera_input_scene"
                     )
                 )
-            ]
+            )
+        ]
 
-            if filtered_candidates:
-                st.session_state["scene_candidates"] = filtered_candidates
-            else:
-                st.session_state.pop("scene_candidates", None)
+        if remaining_candidates:
+            st.session_state["scene_candidates"] = remaining_candidates
+        else:
+            st.session_state.pop("scene_candidates", None)
 
-        if str(st.session_state.get("scene_result_filename", "")).startswith("manual_camera_input_scene"):
-            st.session_state.pop("scene_result_image", None)
-            st.session_state.pop("scene_result_filename", None)
-            st.session_state.pop("scene_selected_label", None)
+    scene_filename = str(
+        st.session_state.get("scene_result_filename", "")
+    )
 
-        if st.session_state.get("camera_input_scene_label") == "Manual Camera Input Scene":
-            st.session_state.pop("camera_input_scene_label", None)
+    if scene_filename.startswith("manual_camera_input_scene"):
+        for key in (
+            "scene_result_image",
+            "scene_result_filename",
+            "scene_selected_label",
+        ):
+            st.session_state.pop(key, None)
+
+    if st.session_state.get("camera_input_scene_label") == "Manual Camera Input Scene":
+        st.session_state.pop("camera_input_scene_label", None)
+
+
+def render_manual_reference_inputs():
+
+    if not ENABLE_MANUAL_REFERENCE_INPUT:
+        return
+
+    with st.expander("Manual Reference Inputs (Testing)", expanded=False):
+        st.caption("Enter image URLs to bypass generation in the corresponding step.")
+
+        with st.form("manual_reference_inputs_form"):
+            st.markdown("**Step 2A — Character Appearance**")
+            face_boy_col, face_girl_col = st.columns(2)
+            with face_boy_col:
+                boy_face_url = st.text_input(
+                    "Boy Appearance URL", key="manual_boy_face_reference_url"
+                )
+            with face_girl_col:
+                girl_face_url = st.text_input(
+                    "Girl Appearance URL", key="manual_girl_face_reference_url"
+                )
+
+            st.markdown("**Step 3 — Full-Body References (Step 2B results)**")
+            body_boy_col, body_girl_col = st.columns(2)
+            with body_boy_col:
+                boy_body_url = st.text_input(
+                    "Boy Full-Body URL", key="manual_boy_body_reference_url"
+                )
+            with body_girl_col:
+                girl_body_url = st.text_input(
+                    "Girl Full-Body URL", key="manual_girl_body_reference_url"
+                )
+
+            st.markdown("**Step 4 — Camera Input Scene**")
+            scene_url = st.text_input(
+                "Scene URL", key="manual_camera_scene_reference_url"
+            )
+            submitted = st.form_submit_button(
+                "Apply Manual Reference URLs", use_container_width=True
+            )
+
+        if not submitted:
+            return
+
+        urls = {
+            "Boy Appearance": boy_face_url.strip(),
+            "Girl Appearance": girl_face_url.strip(),
+            "Boy Full-Body": boy_body_url.strip(),
+            "Girl Full-Body": girl_body_url.strip(),
+            "Scene": scene_url.strip(),
+        }
+        if not any(urls.values()):
+            st.error("Enter at least one reference URL.")
+            return
+
+        invalid_labels = [
+            label for label, url in urls.items()
+            if url and not url.lower().startswith(("https://", "http://"))
+        ]
+        if invalid_labels:
+            st.error("URLs must start with http:// or https://: " + ", ".join(invalid_labels))
+            return
+
+        for label, code in (("Boy", "c1"), ("Girl", "c2")):
+            face_url = urls[f"{label} Appearance"]
+            if face_url:
+                st.session_state[f"face_result_image_{code}"] = face_url
+                st.session_state[f"face_result_filename_{code}"] = f"manual_{label.lower()}_face_reference.png"
+
+            body_url = urls[f"{label} Full-Body"]
+            if body_url:
+                st.session_state[f"body_result_image_{code}"] = body_url
+                st.session_state[f"body_result_filename_{code}"] = f"manual_{label.lower()}_body_reference.png"
+
+        if urls["Scene"]:
+            scene_item = {
+                "label": "Manual Camera Input Scene",
+                "image": urls["Scene"],
+                "url": urls["Scene"],
+                "filename": "manual_camera_input_scene.png",
+            }
+            st.session_state["scene_candidates"] = [scene_item]
+            st.session_state["scene_result_image"] = urls["Scene"]
+            st.session_state["scene_result_filename"] = scene_item["filename"]
+            st.session_state["scene_selected_label"] = scene_item["label"]
+            st.session_state["camera_input_scene_label"] = scene_item["label"]
+
+        st.success("Manual reference URLs applied.")
+        st.rerun()
 
 
 # =========================
@@ -794,10 +652,18 @@ st.set_page_config(
 )
 
 clear_disabled_manual_reference_state()
-apply_preset_2a_results()
-apply_preset_2b_results()
-apply_preset_step3_results()
-apply_preset_step4_results()
+
+if ENABLE_PRESET_2A_RESULTS:
+    apply_preset_2a_results()
+
+if ENABLE_PRESET_2B_RESULTS:
+    apply_preset_2b_results()
+
+if ENABLE_PRESET_STEP3_RESULTS:
+    apply_preset_step3_results()
+
+if ENABLE_PRESET_STEP4_RESULTS:
+    apply_preset_step4_results()
 
 st.title("🎬 AI Storyboard Generation Pipeline")
 st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
@@ -1085,7 +951,7 @@ with tab2:
                     with basic_col2:
                         st.selectbox(
                             "Nationality",
-                            options=["South Korean", "Korean", "East Asian", "Japanese", "Chinese"],
+                            options=NATIONALITY_OPTIONS,
                             index=0,
                             key="nationality",
                         )
@@ -1121,7 +987,7 @@ with tab2:
                     with hair_col2:
                         st.selectbox("Hair Color", options=HAIR_COLOR_OPTIONS, index=5, key="hair_color")
                     with hair_col3:
-                        st.selectbox("Hair Length", options=["-", "Short", "Medium", "Long"], index=0, key="hair_length")
+                        st.selectbox("Hair Length", options=HAIR_LENGTH_OPTIONS, index=0, key="hair_length")
 
             with st.expander("Fine-Grained Appearance Attributes", expanded=False):
                 skin_keys = list(SKIN_DEFAULTS.keys())
@@ -1833,9 +1699,6 @@ with tab4:
         "Refine the camera viewpoint of a generated Step 3 scene "
         "using Qwen Multi-Angle Camera control."
     )
-
-    scene_candidates = get_scene_result_candidates()
-    sync_scene_reference_selection("camera_input_scene_label", scene_candidates)
 
     preview_col, settings_col = st.columns([1.6, 1.1], gap="large")
 
