@@ -668,6 +668,7 @@ if ENABLE_PRESET_STEP4_RESULTS:
 st.title("🎬 AI Storyboard Generation Pipeline")
 st.caption("A ComfyUI-based generation pipeline for character-consistent cinematic storyboard creation and camera-angle refinement")
 
+render_manual_reference_inputs()
 
 # =========================
 # Tabs
@@ -880,66 +881,6 @@ with tab2:
                 horizontal=True,
                 key="character_filter_label",
             )
-
-            if ENABLE_MANUAL_FACE_REFERENCE_INPUT:
-                st.caption("Manual Face Reference")
-            
-                manual_url_col, manual_apply_col = st.columns(
-                    [4.5, 1.0],
-                    gap="small",
-                )
-            
-                with manual_url_col:
-                    manual_face_url = st.text_input(
-                        "Manual Face Reference URL",
-                        value="",
-                        key="manual_face_reference_url",
-                        placeholder="Paste an existing face reference URL",
-                        label_visibility="collapsed",
-                        help=(
-                            "현재 Target Character Control에서 선택한 캐릭터의 "
-                            "face reference로 적용합니다."
-                        ),
-                    )
-            
-                with manual_apply_col:
-                    apply_manual_face_clicked = st.button(
-                        "Apply",
-                        type="secondary",
-                        use_container_width=True,
-                        key="apply_manual_face_reference",
-                    )
-            
-                if apply_manual_face_clicked:
-                    selected_face_target = st.session_state.get(
-                        "character_filter_label",
-                        "Image 2 - Girl",
-                    )
-                    manual_face_url = manual_face_url.strip()
-            
-                    if not manual_face_url:
-                        st.error("Face reference URL을 입력하세요.")
-            
-                    elif not manual_face_url.lower().startswith(("http://", "https://")):
-                        st.error(
-                            "http:// 또는 https://로 시작하는 이미지 URL을 입력하세요."
-                        )
-            
-                    elif selected_face_target == "Image 1 - Boy":
-                        st.session_state["face_result_image_c1"] = manual_face_url
-                        st.session_state["face_result_filename_c1"] = (
-                            "manual_boy_face_reference.png"
-                        )
-                        st.success("Image 1 - Boy face reference가 적용되었습니다.")
-                        st.rerun()
-            
-                    else:
-                        st.session_state["face_result_image_c2"] = manual_face_url
-                        st.session_state["face_result_filename_c2"] = (
-                            "manual_girl_face_reference.png"
-                        )
-                        st.success("Image 2 - Girl face reference가 적용되었습니다.")
-                        st.rerun()
 
             with st.expander("Identity Attribute Controls", expanded=True):
                 with st.container(border=True):
@@ -1529,54 +1470,6 @@ with tab3:
                     hide_index=True,
                 )
 
-                if ENABLE_MANUAL_FULL_BODY_REFERENCE_INPUT:
-                    st.divider()
-
-                    st.subheader("Manual Full-Body Reference Input")
-
-                    manual_body_col1, manual_body_col2 = st.columns(2, gap="medium")
-
-                    with manual_body_col1:
-                        manual_boy_body_url = st.text_input(
-                            "Manual Image 1 - Boy Full-Body Reference URL",
-                            value="",
-                            key="manual_boy_body_reference_url",
-                            placeholder="Paste Image 1 - Boy full-body image URL here",
-                            help="Step 2B를 다시 실행하지 않고, 기존 boy full-body reference URL을 Step 3 입력으로 사용합니다.",
-                        )
-
-                    with manual_body_col2:
-                        manual_girl_body_url = st.text_input(
-                            "Manual Image 2 - Girl Full-Body Reference URL",
-                            value="",
-                            key="manual_girl_body_reference_url",
-                            placeholder="Paste Image 2 - Girl full-body image URL here",
-                            help="Step 2B를 다시 실행하지 않고, 기존 girl full-body reference URL을 Step 3 입력으로 사용합니다.",
-                        )
-
-                    if st.button(
-                        "Use these URLs as Full-Body References",
-                        type="secondary",
-                        use_container_width=True,
-                    ):
-                        updated = False
-
-                        if manual_boy_body_url.strip():
-                            st.session_state["body_result_image_c1"] = manual_boy_body_url.strip()
-                            st.session_state["body_result_filename_c1"] = "manual_boy_body_reference.png"
-                            updated = True
-
-                        if manual_girl_body_url.strip():
-                            st.session_state["body_result_image_c2"] = manual_girl_body_url.strip()
-                            st.session_state["body_result_filename_c2"] = "manual_girl_body_reference.png"
-                            updated = True
-
-                        if updated:
-                            st.success("Manual full-body reference URL이 Step 3 입력으로 설정되었습니다.")
-                            st.rerun()
-                        else:
-                            st.error("최소 1개 이상의 full-body reference URL을 입력하세요.")
-
         st.divider()
     
         st.subheader("Character Reference Inputs")
@@ -1738,52 +1631,6 @@ with tab4:
         # -------------------------------------------------
         with st.container(border=True):
             st.markdown("###### Source Scene")
-
-            if ENABLE_MANUAL_SCENE_REFERENCE_INPUT:
-                manual_scene_url = st.text_input(
-                    "Manual Scene Reference URL",
-                    value="",
-                    key="manual_camera_scene_reference_url",
-                    placeholder="Paste a RunComfy scene output image URL here",
-                    help=(
-                        "Step 3를 다시 실행하지 않고 기존 scene image URL을 "
-                        "Camera Refinement 입력으로 사용합니다."
-                    ),
-                )
-
-                if st.button(
-                    "Use this URL as Camera Input Scene",
-                    type="secondary",
-                    use_container_width=True,
-                ):
-                    if not manual_scene_url.strip():
-                        st.error("Scene reference URL을 입력하세요.")
-                    else:
-                        manual_scene_item = {
-                            "label": "Manual Camera Input Scene",
-                            "image": manual_scene_url.strip(),
-                            "url": manual_scene_url.strip(),
-                            "filename": "manual_camera_input_scene.png",
-                        }
-
-                        st.session_state["scene_candidates"] = [manual_scene_item]
-                        st.session_state["scene_result_image"] = manual_scene_url.strip()
-                        st.session_state["scene_result_filename"] = (
-                            "manual_camera_input_scene.png"
-                        )
-                        st.session_state["scene_selected_label"] = (
-                            "Manual Camera Input Scene"
-                        )
-                        st.session_state["camera_input_scene_label"] = (
-                            "Manual Camera Input Scene"
-                        )
-
-                        st.success(
-                            "Manual scene reference URL이 Camera Refinement 입력으로 설정되었습니다."
-                        )
-                        st.rerun()
-
-                st.divider()
 
             scene_candidates = get_scene_result_candidates()
             sync_scene_reference_selection(
