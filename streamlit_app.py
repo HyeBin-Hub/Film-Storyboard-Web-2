@@ -9,7 +9,7 @@ from backend import (run_face_generation, run_body_generation, run_scene_generat
 # =============================================================================================================================
 # 1. Feature Flags
 # =============================================================================================================================
-ENABLE_MANUAL_REFERENCE_INPUT = False
+ENABLE_MANUAL_REFERENCE_INPUT = True
 
 ENABLE_PRESET_2A_RESULTS = False
 ENABLE_PRESET_2B_RESULTS = False
