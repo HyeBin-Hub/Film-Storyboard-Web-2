@@ -207,7 +207,9 @@ def get_selected_shot_dataframe():
     if not custom_shots:
         return pd.DataFrame()
 
-    return df[df[shot_col].isin([str(x) for x in custom_shots])]
+    normalized_shot_ids = df[shot_col].fillna("").astype(str).str.strip()
+
+    return df[normalized_shot_ids.isin([str(x).strip() for x in custom_shots])]
 
 
 def build_storyboard_input_config():
@@ -250,6 +252,37 @@ def initialize_outfit_reference_inputs():
 
         for garment in ("top", "bottom", "shoes", "single"):
             st.session_state.setdefault(f"outfit_{garment}_reference_{character_code}","")
+
+
+def clear_downstream_results(step, character_code=None):
+
+    if step == "2A":
+        keys = [
+            f"body_result_image_{character_code}",
+            f"body_result_filename_{character_code}",
+        ]
+    else:
+        keys = []
+
+    if step in ("2A", "2B"):
+        keys.extend([
+            "scene_candidates",
+            "scene_result_image",
+            "scene_result_filename",
+            "scene_selected_label",
+        ])
+
+    if step in ("2A", "2B", "3"):
+        keys.extend([
+            "camera_refined_candidates",
+            "camera_refined_result_image",
+            "camera_refined_result_filename",
+            "camera_refined_selected_label",
+            "camera_input_scene_label",
+        ])
+
+    for key in keys:
+        st.session_state.pop(key, None)
 
 
 # =============================================================================================================================
@@ -752,7 +785,7 @@ with tab1:
             if shot_ids:
                 st.multiselect("Select Storyboard Shots", options=shot_ids, key="custom_shots",)
             else:
-                st.warning("CSV에서 추출된 Shot ID가 없습니다.")
+                st.warning("No Shot IDs were found in the CSV.")
 
     else:
         st.info("Upload a CSV file to display the storyboard data preview and shot selection controls.")
@@ -914,6 +947,8 @@ with tab2:
                             
                             st.session_state[f"face_result_image_{character_code}"] = first_image["image"]
                             st.session_state[f"face_result_filename_{character_code}"] = first_image.get("filename", "")
+
+                            clear_downstream_results("2A", character_code)
        
                             st.success("Character appearance generated successfully.")
                             st.rerun()
@@ -1144,8 +1179,10 @@ with tab2:
                         else:
                             first_image = images[0]
 
-                            st.session_state[f"body_result_image_{character_code}"] = (first_image["image"])
-                            st.session_state[f"body_result_filename_{character_code}"] = (first_image.get("filename", ""))
+                            st.session_state[f"body_result_image_{character_code}"] = first_image["image"]
+                            st.session_state[f"body_result_filename_{character_code}"] = first_image.get("filename", "")
+
+                            clear_downstream_results("2B")
 
                             st.success("Outfit reference generated successfully.")
                             st.rerun()
@@ -1352,6 +1389,8 @@ with tab3:
                         st.session_state["scene_result_image"] = first_image["image"]
                         st.session_state["scene_result_filename"] = first_image.get("filename", "")
                         st.session_state["scene_selected_label"] = first_image.get("label", "Scene 1")
+
+                        clear_downstream_results("3")
 
                         st.success("Storyboard scenes generated successfully.")
                         st.rerun()
