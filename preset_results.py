@@ -6,9 +6,6 @@ import streamlit as st
 # =====================================
 
 def apply_preset_2a_results():
-    
-    if not ENABLE_PRESET_2A_RESULTS:
-        return
 
     preset_boy_url = (
         "https://serverless-api-storage.runcomfy.net/"
@@ -35,8 +32,6 @@ def apply_preset_2a_results():
         )
         
 def apply_preset_2b_results():
-    if not ENABLE_PRESET_2B_RESULTS:
-        return
 
     preset_boy_outfit_url = (
         "https://cdn.phototourl.com/free/2026-08-10-cc0d90a8-b115-4c15-bd6f-57d30a16bbd9.png"
@@ -56,8 +51,6 @@ def apply_preset_2b_results():
 
 
 def apply_preset_step3_results():
-    if not ENABLE_PRESET_STEP3_RESULTS:
-        return
 
     if st.session_state.get("scene_candidates"):
         return
@@ -103,8 +96,6 @@ def apply_preset_step3_results():
 
 
 def apply_preset_step4_results():
-    if not ENABLE_PRESET_STEP4_RESULTS:
-        return
 
     if st.session_state.get("camera_refined_result_image"):
         return
