@@ -252,6 +252,11 @@ def initialize_outfit_reference_inputs():
 
         for garment in ("top", "bottom", "shoes", "single"):
             st.session_state.setdefault(f"outfit_{garment}_reference_{character_code}","")
+            
+
+def clear_outfit_reference_on_remove(upload_key, reference_key):
+    if st.session_state.get(upload_key) is None:
+        st.session_state.pop(reference_key, None)
 
 
 def clear_downstream_results(step, character_code=None):
@@ -1051,7 +1056,13 @@ with tab2:
 
                 for column, garment_label, upload_key, reference_key in garment_input_specs:
                     with column:
-                        uploaded_garment = st.file_uploader(garment_label, type=["png", "jpg", "jpeg", "webp"], key=upload_key)
+                        uploaded_garment = st.file_uploader(
+                            garment_label,
+                            type=["png", "jpg", "jpeg", "webp"],
+                            key=upload_key,
+                            on_change=clear_outfit_reference_on_remove,
+                            args=(upload_key, reference_key),
+                        )
 
                         if uploaded_garment is not None:
                             garment_data_uri = uploaded_image_to_data_uri(uploaded_garment)
@@ -1076,11 +1087,15 @@ with tab2:
             else:
                 single_reference_key = f"outfit_single_reference_{selected_character_code}"
             
+                single_upload_key = f"outfit_single_upload_{selected_character_code}"
+
                 single_outfit_upload = st.file_uploader(
                     "Outfit Reference Image",
                     type=["png", "jpg", "jpeg", "webp"],
-                    key=f"outfit_single_upload_{selected_character_code}",
+                    key=single_upload_key,
                     label_visibility="collapsed",
+                    on_change=clear_outfit_reference_on_remove,
+                    args=(single_upload_key, single_reference_key),
                 )
             
                 if single_outfit_upload is not None:
