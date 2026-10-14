@@ -338,6 +338,7 @@ def patch_face_workflow(workflow: dict, config: dict) -> dict:
 
     # 19: PortraitMasterBaseCharacter
     appearance_keys = (
+        "shot",
         "nationality_1",
         "body_type",
         "eyes_color",
